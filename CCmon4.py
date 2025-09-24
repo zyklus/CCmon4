@@ -1,15 +1,15 @@
 # 顾问游戏 - 随机地图与BOSS系统版本 (优化版本)
 #
 # 配置切换说明:
-# 要切换初始游戏配置，请修改第2994行的 GAME_CONFIG_PLAN 变量:
-# - "PlanA": 默认配置（颓废的夏书文，1000金币，基础物品）
-# - "PlanB": 隐藏配置（6个高级顾问，60万金币，特殊物品）
+# 要切换初始游戏配置,请修改第2994行的 GAME_CONFIG_PLAN 变量:
+# - "PlanA": 默认配置（颓废的夏书文,1000金币,基础物品）
+# - "PlanB": 隐藏配置（6个高级顾问,60万金币,特殊物品）
 #
 # 性能优化说明:
-# 1. 表面缓存系统: 实现了地图、UI元素的缓存，避免重复绘制
+# 1. 表面缓存系统: 实现了地图、UI元素的缓存,避免重复绘制
 # 2. 对象池: 减少Surface对象的创建和销毁开销
 # 3. 脏矩形更新: 只重绘发生变化的区域
-# 4. 字体管理优化: 单例模式的字体管理器，避免重复加载
+# 4. 字体管理优化: 单例模式的字体管理器,避免重复加载
 # 5. 图像缓存: 优化的图像加载和缩放缓存系统
 # 6. 数据结构优化: 使用__slots__减少内存占用
 # 7. 预计算常量: 预计算常用的数值以减少运行时计算
@@ -58,7 +58,7 @@ BATTLE_BG_COLOR = (100, 180, 100)
 BATTLE_INFO_BG = (240, 240, 240)
 MENU_BG = (50, 100, 180)
 MENU_HOVER = (80, 130, 210)
-HIGHLIGHT = YELLOW  # 用于标记默认出战顾问，复用YELLOW常量
+HIGHLIGHT = YELLOW  # 用于标记默认出战顾问,复用YELLOW常量
 PURPLE = (128, 0, 128)  # 紫色用于SP条
 
 # ==================== 游戏枚举和数据结构 ====================
@@ -115,16 +115,16 @@ class Skill:
 
 # 技能分类枚举
 class SkillCategory:
-    DIRECT_DAMAGE = "direct_damage"           # 直接伤害（无需SP发动，发动后积攒SP）
-    CONTINUOUS_DAMAGE = "continuous_damage"   # 连续多回合伤害（无需SP发动，发动后积攒SP）
-    DIRECT_HEAL = "direct_heal"              # 直接治疗（无需SP发动，发动后不积攒SP）
-    CONTINUOUS_HEAL = "continuous_heal"       # 连续多回合治疗（无需SP发动，发动后不积攒SP）
+    DIRECT_DAMAGE = "direct_damage"           # 直接伤害（无需SP发动,发动后积攒SP）
+    CONTINUOUS_DAMAGE = "continuous_damage"   # 连续多回合伤害（无需SP发动,发动后积攒SP）
+    DIRECT_HEAL = "direct_heal"              # 直接治疗（无需SP发动,发动后不积攒SP）
+    CONTINUOUS_HEAL = "continuous_heal"       # 连续多回合治疗（无需SP发动,发动后不积攒SP）
     HEAL = "heal"                            # 通用治疗技能
-    SELF_BUFF = "self_buff"                  # 改变己方属性多回合（无需SP发动，发动后不积攒SP）
-    ENEMY_DEBUFF = "enemy_debuff"            # 改变敌方属性多回合（无需SP发动，发动后不积攒SP）
-    TEAM_BUFF = "team_buff"                  # 改变团队属性多回合（无需SP发动，发动后不积攒SP）
-    TEAM_DEBUFF = "team_debuff"              # 改变敌方团队属性多回合（无需SP发动，发动后不积攒SP）
-    SPECIAL_ATTACK = "special_attack"         # 必杀技等（需SP发动，发动后不积攒SP）
+    SELF_BUFF = "self_buff"                  # 改变己方属性多回合（无需SP发动,发动后不积攒SP）
+    ENEMY_DEBUFF = "enemy_debuff"            # 改变敌方属性多回合（无需SP发动,发动后不积攒SP）
+    TEAM_BUFF = "team_buff"                  # 改变团队属性多回合（无需SP发动,发动后不积攒SP）
+    TEAM_DEBUFF = "team_debuff"              # 改变敌方团队属性多回合（无需SP发动,发动后不积攒SP）
+    SPECIAL_ATTACK = "special_attack"         # 必杀技等（需SP发动,发动后不积攒SP）
     DIRECT_ATTACK = "direct_attack"          # 直接攻击技能
     DOT = "dot"                              # 持续伤害效果
     HOT = "hot"                              # 持续治疗效果
@@ -168,7 +168,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.CONTINUOUS_HEAL,
         "description": "连续3回合回复20%生命",
         "sp_cost": 0,
-        "quote": "鼓舞士气提升战斗力",
+        "quote": "莫慌,我有deck",
         "effects": {
             "heal_percentage": 0.2,
             "turns": 3
@@ -178,7 +178,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "体力",
         "category": SkillCategory.SELF_BUFF,
-        "description": "连续3回合攻击增加40%，防御降低40%",
+        "description": "连续3回合攻击增加40%,防御降低40%",
         "sp_cost": 0,
         "quote": "干他",
         "effects": {
@@ -205,7 +205,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.DIRECT_HEAL,
         "description": "恢复40%生命",
         "sp_cost": 0,
-        "quote": "使用治疗技能恢复生命值",
+        "quote": "咖啡来了",
         "effects": {
             "heal_percentage": 0.4
         }
@@ -217,9 +217,9 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "networking",
         "category": SkillCategory.TEAM_BUFF,
-        "description": "消耗95SP，所有顾问攻击力提升35%，血量下降5%，从下一回合开始持续4回合",
+        "description": "消耗95SP,所有顾问攻击力提升35%,血量下降5%,从下一回合开始持续4回合",
         "sp_cost": 95,
-        "quote": "我都两杯了，你快点",
+        "quote": "我都两杯了,你快点",
         "effects": {
             "team_attack_multiplier": 1.35,
             "team_hp_cost": 0.05,
@@ -230,9 +230,9 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "networking",
         "category": SkillCategory.SELF_BUFF,
-        "description": "消耗100SP，从下一回合开始回避任何技能3回合",
+        "description": "消耗100SP,从下一回合开始回避任何技能3回合",
         "sp_cost": 100,
-        "quote": "这不是回家的车，我要~跳车~",
+        "quote": "这不是回家的车,我要跳车~",
         "effects": {
             "dodge_chance": 1.0,
             "turns": 3
@@ -242,7 +242,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "networking",
         "category": SkillCategory.DOT,
-        "description": "消耗80SP，对敌方从下一回合开始连续3回合造成自身攻击力的40%伤害",
+        "description": "消耗80SP,对敌方从下一回合开始连续3回合造成自身攻击力的40%伤害",
         "sp_cost": 80,
         "quote": "所以那是你同事吗？",
         "effects": {
@@ -256,7 +256,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.DIRECT_HEAL,
         "description": "恢复自身生命25%",
         "sp_cost": 0,
-        "quote": "你要跟我比夹夹，还是跟我比茶茶",
+        "quote": "你要跟我比夹夹,还是跟我比茶茶",
         "effects": {
             "heal_percentage": 0.25
         }
@@ -267,7 +267,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.TEAM_HEAL,
         "description": "为我方全体顾问连续三回合恢复28%HP",
         "sp_cost": 0,
-        "quote": "汪汪汪！大家都要健康快乐哦！",
+        "quote": "今晚PS取消！",
         "effects": {
             "team_heal_percentage": 0.28,
             "turns": 3
@@ -288,9 +288,9 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "networking",
         "category": SkillCategory.SPECIAL_ATTACK,
-        "description": "消耗90SP，无视对手防御力造成50-200点随机伤害",
+        "description": "消耗90SP,无视对手防御力造成50-200点随机伤害",
         "sp_cost": 90,
-        "quote": "阿巴次阿巴次，阿巴次阿巴次，喝！",
+        "quote": "阿巴次阿巴次,阿巴次阿巴次,喝！",
         "effects": {
             "ignore_defense_damage_min": 50,
             "ignore_defense_damage_max": 200
@@ -300,7 +300,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["共情", "耐心"],
         "category": SkillCategory.TEAM_HEAL,
-        "description": "消耗50SP，恢复全体生命45%",
+        "description": "消耗50SP,恢复全体生命45%",
         "sp_cost": 50,
         "quote": "相机就是我的女朋友",
         "effects": {
@@ -313,11 +313,12 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["节操", "耐心"],
         "category": SkillCategory.SELF_BUFF,
-        "description": "消耗14SP，有24%几率回避下次攻击",
-        "sp_cost": 14,
-        "quote": "我会努力的",
+        "description": "造成38%伤害,有24%几率回避下次攻击",
+        "sp_cost": 0,
+        "quote": "这不是我的主要工作",
         "effects": {
             "dodge_chance": 0.24,
+            "base_damage_percentage": 0.38,
             "turns": 1
         }
     },
@@ -325,9 +326,9 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["结构化", "耐心", "content"],
         "category": SkillCategory.DOT,
-        "description": "连续3回合造成自身攻击力的10%伤害，有15%几率麻痹对手1回合",
+        "description": "使用 wiki 上看到的公式凑数,有几率麻痹对手。连续3回合造成自身攻击力的10%伤害,有15%几率麻痹对手1回合",
         "sp_cost": 0,
-        "quote": "使用 wiki 上看到的公式凑数，有几率麻痹对手。",
+        "quote": "我昨晚看了一下Wiki,觉得可以直接建模…",
         "effects": {
             "dot_percentage": 0.1,
             "turns": 3,
@@ -339,11 +340,11 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["耐心", "共情"],
         "category": SkillCategory.DOT,
-        "description": "连续2回合造成自身攻击力的12%伤害，有10%几率石化对手1回合",
+        "description": "使用复杂的数学模型震慑对手,有几率石化对手。连续2回合造成自身攻击力的32%伤害,有10%几率石化对手1回合",
         "sp_cost": 0,
-        "quote": "使用复杂的数学模型震慑对手，有几率石化对手。",
+        "quote": "以后每天你们早晚用这公式算一次,然后去现场重设干湿球温度",
         "effects": {
-            "dot_percentage": 0.12,
+            "dot_percentage": 0.32,
             "turns": 2,
             "petrify_chance": 0.1,
             "petrify_turns": 1
@@ -353,11 +354,11 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "共情",
         "category": SkillCategory.ENEMY_DEBUFF,
-        "description": "敌方攻击力下降15%，持续2回合，有12%几率魅惑对手1回合，对成年顾问效力下降30%",
+        "description": "敌方攻击力下降25%,持续2回合,有12%几率魅惑对手1回合,对成年顾问效力下降30%",
         "sp_cost": 0,
-        "quote": "使用话术诱惑对手，有几率魅惑对手，对成年顾问效力下降。",
+        "quote": "虽然这个项目很苦,但其他项目可能更苦啊",
         "effects": {
-            "target_attack_multiplier": 0.85,
+            "target_attack_multiplier": 0.75,
             "turns": 2,
             "charm_chance": 0.12,
             "charm_turns": 1,
@@ -365,12 +366,11 @@ UNIFIED_SKILLS_DATABASE = {
         }
     },
     
-    # 更多必杀技
     "沉默的牛马": {
         "power": 0,
         "type": ["韧性", "耐心", "共情"],
         "category": SkillCategory.MULTI_HIT,
-        "description": "消耗65SP，连续三次造成自身攻击力40%伤害，每次攻击40%几率附加10%伤害",
+        "description": "消耗65SP,连续三次造成自身攻击力40%伤害,每次攻击40%几率附加10%伤害",
         "sp_cost": 65,
         "quote": "我去看了亚洲最大的gay吧",
         "effects": {
@@ -384,9 +384,9 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["韧性", "耐心", "共情"],
         "category": SkillCategory.REVIVE,
-        "description": "消耗100SP，复活一位顾问，恢复其生命90%",
+        "description": "消耗100SP,复活一位顾问,恢复其生命90%",
         "sp_cost": 100,
-        "quote": "你能不能闻到泥煤味",
+        "quote": "这杯试喝的威士忌,已经换了三块冰了",
         "effects": {
             "revive_hp_percentage": 0.9
         }
@@ -395,7 +395,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["节操", "体力"],
         "category": SkillCategory.SELF_BUFF,
-        "description": "消耗50SP，攻击力提升50%，防御力提升200%，持续3回合",
+        "description": "消耗50SP,攻击力提升50%,防御力提升200%,持续3回合",
         "sp_cost": 50,
         "quote": "来陪邱总上厕所呀",
         "effects": {
@@ -408,7 +408,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["节操", "体力"],
         "category": SkillCategory.MULTI_HIT,
-        "description": "消耗70SP，造成自身攻击力180%伤害，40%几率触发第二次120%伤害",
+        "description": "消耗70SP,造成自身攻击力180%伤害,40%几率触发第二次120%伤害",
         "sp_cost": 70,
         "quote": "我两个基地一直都排名前三",
         "effects": {
@@ -421,7 +421,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "勇气",
         "category": SkillCategory.SPECIAL,
-        "description": "消耗90SP，自身不掉血2回合，攻击力变为80%，2回合后造成240%伤害，自身血量变为0",
+        "description": "消耗90SP,自身不掉血2回合,攻击力变为80%,2回合后造成240%伤害,自身血量变为0",
         "sp_cost": 90,
         "quote": "我跟他也不熟",
         "effects": {
@@ -434,14 +434,14 @@ UNIFIED_SKILLS_DATABASE = {
     
     # 从skill_system.py迁移的技能
     "酒精打击": {
-        "power": 93,
+        "power": 63,
         "type": ["networking", "体力"],
         "category": SkillCategory.DIRECT_DAMAGE,
-        "description": "造成自身攻击力93%伤害，有18%几率造成1.5倍伤害",
+        "description": "造成自身攻击力63%伤害,有18%几率造成1.5倍伤害",
         "sp_cost": 0,
-        "quote": "你挣钱不就是来喝的吗",
+        "quote": "挣钱不就是来喝的吗",
         "effects": {
-            "base_damage_percentage": 0.93,
+            "base_damage_percentage": 0.63,
             "crit_chance": 0.18,
             "crit_multiplier": 1.5
         }
@@ -450,20 +450,20 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 55,
         "type": "节操",
         "category": SkillCategory.DIRECT_DAMAGE,
-        "description": "造成自身攻击力25%伤害",
+        "description": "造成自身攻击力55%伤害",
         "sp_cost": 0,
-        "quote": "你不干这个，我就投诉你",
+        "quote": "下周没有code,但是还要继续支持客户",
         "effects": {
-            "base_damage_percentage": 0.25
+            "base_damage_percentage": 0.55
         }
     },
     "Empathy": {
         "power": 42,
         "type": [ "耐心", "共情"],
         "category": SkillCategory.DIRECT_DAMAGE,
-        "description": "造成自身攻击力30%伤害，20%几率对自身产生动摇",
+        "description": "造成自身攻击力42%伤害,20%几率对自身产生动摇",
         "sp_cost": 0,
-        "quote": "唉，是这样，呼噜噜",
+        "quote": "唉,是这样,呼噜噜",
         "effects": {
             "base_damage_percentage": 0.42,
             "self_debuff_chance": 0.20,
@@ -475,9 +475,9 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 15,
         "type": "勇气",
         "category": SkillCategory.DIRECT_DAMAGE,
-        "description": "造成自身攻击力15%伤害，连续3回合使对手防御力下降30%",
+        "description": "造成自身攻击力15%伤害,连续3回合使对手防御力下降30%",
         "sp_cost": 0,
-        "quote": "造成自身攻击力15%伤害，连续3回合使对手防御力下降30%",
+        "quote": "造成自身攻击力15%伤害,连续3回合使对手防御力下降30%",
         "effects": {
             "base_damage_percentage": 0.15,
             "enemy_defense_debuff": 0.3,
@@ -488,22 +488,22 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 10,
         "type": ["耐心", "节操"],
         "category": SkillCategory.DIRECT_DAMAGE,
-        "description": "造成自身攻击力10%伤害",
+        "description": "造成自身攻击力30%伤害",
         "sp_cost": 0,
         "quote": "先去拿个外卖",
         "effects": {
-            "base_damage_percentage": 0.10
+            "base_damage_percentage": 0.30
         }
     },
     "27岁500强总监": {
         "power": 0,
         "type": "节操",
         "category": SkillCategory.DOT,
-        "description": "从下一回合开始连续3回合造成自身攻击力30%伤害",
-        "sp_cost": 75,
+        "description": "从下一回合开始连续3回合造成自身攻击力38%伤害",
+        "sp_cost": 15,
         "quote": "我是DML史上最年轻的总监",
         "effects": {
-            "dot_percentage": 0.3,
+            "dot_percentage": 0.38,
             "turns": 3,
         }
     },
@@ -536,7 +536,7 @@ UNIFIED_SKILLS_DATABASE = {
         "type": "节操",
         "category": SkillCategory.DIRECT_DAMAGE,
         "description": "造成目标当前HP的25%伤害",
-        "sp_cost": 55,
+        "sp_cost": 45,
         "quote": "你为什么没有发现我的错误！",
         "effects": {
             "current_hp_damage_percentage": 0.25
@@ -548,7 +548,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.DIRECT_DAMAGE,
         "description": "造成自身攻击力110%伤害",
         "sp_cost": 0,
-        "quote": "书文总，来比倒立！",
+        "quote": "书文总,来比倒立！",
         "effects": {
             "base_damage_percentage": 1.10
         }
@@ -557,11 +557,11 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["networking", "共情"],
         "category": SkillCategory.ENEMY_DEBUFF,
-        "description": "敌方全体攻击力下降8%，从下一回合开始持续2回合",
+        "description": "敌方全体攻击力下降28%,从下一回合开始持续2回合",
         "sp_cost": 0,
-        "quote": "给整个办公室都来吨吨桶，加12 分糖",
+        "quote": "给客户来个吨吨桶,加12分糖",
         "effects": {
-            "target_attack_multiplier": 1.0,
+            "target_attack_multiplier": 0.72,
             "turns": 2,
         }
     },
@@ -569,11 +569,11 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 20,
         "type": ["共情", "节操"],
         "category": SkillCategory.DIRECT_DAMAGE,
-        "description": "造成自身攻击力20%伤害",
+        "description": "造成自身攻击力40%伤害",
         "sp_cost": 0,
-        "quote": "尽管目前有一点小问题，但是趋势是没有问题的",
+        "quote": "尽管目前有一点小问题,但是趋势是没有问题的",
         "effects": {
-            "base_damage_percentage": 0.20
+            "base_damage_percentage": 0.40
         }
     },
     "浆板下水": {
@@ -620,9 +620,9 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["共情", "体力"],
         "category": SkillCategory.DOT,
-        "description": "从下一回合开始连续3回合造成自身攻击力40%伤害",
+        "description": "连续3回合造成自身攻击力40%伤害",
         "sp_cost": 65,
-        "quote": "你的爱红烧牛肉味",
+        "quote": "你就在我办公室吃方便面吧",
         "effects": {
             "dot_percentage": 0.4,
             "turns": 3,
@@ -632,9 +632,9 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "节操",
         "category": SkillCategory.DOT,
-        "description": "从下一回合开始连续5回合造成自身攻击力35%伤害",
+        "description": "连续5回合造成自身攻击力35%伤害",
         "sp_cost": 65,
-        "quote": "傅老师，你帮我写一下述职报告",
+        "quote": "傅老师,你帮我写一下述职报告",
         "effects": {
             "dot_percentage": 0.35,
             "turns": 5,
@@ -644,9 +644,9 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 50,
         "type": ["PS", "勇气", "content"],
         "category": SkillCategory.DIRECT_DAMAGE,
-        "description": "对敌人造成50点伤害，对自身有反噬效果",
+        "description": "对敌人造成50点伤害,对自身有反噬效果",
         "sp_cost": 25,
-        "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。",
+        "quote": "这个东西怎么落地？",
         "effects": {
             "direct_damage": 50,
             "self_damage": 10
@@ -656,8 +656,8 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 18,
         "type": ["共情", "节操"],
         "category": SkillCategory.SELF_BUFF,
-        "description": "提升自身攻击力，持续3回合",
-        "sp_cost": 15,
+        "description": "提升自身攻击力30%,持续3回合",
+        "sp_cost": 0,
         "quote": "1个月你就能下",
         "effects": {
             "attack_multiplier": 1.3,
@@ -668,9 +668,9 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 20,
         "type": ["结构化", "PS", "节操"],
         "category": SkillCategory.SELF_BUFF,
-        "description": "提升自身防御力，降低敌人攻击力",
+        "description": "提升自身防御力,降低敌人攻击力",
         "sp_cost": 12,
-        "quote": "你的话题我们会后讨论，我们先看我的",
+        "quote": "你的话题我们会后讨论,我们先看我的",
         "effects": {
             "defense_multiplier": 1.4,
             "target_attack_multiplier": 0.8,
@@ -681,7 +681,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 15,
         "type": "节操",
         "category": SkillCategory.ENEMY_DEBUFF,
-        "description": "降低敌人攻击力，持续2回合",
+        "description": "降低敌人攻击力30%,持续2回合",
         "sp_cost": 10,
         "quote": "这个数据我要请示",
         "effects": {
@@ -695,7 +695,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.ENEMY_DEBUFF,
         "description": "使敌方防御力下降65%",
         "sp_cost": 30,
-        "quote": "你自己调整一下",
+        "quote": "你们这个数不对啊",
         "effects": {
             "target_defense_multiplier": 0.35,
             "turns": 3
@@ -707,7 +707,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.MIXED_BUFF_DEBUFF,
         "description": "使敌方防御力下降85%,我方攻击力提升20%",
         "sp_cost": 40,
-        "quote": "我和你说哦",
+        "quote": "我真的没有在总经理办公室吃螺蛳粉",
         "effects": {
             "target_defense_multiplier": 0.15,
             "self_attack_multiplier": 1.2,
@@ -720,7 +720,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.ENEMY_DEBUFF,
         "description": "使用后对手连续3回合攻击下降70%",
         "sp_cost": 75,
-        "quote": "不是8块，是3圈！",
+        "quote": "不是8块,是3圈！",
         "effects": {
             "target_attack_multiplier": 0.3,
             "turns": 3
@@ -745,7 +745,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.ULTIMATE,
         "description": "使用后对对手造成150%的伤害,对手HP<20%时直接进行直接将对手HP清0",
         "sp_cost": 50,
-        "quote": "新伟你这样是不对的",
+        "quote": "找不出根因明天汇报就开天窗",
         "effects": {
             "damage_multiplier": 1.5,
             "execute_threshold": 0.2
@@ -879,7 +879,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 16,
         "type": ["韧性", "体力"],
         "category": SkillCategory.DOT,
-        "description": "对目标从下一回合开始连续4回合造成自身攻击力的16%持续伤害，并使目标每回合SP减少10",
+        "description": "对目标从下一回合开始连续4回合造成自身攻击力的16%持续伤害,并使目标每回合SP减少10",
         "sp_cost": 45,
         "quote": "你见过珠海凌晨4点的太阳吗",
         "effects": {
@@ -894,7 +894,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.SELF_BUFF,
         "description": "从下一回合开始回避任何技能2回合",
         "sp_cost": 95,
-        "quote": "你又不是朱总，我怕个Der",
+        "quote": "你又不是朱总,我怕个Der",
         "effects": {
             "dodge_chance": 1.0,
             "turns": 2
@@ -906,7 +906,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.DOT,
         "description": "连续3回合造成伤害",
         "sp_cost": 15,
-        "quote": "五一你们休息两天了，也差不多了",
+        "quote": "五一你们休息两天了,也差不多了",
         "effects": {
             "dot_damage": 20,
             "turns": 3
@@ -916,7 +916,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 11,
         "type": "节操",
         "category": SkillCategory.DOT,
-        "description": "连续4回合造成伤害",
+        "description": "连续4回合造成11点伤害",
         "sp_cost": 12,
         "quote": "我相信群众里面一定有能人",
         "effects": {
@@ -943,7 +943,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.TEAM_DEBUFF,
         "description": "对所有敌人造成伤害并降低其攻击力",
         "sp_cost": 35,
-        "quote": "你告诉我，为什么W基地一年换了7个总经理",
+        "quote": "你告诉我,为什么W基地一年换了7个总经理",
         "effects": {
             "direct_damage": 40,
             "target_attack_multiplier": 0.6,
@@ -955,8 +955,8 @@ UNIFIED_SKILLS_DATABASE = {
         "type": ["networking", "节操"],
         "category": SkillCategory.SELF_BUFF,
         "description": "提升团队整体攻击力",
-        "sp_cost": 20,
-        "quote": "我们组建了56人的全球团队，但是并不负责解决具体技术问题",
+        "sp_cost": 10,
+        "quote": "我们组建了56人的全球团队,但是并不负责解决具体问题",
         "effects": {
             "attack_multiplier": 1.2,
             "turns": 4
@@ -968,7 +968,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.TEAM_BUFF,
         "description": "大幅提升团队攻击力和防御力",
         "sp_cost": 45,
-        "quote": "该方案采用的都是市面上已有的技术，并没有见到你们的独创性",
+        "quote": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性",
         "effects": {
             "team_attack_multiplier": 1.5,
             "team_defense_multiplier": 1.3,
@@ -979,7 +979,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 30,
         "type": "PS",
         "category": SkillCategory.ENEMY_DEBUFF,
-        "description": "降低敌人士气，减少其攻击力和防御力",
+        "description": "降低敌人士气,减少其攻击力和防御力",
         "sp_cost": 22,
         "quote": "你们来前我们就开始做了",
         "effects": {
@@ -1017,7 +1017,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["勇气", "韧性", "体力"],
         "category": SkillCategory.SPECIAL,
-        "description": "消耗90SP，提升自身攻击力50%、防御力20%持续2回合，并在第二回合造成400%伤害",
+        "description": "消耗90SP,提升自身攻击力50%、防御力20%持续2回合,并在第二回合造成400%伤害",
         "sp_cost": 90,
         "quote": "随我勤王！",
         "second_turn_quote": "万箭齐发",
@@ -1036,8 +1036,11 @@ UNIFIED_SKILLS_DATABASE = {
         "type": ["共情"],
         "category": SkillCategory.DIRECT_DAMAGE,
         "sp_cost": 0,
-        "quote": "",
-        "description": "不停地抱怨和唠叨，造成精神伤害"
+        "quote": "造成29%攻击力伤害",
+        "description": "不停地抱怨和唠叨,造成精神伤害",
+        "effects": {
+            "base_damage_percentage": 0.29
+        }
     },
     "扣除效益": {
         "power": 60,
@@ -1045,7 +1048,7 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.SPECIAL,
         "sp_cost": 0,
         "quote": "所所所所有损失从你们费用里扣！",
-        "description": "强制扣除对方的效益，造成大量伤害"
+        "description": "强制扣除对方的效益,造成大量伤害"
     },
     "深呼吸": {
         "power": 80,
@@ -1053,12 +1056,11 @@ UNIFIED_SKILLS_DATABASE = {
         "category": SkillCategory.SPECIAL,
         "sp_cost": 0,
         "quote": "你们要负全责！",
-        "description": "深呼吸后爆发怒气，造成巨大伤害"
+        "description": "深呼吸后爆发怒气,造成巨大伤害"
     }
 }
 
-# 保持向后兼容性
-NEW_SKILLS_DATABASE = UNIFIED_SKILLS_DATABASE
+# UNIFIED_SKILLS_DATABASE已废弃，统一使用UNIFIED_SKILLS_DATABASE
 
 # 必杀技台词数据库
 ULTIMATE_LINES_DATABASE = {
@@ -1069,38 +1071,38 @@ ULTIMATE_LINES_DATABASE = {
         "心灵震爆": "感受心灵的力量吧！",
         "精神污染": "让混乱占据你的内心！",
         # 整合的技能台词
-        "带队酗酒": "我都两杯了，你快点",
-        "酒后逃逸": "这不是回家的车，我要~跳车~",
+        "带队酗酒": "我都两杯了,你快点",
+        "酒后逃逸": "这不是回家的车,我要~跳车~",
         "小嘴抹毒": "所以那是你同事吗？",
-        "茶颜悦色": "你要跟我比夹夹，还是跟我比茶茶",
-        "快乐小狗": "轻一点，不要打扰我偷听JJZ骂人",
+        "茶颜悦色": "你要跟我比夹夹,还是跟我比茶茶",
+        "快乐小狗": "轻一点,不要打扰我偷听JJZ骂人",
         "躺平": "他不会看细节的",
-        "绝世骰手": "阿巴次阿巴次，阿巴次阿巴次，喝！",
+        "绝世骰手": "阿巴次阿巴次,阿巴次阿巴次,喝！",
         "小考拉之怒": "相机就是我的女朋友",
         "沉默的牛马": "我去看了亚洲最大的gay吧",
         "威士忌之友": "你能不能闻到泥煤味",
-        "躺平才是王道": "你又不是朱总，我怕个Der",
+        "躺平才是王道": "你又不是朱总,我怕个Der",
         "我要休产假了": "来陪邱总上厕所呀",
         "DGL逼我的": "我两个基地一直都排名前三",
         "表没对齐": "你自己调整一下",
         "情报总监上线": "我和你说哦",
-        "摸下腹肌~~": "不是8块，是3圈！",
+        "摸下腹肌~~": "不是8块,是3圈！",
         "我来给你讲下原理": "董事长是我哥们",
         "ValueConcern!": "我跟他也不熟",
         "马总的关爱": "你就在我办公室偷偷吃方便面吧",
-        "我来自珠海": "新伟你这样是不对的",
+        "我来自珠海": "找不出根因明天汇报就开天窗",
         "无锡的羔羊": "你见过白油倒流没",
         "来打羽毛球啊": "实在是干不动了",
         "G总,你不懂OPS": "这不是我想做的",
         "27岁500强总监": "我是DML史上最年轻的总监",
         "我和他谈笑风生": "我离职的原因是不好意思让董事长天天飞上海找我",
         "信不信我投诉你": "你为什么没有发现我的错误！",
-        "我在XX时代": "那天我在仓库里，突然发现一颗烟头",
-        "骚扰专家": "傅老师，你帮我写一下述职报告",
+        "我在XX时代": "那天我在仓库里,突然发现一颗烟头",
+        "骚扰专家": "傅老师,你帮我写一下述职报告",
         "深呼吸": "你们要负全责！",
         "扣除效益": "所所所所有损失从你们费用里扣！",
         "浆板下水": "不用浆好像还比较快啊",
-        "倒立攻击": "书文总，我们比下倒立",
+        "倒立攻击": "书文总,我们比下倒立",
         "治疗": "使用治疗技能恢复生命值",
         "default": "这就是我的必杀技！"
     }
@@ -1371,7 +1373,7 @@ class SkillManager:
         
         # 混合增益减益效果
         elif category == SkillCategory.MIXED_BUFF_DEBUFF:
-            # 这种技能需要特殊处理，暂时添加占位符效果
+            # 这种技能需要特殊处理,暂时添加占位符效果
             effects.append(SkillEffect(
                 EffectType.SPECIAL, 0, 1, 1.0, "mixed", 
                 "混合增益减益效果"
@@ -1379,7 +1381,7 @@ class SkillManager:
         
         # 持续治疗和伤害效果
         elif category == SkillCategory.HOT_DOT:
-            # 这种技能需要特殊处理，暂时添加占位符效果
+            # 这种技能需要特殊处理,暂时添加占位符效果
             effects.append(SkillEffect(
                 EffectType.SPECIAL, 0, 1, 1.0, "mixed", 
                 "持续治疗和伤害效果"
@@ -1411,54 +1413,33 @@ class SkillManager:
     
     def use_skill(self, skill_name: str, user_stats: Dict, target_stats: Dict = None):
         """使用技能"""
-        skill = self.get_skill(skill_name)
-        if not skill:
+        # 从UNIFIED_SKILLS_DATABASE获取技能信息
+        skill_data = UNIFIED_SKILLS_DATABASE.get(skill_name, {})
+        if not skill_data:
             return f"技能 {skill_name} 不存在"
         
-        if user_stats.get("sp", 0) < skill.sp_cost:
-            return f"SP不足，需要 {skill.sp_cost} SP"
+        sp_cost = skill_data.get("sp_cost", 0)
+        if user_stats.get("sp", 0) < sp_cost:
+            return f"SP不足，需要 {sp_cost} SP"
         
         # 扣除SP
-        user_stats["sp"] -= skill.sp_cost
+        user_stats["sp"] -= sp_cost
         
         # 显示台词
-        result = [f'"{skill.quote}"']
+        quote = skill_data.get("quote", "")
+        result = [f'"{quote}"'] if quote else []
         
-        # 执行技能效果
-        for effect in skill.effects:
-            result.append(self._apply_effect(effect, user_stats, target_stats))
+        # 执行技能效果（如果有的话）
+        effects = skill_data.get("effects", {})
+        if effects:
+            result.append(f"技能效果: {skill_data.get('description', '')}")
         
         return "\n".join(result)
     
     def use_skill_on_pokemon(self, skill_name: str, user_pokemon, target_pokemon=None, allies=None):
         """在Pokemon对象上使用技能（统一接口）"""
-        skill = self.get_skill(skill_name)
-        if not skill:
-            return None, [f"技能 {skill_name} 不存在"]
-        
-        # 检查SP消耗
-        if skill.sp_cost > 0:
-            if not user_pokemon.consume_sp(skill.sp_cost):
-                return None, [f"{user_pokemon.name}的SP不足，无法使用{skill_name}！"]
-        
-        messages = []
-        total_damage = 0
-        
-        # 统一使用新的技能系统逻辑
-        if skill_name in UNIFIED_SKILLS_DATABASE:
-            return self._use_unified_skill_logic(skill_name, user_pokemon, target_pokemon, allies)
-        
-        # 显示台词
-        messages.append(f'"{skill.quote}"')
-        
-        # 执行技能效果
-        for effect in skill.effects:
-            damage, effect_messages = self._apply_pokemon_effect(effect, user_pokemon, target_pokemon)
-            if damage:
-                total_damage += damage
-            messages.extend(effect_messages)
-        
-        return total_damage, messages
+        # 直接使用统一的技能系统逻辑
+        return self._use_unified_skill_logic(skill_name, user_pokemon, target_pokemon, allies)
     
     def _use_unified_skill_logic(self, skill_name: str, user_pokemon, target_pokemon=None, allies=None):
         """使用统一的技能系统逻辑"""
@@ -1696,7 +1677,7 @@ clock = None
 # ==================== Surface工厂类 ====================
 
 class SurfaceFactory:
-    """Surface创建工厂类，减少重复的Surface创建代码"""
+    """Surface创建工厂类,减少重复的Surface创建代码"""
     
     @staticmethod
     def create_transparent_surface(size, color, alpha=128):
@@ -1729,7 +1710,7 @@ class SurfaceFactory:
 # ==================== 通用弹窗渲染器 ====================
 
 class PopupRenderer:
-    """通用弹窗渲染器，减少弹窗绘制代码的重复"""
+    """通用弹窗渲染器,减少弹窗绘制代码的重复"""
     
     @staticmethod
     def draw_base_popup(screen, x, y, width, height, title="", bg_color=WHITE, alpha=240):
@@ -1771,11 +1752,11 @@ class PopupRenderer:
 
 # 文本自动换行函数
 def wrap_text(text, font, max_width):
-    """将文本按指定宽度自动换行，支持中文"""
+    """将文本按指定宽度自动换行,支持中文"""
     lines = []
     current_line = ""
     
-    # 对于中文文本，逐字符检查换行
+    # 对于中文文本,逐字符检查换行
     for char in text:
         # 尝试添加当前字符
         test_line = current_line + char
@@ -1807,7 +1788,7 @@ def draw_multiline_text(surface, text, font, color, x, y, max_width, line_spacin
         surface.blit(text_surface, (x, current_y))
         current_y += font.size(line)[1] + line_spacing  # 增加行间距
     
-    return current_y  # 返回最后一行的y坐标，方便后续绘制
+    return current_y  # 返回最后一行的y坐标,方便后续绘制
 
 def draw_multiline_text_with_background(surface, text, font, color, x, y, max_width, line_spacing=5, bg_color=(255, 255, 255, 128), padding=5):
     """绘制带半透明背景的自动换行多行文本"""
@@ -1836,7 +1817,7 @@ def draw_multiline_text_with_background(surface, text, font, color, x, y, max_wi
         surface.blit(text_surface, (x, current_y))
         current_y += font.size(line)[1] + line_spacing
     
-    return current_y  # 返回最后一行的y坐标，方便后续绘制
+    return current_y  # 返回最后一行的y坐标,方便后续绘制
 
 def draw_status_icons(surface, pokemon, x, y, icon_size=30, spacing=5, caster_filter=None):
     """绘制状态效果图标
@@ -1847,7 +1828,7 @@ def draw_status_icons(surface, pokemon, x, y, icon_size=30, spacing=5, caster_fi
         y: 起始y坐标
         icon_size: 图标大小
         spacing: 图标间距
-        caster_filter: 过滤器，只显示特定施放者的效果 ("self", "enemy", None表示显示所有)
+        caster_filter: 过滤器,只显示特定施放者的效果 ("self", "enemy", None表示显示所有)
     Returns:
         绘制的图标数量
     """
@@ -2032,7 +2013,7 @@ def draw_status_icons(surface, pokemon, x, y, icon_size=30, spacing=5, caster_fi
 
 # 统一的游戏配置管理器
 class GameConfig:
-    """统一的游戏配置管理器，整合所有配置类"""
+    """统一的游戏配置管理器,整合所有配置类"""
     
     class Images:
         """图像资源配置"""
@@ -2054,40 +2035,6 @@ class GameConfig:
         boss_battle_background = "images/battle/boss_bg.png"
         ut_empty_image = "images/ui/ut_empty.png"
         
-        @staticmethod
-        def get_pokemon_image(pokemon_name):
-            """获取顾问图像路径"""
-            pokemon_images = {
-                "颓废的夏书文": "images/pokemon/SW1.png",
-                "进击的夏书文": "images/pokemon/SW2.png",
-                "害羞的吕瑞怡": "images/pokemon/RY1.png",
-                "浪浪山吕瑞怡": "images/pokemon/RY2.png",
-                "沉默的傅雪松": "images/pokemon/FXS1.png",
-                "奔放的傅雪松": "images/pokemon/FXS2.png",
-                "蚝汁傅雪松": "images/pokemon/FXS3.png",
-                "DCC的托马斯": "images/pokemon/TT1.png",
-                "做牛做马托马斯": "images/pokemon/TT2.png",
-                "全旋托马斯": "images/pokemon/TT3.png",
-                "没有干劲的随意": "images/pokemon/SY1.png",
-                "满血隋毅": "images/pokemon/SY2.png",
-                "超神隋总": "images/pokemon/SY3.png",
-                "讲课的Raymond": "images/pokemon/Raymond1.png",
-                "ValueConcernRaymond": "images/pokemon/Raymond2.png",
-                "做表的Delia": "images/pokemon/Delia1.png",
-                "大嘴Delia": "images/pokemon/Delia2.png",
-                "酒后Delia": "images/pokemon/Delia3.png",
-                "人畜无害的孙皓": "images/pokemon/SH1.png",
-                "流浪的宏宇": "images/pokemon/HY1.png",
-                # 客户顾问
-                "梅折": "images/pokemon/client1.png",
-                "李巷阳": "images/pokemon/client2.png",
-                "袁钱保": "images/pokemon/client3.png",
-                "王小容": "images/pokemon/client4.png",
-                # 新增的野外顾问
-                "夏港": "images/pokemon/XG.png",
-                "何须强": "images/pokemon/HXQ.png",
-            }
-            return pokemon_images.get(pokemon_name)
 
 # 保持向后兼容的图像配置类
 class ImageConfig:
@@ -2129,6 +2076,9 @@ class ImageConfig:
         "酒后Delia": "images/pokemon/Delia3.png",
         "人畜无害的孙皓": "images/pokemon/SH1.png",
         "流浪的宏宇": "images/pokemon/HY1.png",
+        "半血小萱": "images/pokemon/LLX1.png",
+        "泥潭中的小萱": "images/pokemon/LLX2.png",
+        "拉膜圣手李小萱": "images/pokemon/LLX3.png",
         # 客户顾问
         "梅折": "images/pokemon/client1.png",
         "李巷阳": "images/pokemon/client2.png",
@@ -2139,10 +2089,7 @@ class ImageConfig:
         "何须强": "images/pokemon/HXQ.png",
         "张新炜": "images/pokemon/ZXW.png",
         "严斤": "images/pokemon/YJ.png",
-        "半血小萱": "images/pokemon/LLX1.png",
-        "泥潭中的小萱": "images/pokemon/LLX2.png",
-        "拉膜圣手李小萱": "images/pokemon/LLX3.png",
-        # BOSS顾问
+                # BOSS顾问
         "质量总监ZZZ": "images/pokemon/boss1.png",
         "宇宙质量总监ZZZ": "images/pokemon/boss2.png",
         "HR总监JJZ": "images/pokemon/boss3.png",
@@ -2214,10 +2161,10 @@ class PokemonConfig:
             "disadvantages": ["节操", "networking"],
             "growth_type": "medium_fast",
             "moves": [
-                {"name": "Empathy", "power": 30, "type": ['共情'], "sp_cost": 0, "quote": "唉，是这样，呼噜噜", "description": "造成自身攻击力30%伤害，20%几率对自身产生动摇"},
-                {"name": "酒精打击", "power": 62, "type": ['networking', '体力'], "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害，有18%几率造成1.5倍伤害"},
+                {"name": "Empathy", "power": 30, "type": ['共情'], "sp_cost": 0, "quote": "唉,是这样,呼噜噜", "description": "造成自身攻击力30%伤害,20%几率对自身产生动摇"},
+                {"name": "酒精打击", "power": 62, "type": ['networking', '体力'], "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害,有18%几率造成1.5倍伤害"},
                 {"name": "酒仙", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.DIRECT_HEAL, "sp_cost": 0, "quote": "双倍IPA治疗失眠", "description": "立即回复40%生命"},
-                {"name": "带队酗酒", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.TEAM_BUFF, "sp_cost": 95, "quote": "我都两杯了，你快点", "description": "消耗95SP，所有顾问攻击力提升35%，血量下降5%，从下一回合开始持续4回合"},
+                {"name": "带队酗酒", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.TEAM_BUFF, "sp_cost": 95, "quote": "我都两杯了,你快点", "description": "消耗95SP,所有顾问攻击力提升35%,血量下降5%,从下一回合开始持续4回合"},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
             ]
         },
@@ -2229,7 +2176,7 @@ class PokemonConfig:
             "moves": [
                 {"name": "酒后逃逸", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.SELF_BUFF},
                 {"name": "织条毯子", "power": 24, "type": ['共情', '节操']},
-                {"name": "酒精打击", "power": 45, "type": ['networking', '体力'], "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害，有18%几率造成1.5倍伤害"},
+                {"name": "酒精打击", "power": 45, "type": ['networking', '体力'], "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害,有18%几率造成1.5倍伤害"},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
             ]
         },
@@ -2269,7 +2216,7 @@ class PokemonConfig:
             "moves": [
                 {"name": "小考拉之怒", "power": 0, "type": "共情", "category": SkillCategory.TEAM_HEAL},
                 {"name": "躺平", "power": 0, "type": "体力"},
-                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"}
+                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"}
             ]
         },
         "奔放的傅雪松": {
@@ -2280,7 +2227,7 @@ class PokemonConfig:
             "moves": [
                 {"name": "小考拉之怒", "power": 0, "type": "共情", "category": SkillCategory.TEAM_HEAL},
                 {"name": "躺平", "power": 0, "type": "体力"},
-                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "沉默的牛马", "power": 40, "type": ['共情', 'PS'], "category": SkillCategory.MULTI_HIT},
                 {"name": "浆板下水", "power": 45, "type": ["共情", "体力"]}
             ]
@@ -2293,7 +2240,7 @@ class PokemonConfig:
             "moves": [
                 {"name": "小考拉之怒", "power": 0, "type": "共情", "category": SkillCategory.TEAM_HEAL},
                 {"name": "躺平", "power": 0, "type": "体力"},
-                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "沉默的牛马", "power": 40, "type": ['共情', 'PS'], "category": SkillCategory.MULTI_HIT},
                 {"name": "浆板下水", "power": 45, "type": ["共情", "体力"]},
                 {"name": "威士忌之友", "power": 0, "type": "共情", "category": SkillCategory.REVIVE},
@@ -2323,7 +2270,7 @@ class PokemonConfig:
                 {"name": "奶茶攻击", "power": 40, "type": ["networking", "共情"]},
                 {"name": "心灵震爆", "power": 60, "type": "共情"},
                 {"name": "我要休产假了", "power": 0, "type": "PS", "category": SkillCategory.SELF_BUFF},
-                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
                 {"name": "嘲讽", "power": 30, "type": "networking", "category": SkillCategory.ENEMY_DEBUFF}
             ]
@@ -2338,7 +2285,7 @@ class PokemonConfig:
                 {"name": "奶茶攻击", "power": 40, "type": "体力"},
                 {"name": "心灵震爆", "power": 60, "type": "共情"},
                 {"name": "我要休产假了", "power": 0, "type": "PS", "category": SkillCategory.SELF_BUFF},
-                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "DGL逼我的", "power": 180, "type": ["content", "PS", "韧性"]},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
                 {"name": "嘲讽", "power": 30, "type": "networking", "category": SkillCategory.ENEMY_DEBUFF}
@@ -2353,7 +2300,7 @@ class PokemonConfig:
                 {"name": "表没对齐", "power": 0, "type": "networking", "category": SkillCategory.ENEMY_DEBUFF},
                 {"name": "画饼术", "power": 18, "type": ["共情", "节操"], "category": SkillCategory.SELF_BUFF},
                 {"name": "PTO", "power": 0, "type": ["勇气", "节操"], "category": SkillCategory.DIRECT_HEAL},
-                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"}
+                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"}
             ]
         },
         "大嘴Delia": {
@@ -2366,7 +2313,7 @@ class PokemonConfig:
                 {"name": "画饼术", "power": 18, "type": ["共情", "节操"], "category": SkillCategory.SELF_BUFF},
                 {"name": "PTO", "power": 0, "type": ["勇气", "节操"], "category": SkillCategory.DIRECT_HEAL},
                 {"name": "情报总监上线", "power": 0, "type": "networking", "category": SkillCategory.MIXED_BUFF_DEBUFF},
-                {"name": "酒精打击", "power": 62, "type": ["networking", "体力"], "category": SkillCategory.DIRECT_DAMAGE, "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害，有18%几率造成1.5倍伤害"}
+                {"name": "酒精打击", "power": 62, "type": ["networking", "体力"], "category": SkillCategory.DIRECT_DAMAGE, "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害,有18%几率造成1.5倍伤害"}
             ]
         },
         "酒后Delia": {
@@ -2379,7 +2326,7 @@ class PokemonConfig:
                 {"name": "画饼术", "power": 18, "type": ["共情", "节操"], "category": SkillCategory.SELF_BUFF},
                 {"name": "PTO", "power": 0, "type": ["勇气", "节操"], "category": SkillCategory.DIRECT_HEAL},
                 {"name": "情报总监上线", "power": 0, "type": "networking", "category": SkillCategory.MIXED_BUFF_DEBUFF},
-                {"name": "酒精打击", "power": 62, "type": ["networking", "体力"], "category": SkillCategory.DIRECT_DAMAGE, "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害，有18%几率造成1.5倍伤害"},
+                {"name": "酒精打击", "power": 62, "type": ["networking", "体力"], "category": SkillCategory.DIRECT_DAMAGE, "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害,有18%几率造成1.5倍伤害"},
                 {"name": "摸下腹肌~~", "power": 0, "type": ["networking", "体力"], "category": SkillCategory.ENEMY_DEBUFF}
             ]
         },
@@ -2406,7 +2353,7 @@ class PokemonConfig:
                 {"name": "建模", "power": 50, "type": ['PS', 'content', '结构化']},
                 {"name": "循循善诱", "power": 30, "type": ['共情']},
                 {"name": "ValueConcern!", "power": 240, "type": ["content", "PS", "勇气"], "category": SkillCategory.ULTIMATE},
-                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
             ]
         },
@@ -2417,7 +2364,7 @@ class PokemonConfig:
             "growth_type": "slow",
             "moves": [
                 {"name": "马总的关爱", "power": 40, "type": ["共情", "体力"], "category": SkillCategory.DOT},
-                {"name": "我有意见！", "power": 75, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 75, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "躺平", "power": 0, "type": "防御", "category": SkillCategory.STAT_CHANGE},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
             ]
@@ -2429,9 +2376,9 @@ class PokemonConfig:
             "growth_type": "medium_fast",
             "moves": [
                 {"name": "马总的关爱", "power": 40, "type": ["共情", "体力"], "category": SkillCategory.DOT},
-                {"name": "我有意见！", "power": 75, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 75, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "躺平", "power": 0, "type": "防御", "category": SkillCategory.STAT_CHANGE},
-                {"name": "我来自珠海", "power": 150, "type": ["共情", "PS", "体力"]},
+                {"name": "我来自珠海", "power": 150, "type": ["共情", "PS", "体力"],"category": SkillCategory.ULTIMATE, "sp_cost": 50, "quote": "找不出根因明天汇报就开天窗", "description": "使用后对对手造成150%的伤害,对手HP<20%时直接进行直接将对手HP清0"},
                 {"name": "奶茶攻击", "power": 40, "type": ["networking", "共情"]},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
             ]
@@ -2444,10 +2391,11 @@ class PokemonConfig:
             "moves": [
                 {"name": "治疗", "power": 0, "type": "勇气", "category": SkillCategory.DIRECT_HEAL},
                 {"name": "李代桃僵", "power": 24, "type": ['节操']},
+                {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
                 {"name": "鲁莽", "power": 0, "type": ['勇气'], "category": SkillCategory.SELF_BUFF},
-                {"name": "我有意见！", "power": 75, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
-                {"name": "沉默的牛马", "power": 40, "type": ['共情', 'PS'], "category": SkillCategory.MULTI_HIT},
-                {"name": "浆板下水", "power": 45, "type": ["共情", "体力"]}
+                {"name": "我有意见！", "power": 75, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
+                {"name": "无锡的羔羊", "power": 200, "type": ["共情", "PS", "体力"],"category": SkillCategory.ULTIMATE, "sp_cost": 70, "quote": "找不出根因明天汇报就开天窗", "description": "自身血量下降一半,使用后对对手造成200%的伤害,对手HP<30%时直接进行直接将对手HP清0"}
+                
             ]
         },
         "人畜无害的孙皓": {
@@ -2458,7 +2406,7 @@ class PokemonConfig:
             "moves": [
                 {"name": "来打羽毛球啊", "power": 240, "type": ["content", "PS", "勇气"], "category": SkillCategory.ULTIMATE},
                 {"name": "循循善诱", "power": 12, "type": "共情", "category": SkillCategory.DOT},
-                {"name": "我有意见！", "power": 130, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 130, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "躺平", "power": 35, "type": "节操"}
             ]
         },
@@ -2470,7 +2418,7 @@ class PokemonConfig:
             "moves": [
                 {"name": "G总,你不懂OPS", "power": 240, "type": ["content", "PS", "勇气"], "category": SkillCategory.ULTIMATE},
                 {"name": "循循善诱", "power": 12, "type": "共情", "category": SkillCategory.DOT},
-                {"name": "我有意见！", "power": 130, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 130, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "躺平", "power": 35, "type": "节操"}
             ]
         },
@@ -2493,8 +2441,8 @@ class PokemonConfig:
             "disadvantages": ['content', 'PS', '结构化', '勇气', '韧性'],
             "growth_type": "fast",
             "moves": [
-                {"name": "初级扯皮", "power": 30, "type": "能耗"}, 
-                {"name": "磨磨蹭蹭", "power": 25, "type": "采购"}, 
+                {"name": "初级扯皮", "power": 30, "type": "节操"}, 
+                {"name": "磨磨蹭蹭", "power": 25, "type": "节操"}, 
                 {"name": "唧唧歪歪", "power": 28, "type": "共情"}, 
                 {"name": "感到冒犯", "power": 35, "type": "勇气", "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"}
             ]
@@ -2505,8 +2453,8 @@ class PokemonConfig:
             "disadvantages": ['content', 'PS', '结构化', '勇气', '韧性'],
             "growth_type": "slow",
             "moves": [
-                {"name": "初级扯皮", "power": 30, "type": "能耗"}, 
-                {"name": "磨磨蹭蹭", "power": 25, "type": "采购"}, 
+                {"name": "初级扯皮", "power": 30, "type": "节操"}, 
+                {"name": "磨磨蹭蹭", "power": 25, "type": "节操"}, 
                 {"name": "在你来前", "power": 40, "type": "节操"}, 
                 {"name": "感到冒犯", "power": 35, "type": "勇气", "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"}
             ]
@@ -2517,8 +2465,8 @@ class PokemonConfig:
             "disadvantages": ['content', 'PS', '结构化', '勇气', '韧性'],
             "growth_type": "fast",
             "moves": [
-                {"name": "初级扯皮", "power": 30, "type": "能耗"}, 
-                {"name": "技术创新", "power": 45, "type": "content", "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术，并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}, 
+                {"name": "初级扯皮", "power": 30, "type": "节操"}, 
+                {"name": "技术创新", "power": 45, "type": "content", "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}, 
                 {"name": "在你来前", "power": 40, "type": "节操"}, 
                 {"name": "感到冒犯", "power": 35, "type": "勇气", "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"}
             ]
@@ -2526,8 +2474,8 @@ class PokemonConfig:
         # BOSS顾问数据
         "质量总监ZZZ": {
             "hp": 150, "attack": 70, "defense": 50,
-            "advantages": [],
-            "disadvantages": ["共情"],
+            "advantages": ["节操","共情"],
+            "disadvantages": ["PS","content"],
             "growth_type": "medium_fast",
             "level": 15,
             "reward": {
@@ -2544,8 +2492,8 @@ class PokemonConfig:
         },
         "宇宙质量总监ZZZ": {
             "hp": 180, "attack": 65, "defense": 60,
-            "advantages": ["共情"],
-            "disadvantages": [],
+            "advantages": ["节操","共情"],
+            "disadvantages": ["PS","content"],
             "growth_type": "medium_slow",
             "level": 18,
             "reward": {
@@ -2562,8 +2510,8 @@ class PokemonConfig:
         },
         "HR总监JJZ": {
             "hp": 300, "attack": 90, "defense": 80,
-            "advantages": [],
-            "disadvantages": ["共情"],
+            "advantages": ["节操","共情"],
+            "disadvantages": ["PS","content","体力"],
             "growth_type": "fast",
             "level": 30,
             "stage": 1,
@@ -2581,8 +2529,8 @@ class PokemonConfig:
         },
         "平静的老李": {
             "hp": 500, "attack": 120, "defense": 100,
-            "advantages": ["共情", "结构化"],
-            "disadvantages": ["体力"],
+            "advantages": ["节操","共情"],
+            "disadvantages": ["PS","content","体力","耐心"],
             "growth_type": "slow",
             "level": 50,
             "stage": 2,
@@ -2600,8 +2548,8 @@ class PokemonConfig:
         },
         "暴怒的老李": {
             "hp": 800, "attack": 160, "defense": 130,
-            "advantages": ["体力", "韧性", "节操"],
-            "disadvantages": ["PS", "content"],
+            "advantages": ["节操","共情"],
+            "disadvantages": ["PS","content","体力","耐心"],
             "growth_type": "slow",
             "level": 70,
             "stage": 3,
@@ -2642,10 +2590,10 @@ class PokemonConfig:
             "disadvantages": ["content", "PS", "结构化", "勇气", "韧性"],
             "growth_type": "medium_fast",
             "moves": [
-                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "感到冒犯", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"},
                 {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"},
-                {"name": "技术创新", "power": 80, "type": ["content", "PS", "结构化"], "category": SkillCategory.TEAM_BUFF, "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术，并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}
+                {"name": "技术创新", "power": 80, "type": ["content", "PS", "结构化"], "category": SkillCategory.TEAM_BUFF, "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}
             ]
         },
         "何须强": {
@@ -2657,7 +2605,7 @@ class PokemonConfig:
                 {"name": "磨磨蹭蹭", "power": 0, "type": "节操", "category": SkillCategory.CONTINUOUS_HEAL},
                 {"name": "开始抬杠", "power": 0, "type": ["结构化", "PS", "节操"], "category": SkillCategory.SELF_BUFF},
                 {"name": "感到冒犯", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"},
-                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"}
+                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"}
             ]
         },
         "张新炜": {
@@ -2668,7 +2616,7 @@ class PokemonConfig:
             "moves": [
                 {"name": "哼哼唧唧", "power": 0, "type": "节操", "category": SkillCategory.ENEMY_DEBUFF},
                 {"name": "开始抬杠", "power": 0, "type": ["结构化", "PS", "节操"], "category": SkillCategory.SELF_BUFF},
-                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "心灵震爆", "power": 70, "type": ["共情", "PS"]}
             ]
         },
@@ -2678,10 +2626,10 @@ class PokemonConfig:
             "disadvantages": ["content", "PS", "结构化", "勇气", "韧性"],
             "growth_type": "slow",
             "moves": [
-                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "感到冒犯", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"},
                 {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"},
-                {"name": "技术创新", "power": 80, "type": ["content", "PS", "结构化"], "category": SkillCategory.TEAM_BUFF, "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术，并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}
+                {"name": "技术创新", "power": 80, "type": ["content", "PS", "结构化"], "category": SkillCategory.TEAM_BUFF, "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}
             ]
         },
         "半血小萱": {
@@ -2691,7 +2639,7 @@ class PokemonConfig:
             "growth_type": "medium_fast",
             "moves": [
                 {"name": "织条毯子", "power": 0, "type": ["共情", "节操"], "category": SkillCategory.CONTINUOUS_HEAL},
-                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "躺平", "power": 0, "type": "节操", "category": SkillCategory.DIRECT_HEAL},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
                 {"name": "鼓舞", "power": 0, "type": "共情", "category": SkillCategory.TEAM_BUFF}
@@ -2708,7 +2656,7 @@ class PokemonConfig:
                 {"name": "鼓舞", "power": 0, "type": "共情", "category": SkillCategory.TEAM_BUFF},
                 {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT},
                 {"name": "躺平才是王道", "power": 0, "type": ["content", "勇气"], "category": SkillCategory.SELF_BUFF},
-                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "释放能量攻击对手，对自身伤害高，命中率却低下。", "description": "对敌人造成50点伤害，对自身有反噬效果"},
+                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "天下兵马大元帅", "power": 0, "type": ["勇气", "韧性", "体力"], "category": SkillCategory.ULTIMATE}
             ]
         },
@@ -2878,7 +2826,7 @@ class PokemonConfig:
         "做表的Delia": {"level": 15, "evolution": "大嘴Delia", "item": "办公室微信群"},
         "大嘴Delia": {"level": 34, "evolution": "酒后Delia", "item": "啤酒畅饮券"},
         "DCC的托马斯": {"level": 20, "evolution": "做牛做马托马斯", "item": "华哥的离职通知"},
-        "做牛做马托马斯": {"level": 40, "evolution": "全旋托马斯", "item": "泥潭中的小萱的船票"},
+        "做牛做马托马斯": {"level": 40, "evolution": "全旋托马斯", "item": "无锡征召令"},
         "半血小萱": {"level": 10, "evolution": "泥潭中的小萱", "item": "穿膜工具套装"},
         "泥潭中的小萱": {"level": 20, "evolution": "拉膜圣手李小萱", "item": "挤出机灭火套装"},
     }
@@ -2886,107 +2834,96 @@ class PokemonConfig:
     # 野外顾问池配置 - 按地块类型分配不同的遇敌池和概率
     field_advisor_pools = {
         0: {  # 食品地 (地块1)
-            "夏港": 5,
             "DCC的托马斯": 5,
             "没有干劲的随意": 5,
             "半血小萱": 5,
             "沉默的傅雪松": 5,
-            "严斤": 5,
-            "张新炜": 5,
-            "何须强": 5,
-            "梅折": 15,
-            "李巷阳": 15,
-            "袁钱保": 15,
-            "王小容": 15
+            "夏港": 10,
+            "严斤": 10,
+            "张新炜": 10,
+            "何须强": 10,
+            "梅折": 10,
+            "李巷阳": 10,
+            "袁钱保": 10,
+            "王小容": 10
         },
         1: {  # office (地块2)
-            "夏港": 5,
             "DCC的托马斯": 5,
             "没有干劲的随意": 5,
             "半血小萱": 5,
             "沉默的傅雪松": 5,
-            "严斤": 5,
-            "张新炜": 5,
-            "何须强": 5,
-            "梅折": 15,
-            "李巷阳": 15,
-            "袁钱保": 15,
-            "王小容": 15
+            "夏港": 10,
+            "严斤": 10,
+            "张新炜": 10,
+            "何须强": 10,
+            "梅折": 10,
+            "李巷阳": 10,
+            "袁钱保": 10,
+            "王小容": 10
         },
         2: {  # 客户现场 (地块3)
-            "夏港": 5,
             "DCC的托马斯": 5,
             "没有干劲的随意": 5,
             "半血小萱": 5,
             "沉默的傅雪松": 5,
-            "严斤": 5,
-            "张新炜": 5,
-            "何须强": 5,
-            "梅折": 15,
-            "李巷阳": 15,
-            "袁钱保": 15,
-            "王小容": 15
+            "夏港": 10,
+            "严斤": 10,
+            "张新炜": 10,
+            "何须强": 10,
+            "梅折": 10,
+            "李巷阳": 10,
+            "袁钱保": 10,
+            "王小容": 10
         },
         3: {  # retro (地块4)
-            "夏港": 5,
             "DCC的托马斯": 5,
             "没有干劲的随意": 5,
             "半血小萱": 5,
             "沉默的傅雪松": 5,
-            "严斤": 5,
-            "张新炜": 5,
-            "何须强": 5,
-            "梅折": 15,
-            "李巷阳": 15,
-            "袁钱保": 15,
-            "王小容": 15
+            "夏港": 10,
+            "严斤": 10,
+            "张新炜": 10,
+            "何须强": 10,
+            "梅折": 10,
+            "李巷阳": 10,
+            "袁钱保": 10,
+            "王小容": 10
         },
         4: {  # 培训 (地块5)
-            "夏港": 5,
             "DCC的托马斯": 5,
             "没有干劲的随意": 5,
             "半血小萱": 5,
             "沉默的傅雪松": 5,
-            "严斤": 5,
-            "张新炜": 5,
-            "何须强": 5,
-            "梅折": 15,
-            "李巷阳": 15,
-            "袁钱保": 15,
-            "王小容": 15
+            "夏港": 10,
+            "严斤": 10,
+            "张新炜": 10,
+            "何须强": 10,
+            "梅折": 10,
+            "李巷阳": 10,
+            "袁钱保": 10,
+            "王小容": 10
         },
         5: {  # beach (地块6)
-            "夏港": 5,
             "DCC的托马斯": 5,
             "没有干劲的随意": 5,
             "半血小萱": 5,
             "沉默的傅雪松": 5,
-            "严斤": 5,
-            "张新炜": 5,
-            "何须强": 5,
-            "梅折": 15,
-            "李巷阳": 15,
-            "袁钱保": 15,
-            "王小容": 15
+            "夏港": 10,
+            "严斤": 10,
+            "张新炜": 10,
+            "何须强": 10,
+            "梅折": 10,
+            "李巷阳": 10,
+            "袁钱保": 10,
+            "王小容": 10
         }
     }
-    
-    # 保留原有的wild_pool作为后备选项
-    wild_pool = [
-        # 梅折-4占80%的刷新比例（8/11）
-        "梅折", "梅折",  # 梅折占约18%
-        "李巷阳", "李巷阳",  # 李巷阳占约18%
-        "袁钱保", "袁钱保",  # 袁钱保占约18%
-        "王小容", "王小容",  # 王小容占约18%
-        # 其他顾问占剩余比例（3/11）
-        "沉默的傅雪松", "没有干劲的随意", "DCC的托马斯"
-    ]
-    
+       
     @classmethod
     def get_field_advisor(cls, tile_type):
         """根据地块类型和概率权重选择野外顾问"""
         if tile_type not in cls.field_advisor_pools:
-            # 如果地块类型不在配置中，使用原有的wild_pool
+            # 如果地块类型不在配置中,使用原有的wild_pool
             return random.choice(cls.wild_pool)
         
         advisor_pool = cls.field_advisor_pools[tile_type]
@@ -3041,7 +2978,7 @@ class GameInitialConfig:
     @classmethod
     def get_current_config(cls):
         """获取当前选择的配置"""
-        if GAME_CONFIG_PLAN == "PlanB":
+        if GAME_CONFIG_PLAN == "PlanA":
             return cls.PLAN_B
         else:
             return cls.PLAN_A
@@ -3052,7 +2989,7 @@ class GameInitialConfig:
         config = cls.get_current_config()
         items = []
         for item_data in config["items"]:
-            # 只返回基础的物品信息，不包含quantity
+            # 只返回基础的物品信息,不包含quantity
             items.append({
                 "name": item_data["name"],
                 "description": item_data["description"],
@@ -3089,11 +3026,11 @@ class ItemConfig:
         {"name": "办公室微信群", "description": "用于Delia进化", "item_type": "evolution", "effect": "办公室微信群", "rarity": 0.035, "price": 700},
         {"name": "啤酒畅饮券", "description": "用于Delia二次进化", "item_type": "evolution", "effect": "啤酒畅饮券", "rarity": 0.02, "price": 1300},
         {"name": "华哥的离职通知", "description": "用于托马斯进化", "item_type": "evolution", "effect": "华哥的离职通知", "rarity": 0.025, "price": 1000},
-        {"name": "泥潭中的小萱的船票", "description": "用于托马斯二次进化", "item_type": "evolution", "effect": "泥潭中的小萱的船票", "rarity": 0.02, "price": 1600},
+        {"name": "无锡征召令", "description": "用于托马斯二次进化", "item_type": "evolution", "effect": "无锡征召令", "rarity": 0.02, "price": 1600},
         {"name": "穿膜工具套装", "description": "用于半血小萱进化为泥潭中的小萱", "item_type": "evolution", "effect": "穿膜工具套装", "rarity": 0.03, "price": 800},
         {"name": "挤出机灭火套装", "description": "用于泥潭中的小萱进化为拉膜圣手李小萱", "item_type": "evolution", "effect": "挤出机灭火套装", "rarity": 0.02, "price": 1400},
         {"name": "经验糖果", "description": "获得50点经验值", "item_type": "exp_boost", "effect": 50, "rarity": 0.1, "price": 250},
-        {"name": "UT补充剂", "description": "将UT恢复至100点", "item_type": "ut_restore", "effect": 100, "rarity": 0.0, "price": 400},  # 普通战斗不掉落，仅BOSS战掉落
+        {"name": "UT补充剂", "description": "将UT恢复至100点", "item_type": "ut_restore", "effect": 100, "rarity": 0.0, "price": 400},  # 普通战斗不掉落,仅BOSS战掉落
         {"name": "必杀技学习盲盒", "description": "使用后随机生成一个必杀技学习书", "item_type": "skill_blind_box", "effect": None, "rarity": 0.03, "price": 2500}
     ]
     
@@ -3101,8 +3038,8 @@ class ItemConfig:
     shop_items = {
         # 常规物品
         "regular": [
-            {"name": "精灵球", "description": "用于捕捉顾问，成功率中等", "item_type": "pokeball", "effect": 1, "price": 200, "stock": 10},
-            {"name": "大师球", "description": "用于捕捉顾问，成功率极高", "item_type": "master_ball", "effect": 1, "price": 1000, "stock": 3},
+            {"name": "精灵球", "description": "用于捕捉顾问,成功率中等", "item_type": "pokeball", "effect": 1, "price": 200, "stock": 10},
+            {"name": "大师球", "description": "用于捕捉顾问,成功率极高", "item_type": "master_ball", "effect": 1, "price": 1000, "stock": 3},
             {"name": "HP药", "description": "恢复50点HP", "item_type": "heal", "effect": 50, "price": 150, "stock": 15},
             {"name": "UT补充剂", "description": "将UT恢复至100点", "item_type": "ut_restore", "effect": 100, "price": 400, "stock": 8},
             {"name": "加冰美式1200ml装", "description": "SP恢复至100点", "item_type": "sp_restore", "effect": 100, "price": 300, "stock": 5},
@@ -3122,7 +3059,7 @@ class ItemConfig:
             {"name": "办公室微信群", "description": "用于Delia进化", "item_type": "evolution", "effect": "办公室微信群", "price": 700, "stock": 1},
             {"name": "啤酒畅饮券", "description": "用于Delia二次进化", "item_type": "evolution", "effect": "啤酒畅饮券", "price": 1300, "stock": 1},
             {"name": "华哥的离职通知", "description": "用于托马斯进化", "item_type": "evolution", "effect": "华哥的离职通知", "price": 1000, "stock": 1},
-            {"name": "泥潭中的小萱的船票", "description": "用于托马斯二次进化", "item_type": "evolution", "effect": "泥潭中的小萱的船票", "price": 1600, "stock": 1},
+            {"name": "无锡征召令", "description": "用于托马斯二次进化", "item_type": "evolution", "effect": "无锡征召令", "price": 1600, "stock": 1},
             {"name": "穿膜工具套装", "description": "用于半血小萱进化为泥潭中的小萱", "item_type": "evolution", "effect": "穿膜工具套装", "price": 800, "stock": 1},
             {"name": "挤出机灭火套装", "description": "用于泥潭中的小萱进化为拉膜圣手李小萱", "item_type": "evolution", "effect": "挤出机灭火套装", "price": 1400, "stock": 1},
             {"name": "晚7点PS券", "description": "永久增加5点攻击力", "item_type": "permanent_boost", "effect": {"stat": "attack", "value": 5}, "price": 4000, "stock": 1},
@@ -3136,43 +3073,43 @@ class ItemConfig:
 # 招式配置
 class MoveConfig:
     move_descriptions = {
-        "建模": "使用wiki上看到的公式凑数，有几率麻痹对手。",
-        "循循善诱": "使用复杂的数学模型震慑对手，有几率石化对手。",
-        "我有意见！": "释放能量攻击对手，对自身伤害高，命中率却低下。",
-        "PUA": "使用话术诱惑对手，有几率魅惑对手，对成年顾问效力下降。",
-        "酒精打击": "威力62，有18%几率形成1.5倍伤害。你挣钱不就是来喝的吗",
-        "Empathy": "保持倾听感化对手，有几率无效并对自身产生动摇。",
-        "嘲讽": "造成自身攻击力15%伤害，连续3回合使对手防御力下降30%",
+        "建模": "使用wiki上看到的公式凑数,有几率麻痹对手。",
+        "循循善诱": "使用复杂的数学模型震慑对手,有几率石化对手。",
+        "我有意见！": "这个东西怎么落地？",
+        "PUA": "使用话术诱惑对手,有几率魅惑对手,对成年顾问效力下降。",
+        "酒精打击": "威力62,有18%几率形成1.5倍伤害。你挣钱不就是来喝的吗",
+        "Empathy": "保持倾听感化对手,有几率无效并对自身产生动摇。",
+        "嘲讽": "造成自身攻击力15%伤害,连续3回合使对手防御力下降30%",
         "躺平": "他不会看细节的",
         "磨磨蹭蹭": "先去拿个外卖",
         "画饼术": "1个月你就能下",
-        "开始抬杠": "你的话题我们会后讨论，我们先看我的",
+        "开始抬杠": "你的话题我们会后讨论,我们先看我的",
         "哼哼唧唧": "这个数据我要请示",
         "感到冒犯": "外包又出花样了",
         "PTO": "我下周休假你backup一下",
-        "雪松杀手": "傅雪松，我要你助我一臂之力！",
+        "雪松杀手": "傅雪松,我要你助我一臂之力！",
         "钓鱼执法": "你上钩了！",
         "熬夜攻击": "今晚一定要搞出来",
         "大海无量": "我们全部都要打开",
         "凌晨4点的太阳": "你见过珠海凌晨4点的太阳吗",
-        "无偿加班": "五一你们休息两天了，也差不多了",
+        "无偿加班": "五一你们休息两天了,也差不多了",
         "既要又要还要": "我相信群众里面一定有能人",
         "拖欠费用": "你凭什么拿这个钱",
-        "整风运动": "你告诉我，为什么W基地一年换了7个总经理",
-        "团队增殖": "我们组建了56人的全球团队，但是并不负责解决具体技术问题",
-        "技术创新": "该方案采用的都是市面上已有的技术，并没有见到你们的独创性",
+        "整风运动": "你告诉我,为什么W基地一年换了7个总经理",
+        "团队增殖": "我们组建了56人的全球团队,但是并不负责解决具体技术问题",
+        "技术创新": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性",
         "在你来前": "你们来前我们就开始做了",
         "奶茶攻击": "给整个办公室都来吨吨桶+12分糖",
-        "织条毯子": "尽管目前有一点小问题，但是趋势是没有问题的",
+        "织条毯子": "尽管目前有一点小问题,但是趋势是没有问题的",
         "李代桃僵": "老厂长你来回答一下。",
         "酒仙": "双倍IPA治疗失眠",
         "鲁莽": "干他",
-        "心灵震爆": "你不干这个，我就投诉你",
+        "心灵震爆": "你不干这个,我就投诉你",
         "腐蚀": "商后面是个啥字母来着",
         "鼓舞": "鼓舞士气提升战斗力",
         "精神污染": "造成精神污染效果",
-        "浆板下水": "勇敢下水救人，既能攻击敌人又能治愈自己",
-        "倒立攻击": "颠倒世界的独特攻击方式，造成伤害的同时提升自身攻击力"
+        "浆板下水": "勇敢下水救人,既能攻击敌人又能治愈自己",
+        "倒立攻击": "颠倒世界的独特攻击方式,造成伤害的同时提升自身攻击力"
     }
 
 # 物品类 - 增加UT补充剂功能
@@ -3237,7 +3174,7 @@ class Item:
             if target and hasattr(target, 'moves'):
                 skill_name = self.effect
                 if skill_name not in [move["name"] for move in target.moves]:
-                    # 添加新技能，如果技能数量超过4个，需要选择要忘记的技能
+                    # 添加新技能,如果技能数量超过4个,需要选择要忘记的技能
                     if len(target.moves) >= 4:
                         return f"SKILL_FORGET_DIALOG|{skill_name}"
                     else:
@@ -3287,7 +3224,7 @@ class Item:
             return "这个宝石需要对顾问使用"
             
         elif self.item_type == "sp_restore":
-            return "SP系统尚未开放，暂时无法使用"
+            return "SP系统尚未开放,暂时无法使用"
             
         elif self.item_type == "battle_prevent":
             if player:
@@ -3306,7 +3243,7 @@ class Item:
                     selected_skill_code = random.choice(list(ultimate_skills.keys()))
                     selected_skill = ultimate_skills[selected_skill_code]
                     
-                    # 创建对应的必杀技学习书，包含详细信息
+                    # 创建对应的必杀技学习书,包含详细信息
                     # 获取技能详细信息
                     skill_attributes = selected_skill.get('type', '未知')
                     skill_sp_cost = selected_skill.get('sp_cost', 0)
@@ -3358,14 +3295,14 @@ class Item:
                     
                     return f"打开了{self.name}！获得了{skill_book.name}！（编码：{selected_skill_code}）"
                 else:
-                    return f"打开了{self.name}，但没有找到可学习的必杀技..."
+                    return f"打开了{self.name},但没有找到可学习的必杀技..."
             return "无法使用必杀技学习盲盒"
             
-        return f"使用了{self.name}，但没有效果"
+        return f"使用了{self.name},但没有效果"
     
     def _get_all_ultimate_skills(self):
         """
-        获取所有必杀技的编码系统，现在从统一技能数据库中获取
+        获取所有必杀技的编码系统,现在从统一技能数据库中获取
         """
         ultimate_skills = {}
         skill_id = 1
@@ -3393,7 +3330,7 @@ class Item:
         """
         # Pokemon Yellow风格的属性计算公式
         # Stat = floor(((Base + IV) * 2 + floor(sqrt(EV)/4)) * Level / 100) + Level + 10
-        # 简化版本，不考虑IV和EV，使用基础属性和等级
+        # 简化版本,不考虑IV和EV,使用基础属性和等级
         
         # HP计算 (HP有特殊公式)
         hp_stat = int((self.base_hp * 2 * self.level) / 100) + self.level + 10
@@ -3430,7 +3367,7 @@ class GameMap:
         self.training_position = None  # 训练中心位置
         self.portal_positions = []  # 传送门位置
         self.player = player  # 引用玩家对象以获取BOSS击败信息
-        self.can_refresh = True  # 是否可以刷新地图，初始为True
+        self.can_refresh = True  # 是否可以刷新地图,初始为True
         self.generate_map()  # 随机生成地图
         self.map_data = self.generate_map()  # 初始化地图数据
         # 确保特殊地块被正确放置（可选：手动指定关键地块位置）
@@ -3442,7 +3379,7 @@ class GameMap:
         }
         
     def generate_map(self):
-        """随机生成地图，包含新地块和BOSS逻辑"""
+        """随机生成地图,包含新地块和BOSS逻辑"""
         self.grid = [[0 for _ in range(self.size)] for _ in range(self.size)]
         
         # 确定是否生成大BOSS（每击败3个小BOSS）
@@ -3511,17 +3448,17 @@ class GameMap:
                     # 随机生成普通地块（0-5）
                     self.grid[i][j] = random.randint(0, 5)
     def refresh_map(self):
-        """刷新地图，生成新的BOSS位置和新的宝箱"""
+        """刷新地图,生成新的BOSS位置和新的宝箱"""
         if self.can_refresh:
             self.generate_map()
-            # 只重置初始宝箱的已打开状态，让初始宝箱可以重新打开
+            # 只重置初始宝箱的已打开状态,让初始宝箱可以重新打开
             self.opened_chests = set()
-            # 清空定时宝箱位置，但保持定时宝箱的已打开状态和定时器
+            # 清空定时宝箱位置,但保持定时宝箱的已打开状态和定时器
             self.timed_chest_positions = []
-            self.can_refresh = False  # 刷新后设置为不可刷新，直到击败BOSS
+            self.can_refresh = False  # 刷新后设置为不可刷新,直到击败BOSS
     
     def update_timed_chests(self):
-        """更新定时宝箱系统，每2分钟随机生成一个宝箱"""
+        """更新定时宝箱系统,每2分钟随机生成一个宝箱"""
         import pygame
         current_time = pygame.time.get_ticks()
         
@@ -3539,7 +3476,7 @@ class GameMap:
     
     def spawn_timed_chest(self):
         """生成一个定时宝箱"""
-        max_attempts = 50  # 最大尝试次数，防止无限循环
+        max_attempts = 50  # 最大尝试次数,防止无限循环
         attempts = 0
         
         while attempts < max_attempts:
@@ -3586,7 +3523,7 @@ class GameMap:
         if player and player.battle_prevention_steps > 0:
             return None  # PTO通知生效期间不触发战斗
         
-        # BOSS地块（类型6，旧版本兼容）必定触发BOSS战
+        # BOSS地块（类型6,旧版本兼容）必定触发BOSS战
         if tile_type == 6:
             return "boss"
         # 其他地块的普通遇敌概率（调整为20-30%）
@@ -3652,11 +3589,11 @@ class GameMap:
         
         # 1-6地块都使用基于我方默认出战顾问等级的生成逻辑
         if tile_type in [0, 1, 2, 3, 4, 5, 6] and player_default_level is not None:
-            # 新规则：7级之前，敌人等级与默认出战顾问等级相同
+            # 新规则：7级之前,敌人等级与默认出战顾问等级相同
             if player_default_level < 7:
                 return player_default_level
             
-            # 7级及以上，沿用现有等级计算规则
+            # 7级及以上,沿用现有等级计算规则
             rand = random.random()
             if rand < 0.5:  # 50%概率：±2级之内
                 level_offset = random.randint(-2, 2)
@@ -3696,7 +3633,7 @@ class GameMap:
                 
         if valid_directions:
             return random.choice(valid_directions)
-        return (x, y)  # 如果没有有效相邻地块，返回原位置
+        return (x, y)  # 如果没有有效相邻地块,返回原位置
         
     def to_dict(self):
         return {
@@ -3734,7 +3671,7 @@ class GameMap:
 
 # 移除BOSS地块函数
 def remove_boss(game_map, x, y):
-    """击败BOSS后移除地图上的BOSS地块，替换为普通地块"""
+    """击败BOSS后移除地图上的BOSS地块,替换为普通地块"""
     # 兼容 GameMap 实例
     grid = game_map.grid if hasattr(game_map, "grid") else game_map
     size = game_map.size if hasattr(game_map, "size") else MAP_SIZE
@@ -3795,7 +3732,7 @@ class Pokemon:
             }
         }
         
-        # 回合计数器，用于延迟效果
+        # 回合计数器,用于延迟效果
         self.battle_turn_counter = 0
         
         self.calculate_stats()
@@ -3807,7 +3744,7 @@ class Pokemon:
         """
         # Pokemon Yellow风格的属性计算公式
         # Stat = floor(((Base + IV) * 2 + floor(sqrt(EV)/4)) * Level / 100) + Level + 10
-        # 简化版本，不考虑IV和EV，使用基础属性和等级
+        # 简化版本,不考虑IV和EV,使用基础属性和等级
         
         # HP计算 (HP有特殊公式)
         hp_stat = int((self.base_hp * 2 * self.level) / 100) + self.level + 10
@@ -3827,7 +3764,7 @@ class Pokemon:
         self.defense = int((self.base_defense * 2 * self.level) / 100) + 5
         
     def gain_exp(self, amount):
-        """获取经验值，可能触发升级和进化"""
+        """获取经验值,可能触发升级和进化"""
         self.exp += amount
         leveled_up = False
         evolution_messages = []
@@ -3902,7 +3839,7 @@ class Pokemon:
             new_data = PokemonConfig.base_data.get(new_name)
             if not new_data:
                 self.is_evolving = False  # 恢复状态
-                return "进化失败，未知的顾问形态！"
+                return "进化失败,未知的顾问形态！"
             
             self.base_hp = new_data["hp"]
             self.base_attack = new_data["attack"]
@@ -3965,22 +3902,22 @@ class Pokemon:
         """计算属性克制效果"""
         # 处理多属性技能
         if isinstance(move_type, list):
-            # 如果技能有多个属性，采用"取最有利的属性"策略
+            # 如果技能有多个属性,采用"取最有利的属性"策略
             # 优先检查是否有任何属性命中敌方劣势（对攻击方有利）
             for attr in move_type:
                 if attr in self.disadvantages:
-                    return random.uniform(1.8, 2.5)  # 劣势属性，受到伤害增加（对攻击方有利）
-            # 如果没有命中劣势，再检查是否命中优势
+                    return random.uniform(1.8, 2.5)  # 劣势属性,受到伤害增加（对攻击方有利）
+            # 如果没有命中劣势,再检查是否命中优势
             for attr in move_type:
                 if attr in self.advantages:
-                    return random.uniform(0.2, 0.5)  # 优势属性，受到伤害减少（对攻击方不利）
+                    return random.uniform(0.2, 0.5)  # 优势属性,受到伤害减少（对攻击方不利）
             return 1.0
         else:
             # 单属性技能的原有逻辑
             if move_type in self.advantages:
-                return random.uniform(0.2, 0.5)  # 优势属性，受到伤害减少
+                return random.uniform(0.2, 0.5)  # 优势属性,受到伤害减少
             elif move_type in self.disadvantages:
-                return random.uniform(1.8, 2.5)  # 劣势属性，受到伤害增加
+                return random.uniform(1.8, 2.5)  # 劣势属性,受到伤害增加
             return 1.0
         
     def calculate_move_damage(self, move, target):
@@ -4008,18 +3945,18 @@ class Pokemon:
     
     def use_skill(self, skill_name, target=None, allies=None):
         """使用技能（新的技能系统）"""
-        if skill_name not in NEW_SKILLS_DATABASE:
+        if skill_name not in UNIFIED_SKILLS_DATABASE:
             return None, []
         
-        skill_data = NEW_SKILLS_DATABASE[skill_name]
+        skill_data = UNIFIED_SKILLS_DATABASE[skill_name]
         messages = []
         
         # 检查SP消耗
         if skill_data["sp_cost"] > 0:
             if not self.consume_sp(skill_data["sp_cost"]):
-                return None, [f"{self.name}的SP不足，无法使用{skill_name}！"]
+                return None, [f"{self.name}的SP不足,无法使用{skill_name}！"]
         
-        # 如果技能没有category或者是伤害类技能，使用旧系统处理
+        # 如果技能没有category或者是伤害类技能,使用旧系统处理
         if "category" not in skill_data:
             return None, []
         
@@ -4051,7 +3988,7 @@ class Pokemon:
                 
                 if is_crit:
                     base_damage = int(base_damage * crit_multiplier)
-                    messages.append(f"{self.name}使用了{skill_name}，暴击！")
+                    messages.append(f"{self.name}使用了{skill_name},暴击！")
                 else:
                     messages.append(f"{self.name}使用了{skill_name}！")
                 
@@ -4079,11 +4016,11 @@ class Pokemon:
                     self_attack_mult = effects.get("self_attack_multiplier", 1.0)
                     self_debuff_turns = effects.get("self_debuff_turns", 1)
                     self.add_stat_modifier(self_attack_mult, 1.0, self_debuff_turns, f"{skill_name}副作用", "self")
-                    messages.append(f"{self.name}受到{skill_name}的副作用影响，攻击力下降！")
+                    messages.append(f"{self.name}受到{skill_name}的副作用影响,攻击力下降！")
                 
                 return actual_damage, messages
             else:
-                return 0, [f"{self.name}使用了{skill_name}，但没有目标！"]
+                return 0, [f"{self.name}使用了{skill_name},但没有目标！"]
         
         # 连续伤害技能使用旧系统
         elif category == SkillCategory.CONTINUOUS_DAMAGE:
@@ -4121,10 +4058,10 @@ class Pokemon:
                     
                     return damage_per_turn, messages
                 else:
-                    messages.append(f"{self.name}使用了{skill_name}，但没有产生效果！")
+                    messages.append(f"{self.name}使用了{skill_name},但没有产生效果！")
                     return 0, messages
             else:
-                return 0, [f"{self.name}使用了{skill_name}，但没有目标！"]
+                return 0, [f"{self.name}使用了{skill_name},但没有目标！"]
         
         effects = skill_data["effects"]
         
@@ -4135,7 +4072,7 @@ class Pokemon:
             old_hp = self.hp
             self.hp = min(self.max_hp, self.hp + heal_amount)
             actual_heal = self.hp - old_hp
-            messages.append(f"{self.name}使用了{skill_name}，回复了{actual_heal}点HP！")
+            messages.append(f"{self.name}使用了{skill_name},回复了{actual_heal}点HP！")
             return actual_heal, messages
         
         elif category == SkillCategory.CONTINUOUS_HEAL:
@@ -4144,7 +4081,7 @@ class Pokemon:
             turns = effects["turns"]
             heal_per_turn = int(self.max_hp * heal_percentage)
             self.add_continuous_heal(heal_per_turn, turns, skill_name)
-            messages.append(f"{self.name}使用了{skill_name}，将在接下来{turns}回合内每回合回复{heal_per_turn}点HP！")
+            messages.append(f"{self.name}使用了{skill_name},将在接下来{turns}回合内每回合回复{heal_per_turn}点HP！")
             return heal_per_turn, messages
         
         elif category == SkillCategory.SELF_BUFF:
@@ -4159,7 +4096,7 @@ class Pokemon:
                 # 恢复所有队友血量（不包括使用者自己）
                 if allies:
                     for ally in allies:
-                        if ally != self and not ally.is_fainted():  # 不包括自己，不治疗已倒下的队友
+                        if ally != self and not ally.is_fainted():  # 不包括自己,不治疗已倒下的队友
                             ally_heal_amount = int(ally.max_hp * heal_percentage)
                             old_ally_hp = ally.hp
                             ally.hp = min(ally.max_hp, ally.hp + ally_heal_amount)
@@ -4174,9 +4111,9 @@ class Pokemon:
                     if self.hp > 1:
                         hp_sacrificed = self.hp - 1
                         self.hp = 1
-                        messages.append(f"{self.name}牺牲了{hp_sacrificed}点血量，血量降为1！")
+                        messages.append(f"{self.name}牺牲了{hp_sacrificed}点血量,血量降为1！")
                     else:
-                        messages.append(f"{self.name}血量已经很低，但依然使用了{skill_name}！")
+                        messages.append(f"{self.name}血量已经很低,但依然使用了{skill_name}！")
                 
                 # 所有顾问攻击力增加20%（不包括自己）
                 all_allies_attack_buff = effects.get("all_allies_attack_buff", 0.2)
@@ -4201,9 +4138,9 @@ class Pokemon:
                 turns = effects.get("turns", 999)  # 持续整场战斗
                 self.add_stat_modifier(attack_mult, 1.0, turns, f"{skill_name}·武神之力", "self")
                 
-                messages.append(f"{self.name}使用了{skill_name}！队友血量恢复，攻击力大幅提升！")
+                messages.append(f"{self.name}使用了{skill_name}！队友血量恢复,攻击力大幅提升！")
                 messages.append(f"{delay_turns}回合后将满血复活！")
-                messages.append(f"自身攻击力翻倍，全队攻击力提升{int(all_allies_attack_buff*100)}%！")
+                messages.append(f"自身攻击力翻倍,全队攻击力提升{int(all_allies_attack_buff*100)}%！")
                 return total_heal, messages
             
             # 通用SELF_BUFF处理
@@ -4222,7 +4159,7 @@ class Pokemon:
             elif defense_mult < 1.0:
                 buff_desc.append(f"防御力下降{int((1-defense_mult)*100)}%")
             
-            messages.append(f"{self.name}使用了{skill_name}，{', '.join(buff_desc)}，持续{turns}回合！")
+            messages.append(f"{self.name}使用了{skill_name},{', '.join(buff_desc)},持续{turns}回合！")
             return 0, messages
         
         elif category == SkillCategory.ENEMY_DEBUFF:
@@ -4236,7 +4173,7 @@ class Pokemon:
                 if target_attack_mult < 1.0:
                     debuff_desc.append(f"攻击力下降{int((1-target_attack_mult)*100)}%")
                 
-                messages.append(f"{self.name}使用了{skill_name}，{target.name}{', '.join(debuff_desc)}，持续{turns}回合！")
+                messages.append(f"{self.name}使用了{skill_name},{target.name}{', '.join(debuff_desc)},持续{turns}回合！")
                 return 0, messages
         
         elif category == SkillCategory.SPECIAL_ATTACK:
@@ -4255,29 +4192,29 @@ class Pokemon:
                 # 检查是否触发斩杀效果
                 if execute_threshold > 0 and target.get_hp_percentage() < execute_threshold:
                     target.hp = 0
-                    messages.append(f"{self.name}使用了{skill_name}，{target.name}的HP低于{int(execute_threshold*100)}%，直接被击败！")
+                    messages.append(f"{self.name}使用了{skill_name},{target.name}的HP低于{int(execute_threshold*100)}%,直接被击败！")
                     return target.max_hp, messages
                 
                 # 处理固定伤害
                 elif base_damage > 0:
                     actual_damage = target.take_damage(base_damage)
-                    messages.append(f"{self.name}使用了{skill_name}，对{target.name}造成{actual_damage}点伤害！")
+                    messages.append(f"{self.name}使用了{skill_name},对{target.name}造成{actual_damage}点伤害！")
                 
                 # 处理无视防御的随机伤害
                 elif ignore_defense_damage_min > 0 and ignore_defense_damage_max > 0:
                     random_damage = random.randint(ignore_defense_damage_min, ignore_defense_damage_max)
                     target.hp = max(0, target.hp - random_damage)
                     actual_damage = random_damage
-                    messages.append(f"{self.name}使用了{skill_name}，无视防御对{target.name}造成{actual_damage}点伤害！")
+                    messages.append(f"{self.name}使用了{skill_name},无视防御对{target.name}造成{actual_damage}点伤害！")
                 
                 else:
-                    # 如果没有明确的伤害定义，使用power值
+                    # 如果没有明确的伤害定义,使用power值
                     power_damage = skill_data.get("power", 0)
                     if power_damage > 0:
                         actual_damage = target.take_damage(power_damage)
-                        messages.append(f"{self.name}使用了{skill_name}，对{target.name}造成{actual_damage}点伤害！")
+                        messages.append(f"{self.name}使用了{skill_name},对{target.name}造成{actual_damage}点伤害！")
                     else:
-                        messages.append(f"{self.name}使用了{skill_name}，但没有产生效果！")
+                        messages.append(f"{self.name}使用了{skill_name},但没有产生效果！")
                 
                 return actual_damage, messages
         
@@ -4305,7 +4242,7 @@ class Pokemon:
                             defense_buff_percentage = int((team_defense_mult - 1.0) * 100)
                             buff_desc.append(f"防御力提升{defense_buff_percentage}%")
                         
-                        messages.append(f"{ally.name}的{', '.join(buff_desc)}，持续{turns}回合！")
+                        messages.append(f"{ally.name}的{', '.join(buff_desc)},持续{turns}回合！")
             
             # 处理团队血量损失
             if allies and team_hp_cost > 0:
@@ -4362,13 +4299,13 @@ class Pokemon:
             if target and direct_damage > 0:
                 actual_damage = target.take_damage(direct_damage)
                 total_damage += actual_damage
-                messages.append(f"{self.name}使用了{skill_name}，对{target.name}造成{actual_damage}点伤害！")
+                messages.append(f"{self.name}使用了{skill_name},对{target.name}造成{actual_damage}点伤害！")
             
-            # 对目标添加攻击力减益（注：这里只能处理单个目标，多目标需要在战斗系统中处理）
+            # 对目标添加攻击力减益（注：这里只能处理单个目标,多目标需要在战斗系统中处理）
             if target and target_attack_mult != 1.0:
                 target.add_stat_modifier(target_attack_mult, 1.0, turns, f"{skill_name}·减益效果", "enemy")
                 debuff_percentage = int((1.0 - target_attack_mult) * 100)
-                messages.append(f"{target.name}的攻击力下降{debuff_percentage}%，持续{turns}回合！")
+                messages.append(f"{target.name}的攻击力下降{debuff_percentage}%,持续{turns}回合！")
             
             messages.append(f"{self.name}使用了{skill_name}！对敌方造成伤害和减益效果！")
             return total_damage, messages
@@ -4391,7 +4328,7 @@ class Pokemon:
                 if delayed_damage_percentage > 0 and target:
                     self.add_delayed_effect("damage_percentage", delayed_damage_percentage, delayed_turns, f"{skill_name}·万箭齐发", "self", "enemy")
                 
-                messages.append(f"{self.name}使用了{skill_name}！攻击力提升{int((attack_mult-1)*100)}%，防御力提升{int((defense_mult-1)*100)}%！")
+                messages.append(f"{self.name}使用了{skill_name}！攻击力提升{int((attack_mult-1)*100)}%,防御力提升{int((defense_mult-1)*100)}%！")
                 messages.append(f"第二回合将造成{int(delayed_damage_percentage*100)}%攻击力伤害！")
                 return 0, messages
             
@@ -4411,7 +4348,7 @@ class Pokemon:
                 if effects.get("self_sacrifice", False):
                     self.add_delayed_effect("self_sacrifice", 0, 2, f"{skill_name}·献身", "self", "self")
                 
-                messages.append(f"{self.name}使用了{skill_name}！无敌2回合，攻击力变为80%！")
+                messages.append(f"{self.name}使用了{skill_name}！无敌2回合,攻击力变为80%！")
                 messages.append(f"2回合后将造成{int(final_damage_percentage*100)}%攻击力伤害并献身！")
                 return 0, messages
             
@@ -4443,7 +4380,7 @@ class Pokemon:
             self.hp = min(self.max_hp, self.hp + heal)
             actual_heal = self.hp - old_hp
             if actual_heal > 0:
-                messages.append(f"{self.name}受到{effect['name']}的治疗效果，回复{actual_heal}点HP！")
+                messages.append(f"{self.name}受到{effect['name']}的治疗效果,回复{actual_heal}点HP！")
             effect["turns"] -= 1
             if effect["turns"] <= 0:
                 self.status_effects["continuous_heal"].remove(effect)
@@ -4623,17 +4560,17 @@ class Player:
         self.pokemon_team = []
         self.x, self.y = 0, 0
         self.backpack = []
-        self.inventory = {}  # 添加inventory属性，用于商店系统
+        self.inventory = {}  # 添加inventory属性,用于商店系统
         self.pokeballs = 20
         self.master_balls = 0  # 大师球数量
         # 初始化精灵球到inventory中
         self.inventory["精灵球"] = self.pokeballs
         self.inventory["大师球"] = self.master_balls
         self.default_pokemon_index = 0
-        self.ut = 100  # UT值，初始100点
+        self.ut = 100  # UT值,初始100点
         self.max_ut = 100  # 最大UT值
         self.ut_empty_counter = 0  # UT耗尽提示计数器
-        self.stage = 1  # 游戏阶段，用于决定大BOSS
+        self.stage = 1  # 游戏阶段,用于决定大BOSS
         self.mini_bosses_defeated = 0  # 击败的小BOSS数量
         # 根据配置设置初始金币数量
         config = GameInitialConfig.get_current_config()
@@ -4699,7 +4636,7 @@ class Player:
     def decrease_ut(self, amount=1):
         """减少UT值"""
         self.ut = max(0, self.ut - amount)
-        # 如果UT耗尽，处理惩罚
+        # 如果UT耗尽,处理惩罚
         if self.ut <= 0:
             self.ut_empty_counter = 60  # 显示1秒的提示（假设60FPS）
             # 所有顾问降一级
@@ -4803,7 +4740,7 @@ class MapGenerator:
         
     @staticmethod
     def get_random_position(game_map, min_distance=0, avoid_start=False):
-        """获取随机位置，可指定与起点的最小距离"""
+        """获取随机位置,可指定与起点的最小距离"""
         while True:
             x = random.randint(0, MAP_SIZE - 1)
             y = random.randint(0, MAP_SIZE - 1)
@@ -4934,10 +4871,10 @@ class Button:
         
     def draw(self, surface):
         color = self.hover_color if self.active else self.color
-        # 如果是橙色按钮，绘制半透明效果
+        # 如果是橙色按钮,绘制半透明效果
         if color == ORANGE:
             button_surface = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
-            button_surface.fill((255, 165, 0, 128))  # 橙色，50%透明度
+            button_surface.fill((255, 165, 0, 128))  # 橙色,50%透明度
             surface.blit(button_surface, self.rect)
         else:
             pygame.draw.rect(surface, color, self.rect)
@@ -5074,7 +5011,7 @@ class TrainingCenter:
             healed_pokemon.append(f"• {pokemon.name}: {old_hp} → {pokemon.max_hp} HP")
         
         # 返回详细的治疗信息
-        result_text = f"HP恢复服务完成！\n\n免费服务，无需花费金币\n当前金币: {player.money}\n\n恢复详情:\n" + "\n".join(healed_pokemon)
+        result_text = f"HP恢复服务完成！\n\n免费服务,无需花费金币\n当前金币: {player.money}\n\n恢复详情:\n" + "\n".join(healed_pokemon)
         return result_text
     
     def deposit_pokemon(self, player, pokemon_index):
@@ -5237,7 +5174,7 @@ class PokemonGame:
         return images
     
     def _get_cached_surface(self, key, create_func, *args, **kwargs):
-        """获取缓存的surface，如果不存在则创建"""
+        """获取缓存的surface,如果不存在则创建"""
         if key not in self._surface_cache:
             self._surface_cache[key] = create_func(*args, **kwargs)
         return self._surface_cache[key]
@@ -5261,7 +5198,7 @@ class PokemonGame:
                 del self._surface_cache[key]
     
     def _get_pooled_surface(self, size, flags=0):
-        """从对象池获取Surface，如果不存在则创建"""
+        """从对象池获取Surface,如果不存在则创建"""
         key = f"{size[0]}x{size[1]}_{flags}"
         if key not in self._surface_pool:
             self._surface_pool[key] = []
@@ -5341,7 +5278,7 @@ class PokemonGame:
         # 重置完全重绘标志
         self._need_full_redraw = False
         
-        # 如果状态改变，清除相关缓存
+        # 如果状态改变,清除相关缓存
         if self.state in [GameState.BATTLE, GameState.BOSS_BATTLE]:
             if self._battle_cache_dirty:
                 self._battle_bg_cache = None
@@ -5375,10 +5312,10 @@ class PokemonGame:
                 y = i * TILE_SIZE
                 tile_type = self.map.get_tile_type(i, j)
                 
-                # 特殊处理宝箱：如果已经打开，则不显示宝箱图像
+                # 特殊处理宝箱：如果已经打开,则不显示宝箱图像
                 if tile_type == 7:  # chest
                     if self.map.is_chest_opened(i, j):
-                        # 宝箱已打开，显示对应的地面图块
+                        # 宝箱已打开,显示对应的地面图块
                         continue
                 
                 # 使用映射直接获取图像
@@ -5405,13 +5342,13 @@ class PokemonGame:
             pokemon = Pokemon(advisor_data["name"], level=advisor_data["level"])
             # 设置SP值
             pokemon.sp = advisor_data["sp"]
-            # 如果SP大于默认最大值，更新最大SP
+            # 如果SP大于默认最大值,更新最大SP
             if advisor_data["sp"] > pokemon.max_sp:
                 pokemon.max_sp = advisor_data["sp"]
             self.player.add_pokemon(pokemon)
         
     def start_battle(self, battle_type="wild"):
-        """开始战斗，battle_type: "wild", "mini_boss" 或 "stage_boss"""
+        """开始战斗,battle_type: "wild", "mini_boss" 或 "stage_boss"""
         self.is_boss_battle = battle_type in ["boss", "mini_boss", "stage_boss"]
         
         # 重置战斗回合计数器
@@ -5443,10 +5380,10 @@ class PokemonGame:
                 # 强制选择当前阶段的大BOSS
                 boss_data = next((b for b in PokemonConfig.stage_bosses if b["stage"] == self.player.stage), None)
                 if not boss_data:
-                    # 如果没有对应阶段的大BOSS，选择最后一个
+                    # 如果没有对应阶段的大BOSS,选择最后一个
                     boss_data = PokemonConfig.stage_bosses[-1] if PokemonConfig.stage_bosses else random.choice(PokemonConfig.mini_bosses)
             else:
-                # 兼容旧的"boss"参数，随机选择
+                # 兼容旧的"boss"参数,随机选择
                 if random.random() < 0.7 or self.player.stage > len(PokemonConfig.stage_bosses):
                     # 70%概率是小BOSS
                     boss_data = random.choice(PokemonConfig.mini_bosses)
@@ -5465,13 +5402,13 @@ class PokemonGame:
             # 调整战斗按钮位置
             # 创建带有橙色半透明背景的战斗按钮
             orange_surface = pygame.Surface((150, 40), pygame.SRCALPHA)
-            orange_surface.fill((255, 165, 0, 128))  # 橙色，50%透明度
+            orange_surface.fill((255, 165, 0, 128))  # 橙色,50%透明度
             
             # 按钮位于下方40%区域的最右侧
             bottom_area_height = int(SCREEN_HEIGHT * 0.4)
             bottom_area_y = SCREEN_HEIGHT - bottom_area_height
-            button_width = int(SCREEN_WIDTH * 0.22)   # 按钮宽度，留些边距
-            button_area_x = SCREEN_WIDTH - button_width - 5  # 右对齐，距离边框5像素
+            button_width = int(SCREEN_WIDTH * 0.22)   # 按钮宽度,留些边距
+            button_area_x = SCREEN_WIDTH - button_width - 5  # 右对齐,距离边框5像素
             button_height = 40
             button_spacing = 10
             
@@ -5503,8 +5440,8 @@ class PokemonGame:
                 # 按钮位于下方40%区域的最右侧
                 bottom_area_height = int(SCREEN_HEIGHT * 0.4)
                 bottom_area_y = SCREEN_HEIGHT - bottom_area_height
-                button_width = int(SCREEN_WIDTH * 0.22)   # 按钮宽度，留些边距
-                button_area_x = SCREEN_WIDTH - button_width - 5  # 右对齐，距离边框5像素
+                button_width = int(SCREEN_WIDTH * 0.22)   # 按钮宽度,留些边距
+                button_area_x = SCREEN_WIDTH - button_width - 5  # 右对齐,距离边框5像素
                 button_height = 40
                 button_spacing = 10
                 
@@ -5532,7 +5469,7 @@ class PokemonGame:
         else:
             self.menu_stack.append(GameState.BATTLE)
         self.move_buttons = []
-        # 注意：只在第一次进入时重置滚动偏移，滚动时不重置
+        # 注意：只在第一次进入时重置滚动偏移,滚动时不重置
         if not hasattr(self, '_move_buttons_created'):
             self.skill_scroll_offset = 0  # 重置滚动偏移
             self._move_buttons_created = True
@@ -5593,7 +5530,7 @@ class PokemonGame:
                 skill = skill_manager.get_skill(move["name"])
                 if skill:
                     if skill.sp_cost > 0:
-                        # SP技能，检查是否有足够SP
+                        # SP技能,检查是否有足够SP
                         if player_pkm.sp >= skill.sp_cost:
                             button_text = f"{move['name']} (SP:{skill.sp_cost})"
                             button_color = ORANGE
@@ -5614,7 +5551,7 @@ class PokemonGame:
                            f"move_{i}", text_color=text_color, color=button_color, hover_color=button_color)
                 )
         
-        # 返回上级按钮 - 放在右下角，与技能按钮右对齐
+        # 返回上级按钮 - 放在右下角,与技能按钮右对齐
         text_color = BLACK
         back_button_width = 180  # 调整按钮宽度
         back_button_x = SCREEN_WIDTH - back_button_width  # 完全右对齐到边框处
@@ -5652,7 +5589,7 @@ class PokemonGame:
                        f"switch_{i}", text_color=text_color, color=ORANGE, hover_color=ORANGE)
             )
         
-        # 取消按钮放在右下角，完全右对齐到边框处
+        # 取消按钮放在右下角,完全右对齐到边框处
         text_color = BLACK
         back_button_width = 180  # 调整按钮宽度
         back_button_x = SCREEN_WIDTH - back_button_width  # 完全右对齐到边框处
@@ -5700,7 +5637,7 @@ class PokemonGame:
                             else:
                                 messages.append(f"获得了{item_data['name']}！已添加到背包。")
                 
-                # 如果是大BOSS，提升游戏阶段
+                # 如果是大BOSS,提升游戏阶段
                 if any(boss_name == b["name"] for b in PokemonConfig.stage_bosses):
                     self.player.stage += 1
                     messages.append(f"恭喜！你已进入第{self.player.stage}阶段！")
@@ -5734,9 +5671,9 @@ class PokemonGame:
         
         # 没有获得物品
         consolation_messages = [
-            "野生的顾问逃走了，什么也没留下...",
-            "虽然没获得物品，但你的顾问获得了宝贵的战斗经验！",
-            "对方什么也没留下，但你感觉顾问变得更强了！"
+            "野生的顾问逃走了,什么也没留下...",
+            "虽然没获得物品,但你的顾问获得了宝贵的战斗经验！",
+            "对方什么也没留下,但你感觉顾问变得更强了！"
         ]
         return [random.choice(consolation_messages)]
         
@@ -5790,15 +5727,15 @@ class PokemonGame:
                     # 检查技能是否存在于技能管理器中
                     skill = skill_manager.get_skill(move["name"])
                     if skill:
-                        # 使用统一的技能管理器，传递队友信息以支持团队技能
+                        # 使用统一的技能管理器,传递队友信息以支持团队技能
                         allies = [pokemon for pokemon in self.player.pokemon_team if not pokemon.is_fainted()]
                         damage, skill_messages = skill_manager.use_skill_on_pokemon(move["name"], player_pkm, enemy_pkm, allies)
                         self.current_turn["damage"] = damage if damage is not None else 0
                         self.current_turn["type_multiplier"] = 1.0
                         
-                        # 检查是否为必杀技，如果是则显示台词
-                        if move["name"] in NEW_SKILLS_DATABASE:
-                            skill_data = NEW_SKILLS_DATABASE[move["name"]]
+                        # 检查是否为必杀技,如果是则显示台词
+                        if move["name"] in UNIFIED_SKILLS_DATABASE:
+                            skill_data = UNIFIED_SKILLS_DATABASE[move["name"]]
                             if skill_data["category"] == SkillCategory.SPECIAL_ATTACK:
                                 # 我方必杀技台词
                                 self.ally_ultimate_line = ULTIMATE_LINES_DATABASE["ally"].get(move["name"], ULTIMATE_LINES_DATABASE["ally"]["default"])
@@ -5814,9 +5751,9 @@ class PokemonGame:
                             self.battle_messages.append(msg)
                         
                         # 新技能系统也获得SP - 修复SP积攒问题
-                        skill_data = NEW_SKILLS_DATABASE.get(move["name"])
+                        skill_data = UNIFIED_SKILLS_DATABASE.get(move["name"])
                         if skill_data:
-                            # 对于伤害类技能，使用者获得SP
+                            # 对于伤害类技能,使用者获得SP
                             if skill_data["category"] in [SkillCategory.DIRECT_DAMAGE, SkillCategory.CONTINUOUS_DAMAGE, SkillCategory.DOT, SkillCategory.SPECIAL_ATTACK, SkillCategory.MULTI_HIT]:
                                 sp_gained = player_pkm.gain_sp(SP_CONFIG["sp_gain_on_attack"])
                                 self.battle_messages.append(f"{player_pkm.name}获得了{sp_gained}点SP！")
@@ -5897,9 +5834,9 @@ class PokemonGame:
                         self.battle_messages.append("逃跑失败！")
                         enemy_move = random.choice(enemy_pkm.moves)
                         # 检查是否为自增益技能
-                        skill_data = NEW_SKILLS_DATABASE.get(enemy_move["name"])
+                        skill_data = UNIFIED_SKILLS_DATABASE.get(enemy_move["name"])
                         if skill_data and skill_data["category"] in [SkillCategory.SELF_BUFF, SkillCategory.DIRECT_HEAL, SkillCategory.CONTINUOUS_HEAL]:
-                            # 对自己使用技能，不造成伤害
+                            # 对自己使用技能,不造成伤害
                             skill = skill_manager.get_skill(enemy_move["name"])
                             if skill:
                                 _, skill_messages = skill_manager.use_skill_on_pokemon(enemy_move["name"], enemy_pkm, enemy_pkm)
@@ -5927,10 +5864,10 @@ class PokemonGame:
                         result = item.use(player_pkm, self.player)
                         self.battle_messages.append(result)
                         self.player.remove_item(self.current_turn.get("item_index", -1))
-                        self.battle_messages.append("使用物品后，当前回合结束！")
+                        self.battle_messages.append("使用物品后,当前回合结束！")
                         # 添加战斗中物品使用成功通知
                         self.notification_system.add_notification(f"战斗中使用了{item.name}！", "success")
-                        self.battle_step = 7  # 直接结束回合，不让敌人攻击
+                        self.battle_step = 7  # 直接结束回合,不让敌人攻击
                         self.animation_delay = 1000
                     else:
                         self.battle_messages.append("无法使用物品")
@@ -6020,7 +5957,7 @@ class PokemonGame:
                     skill = skill_manager.get_skill(enemy_move["name"])
                     if skill:
                         # 判断技能目标并使用统一的技能管理器
-                        skill_data = NEW_SKILLS_DATABASE.get(enemy_move["name"])
+                        skill_data = UNIFIED_SKILLS_DATABASE.get(enemy_move["name"])
                         if skill_data and skill_data["category"] in [SkillCategory.SELF_BUFF, SkillCategory.DIRECT_HEAL, SkillCategory.CONTINUOUS_HEAL]:
                             # 对自己使用的技能
                             damage, skill_messages = skill_manager.use_skill_on_pokemon(enemy_move["name"], enemy_pkm, enemy_pkm)
@@ -6030,9 +5967,9 @@ class PokemonGame:
                         self.current_turn["enemy_damage"] = damage if damage is not None else 0
                         self.current_turn["enemy_type_multiplier"] = 1.0
                         
-                        # 检查是否为必杀技，如果是则显示台词
-                        if enemy_move["name"] in NEW_SKILLS_DATABASE:
-                            skill_data = NEW_SKILLS_DATABASE[enemy_move["name"]]
+                        # 检查是否为必杀技,如果是则显示台词
+                        if enemy_move["name"] in UNIFIED_SKILLS_DATABASE:
+                            skill_data = UNIFIED_SKILLS_DATABASE[enemy_move["name"]]
                             if skill_data["category"] == SkillCategory.SPECIAL_ATTACK:
                                 # 敌方使用与我方相同的台词
                                 self.enemy_ultimate_line = ULTIMATE_LINES_DATABASE["ally"].get(enemy_move["name"], ULTIMATE_LINES_DATABASE["ally"]["default"])
@@ -6050,7 +5987,7 @@ class PokemonGame:
                         
                         # 敌方新技能系统也获得SP - 修复SP积攒问题
                         if skill_data:
-                            # 对于伤害类技能，使用者获得SP
+                            # 对于伤害类技能,使用者获得SP
                             if skill_data["category"] in [SkillCategory.DIRECT_DAMAGE, SkillCategory.CONTINUOUS_DAMAGE, SkillCategory.DOT, SkillCategory.SPECIAL_ATTACK, SkillCategory.MULTI_HIT]:
                                 sp_gained = enemy_pkm.gain_sp(SP_CONFIG["sp_gain_on_attack"])
                                 self.battle_messages.append(f"{enemy_pkm.name}获得了{sp_gained}点SP！")
@@ -6097,9 +6034,9 @@ class PokemonGame:
                     self.battle_messages.append(f"{enemy_pkm.name}挣脱了精灵球！")
                     enemy_move = random.choice(enemy_pkm.moves)
                     # 检查是否为自增益技能
-                    skill_data = NEW_SKILLS_DATABASE.get(enemy_move["name"])
+                    skill_data = UNIFIED_SKILLS_DATABASE.get(enemy_move["name"])
                     if skill_data and skill_data["category"] in [SkillCategory.SELF_BUFF, SkillCategory.DIRECT_HEAL, SkillCategory.CONTINUOUS_HEAL]:
-                        # 对自己使用技能，不造成伤害
+                        # 对自己使用技能,不造成伤害
                         skill = skill_manager.get_skill(enemy_move["name"])
                         if skill:
                             _, skill_messages = skill_manager.use_skill_on_pokemon(enemy_move["name"], enemy_pkm, enemy_pkm)
@@ -6122,7 +6059,7 @@ class PokemonGame:
                     
             elif self.battle_step == 4:
                 # 只有在使用旧技能系统时才需要手动处理伤害（新技能系统已经在use_skill中处理了伤害）
-                # 这里简化处理，如果enemy_damage > 0说明使用的是旧技能系统
+                # 这里简化处理,如果enemy_damage > 0说明使用的是旧技能系统
                 if self.current_turn["enemy_damage"] > 0:
                     player_pkm.take_damage(self.current_turn["enemy_damage"])
                     self.battle_messages.append(f"你的{player_pkm.name}受到了{self.current_turn['enemy_damage']}点伤害！")
@@ -6150,7 +6087,7 @@ class PokemonGame:
                     self.animation_delay = 1000
                     
             elif self.battle_step == 6:
-                # 所有顾问倒下，恢复HP到1点并结束战斗
+                # 所有顾问倒下,恢复HP到1点并结束战斗
                 self.revive_all_pokemon()
                 self.end_battle()
                 
@@ -6231,7 +6168,7 @@ class PokemonGame:
             skill = skill_manager.get_skill(move["name"])
             if skill:
                 if skill.sp_cost > 0 and player_pkm.sp < skill.sp_cost:
-                    self.battle_messages.append(f"SP不足，无法使用{move['name']}！")
+                    self.battle_messages.append(f"SP不足,无法使用{move['name']}！")
                     return
         
         self.process_battle_turn(move_idx=move_idx, action="attack")
@@ -6260,9 +6197,9 @@ class PokemonGame:
             self.battle_messages.append(f"派出了{new_pkm.name} (Lv.{new_pkm.level})！")
             self.battle_messages.append(f"优点: {advantages}, 缺点: {disadvantages}")
             
-            # 如果在战斗中切换顾问，当前回合结束
+            # 如果在战斗中切换顾问,当前回合结束
             if self.state in [GameState.BATTLE, GameState.BOSS_BATTLE, GameState.BATTLE_SWITCH_POKEMON]:
-                self.battle_messages.append("更换顾问后，当前回合结束！")
+                self.battle_messages.append("更换顾问后,当前回合结束！")
                 # 创建一个切换顾问的turn来触发回合结束逻辑
                 self.current_turn = {
                     "action": "switch_pokemon",
@@ -6305,12 +6242,12 @@ class PokemonGame:
                 self.current_turn.get("capture_success", False)):
                 player_victory = True
                 
-            # 修复顾问HP bug：当顾问在战斗中被击败后，将其HP设为1以防止再次进入战斗时死机
+            # 修复顾问HP bug：当顾问在战斗中被击败后,将其HP设为1以防止再次进入战斗时死机
             for pokemon in self.player.pokemon_team:
                 if pokemon.is_fainted():
                     pokemon.hp = 1
                 
-            # BOSS战胜利，增加计数器并刷新地图
+            # BOSS战胜利,增加计数器并刷新地图
             if self.is_boss_battle and player_victory:
                 # 判断击败的是哪种BOSS并增加计数
                 boss_name = self.boss_pokemon.name if self.boss_pokemon else ""
@@ -6324,20 +6261,20 @@ class PokemonGame:
                 self.map.can_refresh = True  # 击败BOSS后允许地图刷新
                 self.map.refresh_map()
                 self.shop.refresh_shop()  # 同时刷新商店物品
-                self.battle_messages.append("地图已刷新，新的BOSS出现了！")
+                self.battle_messages.append("地图已刷新,新的BOSS出现了！")
                 self.battle_messages.append("商店物品也已更新！")
             
-            # BOSS战失败，返回训练中心附近
+            # BOSS战失败,返回训练中心附近
             if self.is_boss_battle and not player_victory:
                 # 将玩家传送到训练中心附近
                 if self.map.training_position:
                     new_x, new_y = self.map.get_adjacent_tile(self.map.training_position[0], self.map.training_position[1])
                     self.player.x, self.player.y = new_x, new_y
-                    self.battle_messages.append("BOSS战失败，被送回训练中心附近！")
+                    self.battle_messages.append("BOSS战失败,被送回训练中心附近！")
                 else:
-                    # 如果没有训练中心，使用默认位置
+                    # 如果没有训练中心,使用默认位置
                     self.player.x, self.player.y = 3, 3
-                    self.battle_messages.append("BOSS战失败，被送回安全区域！")
+                    self.battle_messages.append("BOSS战失败,被送回安全区域！")
             
             self.state = GameState.EXPLORING
             self.wild_pokemon = None
@@ -6478,7 +6415,7 @@ class PokemonGame:
             self.selected_item_index = item_index
             self.menu_buttons = []
             
-            # 检查是否在战斗中，决定使用什么颜色
+            # 检查是否在战斗中,决定使用什么颜色
             is_in_battle = self.state in [GameState.BATTLE, GameState.BOSS_BATTLE, GameState.BATTLE_MOVE_SELECT, GameState.BATTLE_SWITCH_POKEMON]
             button_color = ORANGE if is_in_battle else MINT_GREEN
             hover_color = ORANGE if is_in_battle else MINT_GREEN_HOVER
@@ -6523,7 +6460,7 @@ class PokemonGame:
         return "无法使用物品"
     
     def use_item_directly(self, item_index):
-        """直接使用物品，自动选择最佳目标"""
+        """直接使用物品,自动选择最佳目标"""
         if 0 <= item_index < len(self.player.backpack):
             item = self.player.backpack[item_index]
             
@@ -6550,20 +6487,20 @@ class PokemonGame:
                 result = item.use(None, self.player)
                 self.player.remove_item(item_index)
                 # 添加UT恢复通知
-                self.notification_system.add_notification(f"使用了{item.name}，恢复UT！", "success")
+                self.notification_system.add_notification(f"使用了{item.name},恢复UT！", "success")
                 return result
                 
             elif item.item_type == "battle_prevent":
                 result = item.use(None, self.player)
                 self.player.remove_item(item_index)
                 # 添加PTO通知使用通知
-                self.notification_system.add_notification(f"使用了{item.name}，战斗保护生效！", "success")
+                self.notification_system.add_notification(f"使用了{item.name},战斗保护生效！", "success")
                 return result
                 
             elif item.item_type == "skill_blind_box":
                 result = item.use(None, self.player)
                 self.player.remove_item(item_index)
-                # 添加盲盒使用通知，显示详细结果
+                # 添加盲盒使用通知,显示详细结果
                 self.notification_system.add_notification(result, "success")
                 
                 # 调整选择索引到新生成的技能书（背包末尾）
@@ -6578,7 +6515,7 @@ class PokemonGame:
                 return result
                 
             elif item.item_type == "evolution":
-                # 进化道具：先使用，然后选择目标
+                # 进化道具：先使用,然后选择目标
                 self.pending_item_use = {
                     "item_index": item_index,
                     "item": item,
@@ -6588,7 +6525,7 @@ class PokemonGame:
                 return "请选择要进化的顾问"
             
             elif item.item_type == "permanent_boost":
-                # 攻击力/防御力道具：先使用，然后选择目标
+                # 攻击力/防御力道具：先使用,然后选择目标
                 self.pending_item_use = {
                     "item_index": item_index,
                     "item": item,
@@ -6621,7 +6558,7 @@ class PokemonGame:
         self.menu_stack.append(self.state)
         self.menu_buttons = []
         
-        # 检查是否在战斗中，决定使用什么颜色
+        # 检查是否在战斗中,决定使用什么颜色
         is_in_battle = self.state in [GameState.BATTLE, GameState.BOSS_BATTLE, GameState.BATTLE_MOVE_SELECT, GameState.BATTLE_SWITCH_POKEMON]
         button_color = ORANGE if is_in_battle else MINT_GREEN
         hover_color = ORANGE if is_in_battle else MINT_GREEN_HOVER
@@ -6763,7 +6700,7 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 self.skill_forget_dialog = None
                 
-                return f"{target.name}忘记了{old_move['name']}，学会了{new_skill}！"
+                return f"{target.name}忘记了{old_move['name']},学会了{new_skill}！"
         
         return "无效的选择"
     
@@ -6787,8 +6724,8 @@ class PokemonGame:
             # 统一的按钮位置计算
             bottom_area_height = int(SCREEN_HEIGHT * 0.4)
             bottom_area_y = SCREEN_HEIGHT - bottom_area_height
-            button_width = int(SCREEN_WIDTH * 0.22)   # 按钮宽度，留些边距
-            button_area_x = SCREEN_WIDTH - button_width - 5  # 右对齐，距离边框5像素
+            button_width = int(SCREEN_WIDTH * 0.22)   # 按钮宽度,留些边距
+            button_area_x = SCREEN_WIDTH - button_width - 5  # 右对齐,距离边框5像素
             button_height = 40
             button_spacing = 10
             
@@ -6808,7 +6745,7 @@ class PokemonGame:
                     Button(button_area_x, bottom_area_y + 20 + (button_height + button_spacing) * 3, button_width, button_height, "逃跑", "flee", BLACK, ORANGE, ORANGE)
                 ]
             elif prev_state == GameState.BATTLE_MOVE_SELECT:
-                # 不应该从技能选择界面返回到技能选择界面，这里应该重新创建战斗按钮
+                # 不应该从技能选择界面返回到技能选择界面,这里应该重新创建战斗按钮
                 if self.is_boss_battle:
                     self.battle_buttons = [
                         Button(button_area_x, bottom_area_y + 20, button_width, button_height, "战斗", "fight", BLACK, ORANGE, ORANGE),
@@ -6858,9 +6795,9 @@ class PokemonGame:
             player_y = MAP_START_Y + self.player.x * TILE_SIZE + 10
             screen.blit(self.images.player, (player_x, player_y))
             
-            # 绘制顶部菜单按钮 - 薄荷绿色，透明度40%，文字为黑色
+            # 绘制顶部菜单按钮 - 薄荷绿色,透明度40%,文字为黑色
             menu_surface = pygame.Surface((100, 40), pygame.SRCALPHA)
-            menu_surface.fill((152, 251, 152, 102))  # 薄荷绿色，40%透明度
+            menu_surface.fill((152, 251, 152, 102))  # 薄荷绿色,40%透明度
             screen.blit(menu_surface, (10, 10))
             pygame.draw.rect(screen, BLACK, (10, 10, 100, 40), 2)
             
@@ -6870,7 +6807,7 @@ class PokemonGame:
             
             # 绘制金币信息
             money_surface = pygame.Surface((150, 40), pygame.SRCALPHA)
-            money_surface.fill((152, 251, 152, 102))  # 薄荷绿色，40%透明度
+            money_surface.fill((152, 251, 152, 102))  # 薄荷绿色,40%透明度
             screen.blit(money_surface, (SCREEN_WIDTH - 160, 10))
             pygame.draw.rect(screen, BLACK, (SCREEN_WIDTH - 160, 10, 150, 40), 2)
             
@@ -6878,13 +6815,13 @@ class PokemonGame:
             money_text = money_font.render(f"金币: {self.player.money}", True, BLACK)
             screen.blit(money_text, (SCREEN_WIDTH - 155, 20))
             
-            # 绘制UT条 - 黑色边框，蓝色半透明
+            # 绘制UT条 - 黑色边框,蓝色半透明
             ut_percentage = self.player.ut / 100.0 if self.player.ut > 0 else 0
             # 绘制背景
             pygame.draw.rect(screen, GRAY, (120, 10, 200, 40))
             # 绘制蓝色半透明UT条
             ut_surface = pygame.Surface((int(200 * ut_percentage), 40), pygame.SRCALPHA)
-            ut_surface.fill((0, 0, 255, 128))  # 蓝色，50%透明度
+            ut_surface.fill((0, 0, 255, 128))  # 蓝色,50%透明度
             screen.blit(ut_surface, (120, 10))
             # 绘制黑色边框
             pygame.draw.rect(screen, BLACK, (120, 10, 200, 40), 2)
@@ -6966,14 +6903,14 @@ class PokemonGame:
             screen.blit(hp_surface, (enemy_x + 2, enemy_status_y + 2))
             pygame.draw.rect(screen, BLACK, (enemy_x, enemy_status_y, enemy_hp_width, enemy_hp_height), 2)
             
-            # HP文字 - 显示在HP条内部居中，带半透明白色背景
+            # HP文字 - 显示在HP条内部居中,带半透明白色背景
             hp_text = f"HP: {enemy_pkm.hp}/{enemy_pkm.max_hp}"
             hp_text_surface = battle_info_font.render(hp_text, True, BLACK)
             hp_text_rect = hp_text_surface.get_rect(center=(enemy_x + enemy_hp_width // 2, enemy_status_y + enemy_hp_height // 2))
             
             # 绘制HP文字的半透明白色背景
             hp_text_bg = pygame.Surface((hp_text_rect.width + 6, hp_text_rect.height + 2), pygame.SRCALPHA)
-            hp_text_bg.fill((255, 255, 255, 128))  # 白色，50%透明度
+            hp_text_bg.fill((255, 255, 255, 128))  # 白色,50%透明度
             screen.blit(hp_text_bg, (hp_text_rect.x - 3, hp_text_rect.y - 1))
             
             screen.blit(hp_text_surface, hp_text_rect)
@@ -6986,18 +6923,18 @@ class PokemonGame:
             pygame.draw.rect(screen, WHITE, (enemy_x, enemy_status_y, enemy_sp_width, enemy_sp_height))
             sp_fill_width = max(0, min(int((enemy_sp_width - 4) * enemy_pkm.get_sp_percentage()), enemy_sp_width - 4))
             sp_surface = pygame.Surface((sp_fill_width, enemy_sp_height - 4), pygame.SRCALPHA)
-            sp_surface.fill((*PURPLE, 128))  # 紫色，50%透明度
+            sp_surface.fill((*PURPLE, 128))  # 紫色,50%透明度
             screen.blit(sp_surface, (enemy_x + 2, enemy_status_y + 2))
             pygame.draw.rect(screen, BLACK, (enemy_x, enemy_status_y, enemy_sp_width, enemy_sp_height), 2)
             
-            # SP文字 - 显示在SP条内部居中，带半透明白色背景
+            # SP文字 - 显示在SP条内部居中,带半透明白色背景
             sp_text = f"SP: {enemy_pkm.sp}/{enemy_pkm.max_sp}"
             sp_text_surface = battle_info_font.render(sp_text, True, BLACK)
             sp_text_rect = sp_text_surface.get_rect(center=(enemy_x + enemy_sp_width // 2, enemy_status_y + enemy_sp_height // 2))
             
             # 绘制SP文字的半透明白色背景
             sp_text_bg = pygame.Surface((sp_text_rect.width + 6, sp_text_rect.height + 2), pygame.SRCALPHA)
-            sp_text_bg.fill((255, 255, 255, 128))  # 白色，50%透明度
+            sp_text_bg.fill((255, 255, 255, 128))  # 白色,50%透明度
             screen.blit(sp_text_bg, (sp_text_rect.x - 3, sp_text_rect.y - 1))
             
             screen.blit(sp_text_surface, sp_text_rect)
@@ -7013,12 +6950,12 @@ class PokemonGame:
             # 敌方标识已移除
             
             # 绘制敌方状态图标（在头像右侧） - 敌方对自己的效果
-            enemy_status_icon_x = min(SCREEN_WIDTH - 100, enemy_x + 160)  # 头像右侧，但不超出屏幕边界
+            enemy_status_icon_x = min(SCREEN_WIDTH - 100, enemy_x + 160)  # 头像右侧,但不超出屏幕边界
             enemy_status_icon_y = enemy_status_y + 10  # 头像上方一点
             draw_status_icons(screen, enemy_pkm, enemy_status_icon_x, enemy_status_icon_y, caster_filter="self")
             
             # 绘制我方对敌方施加的状态图标（在敌方头像左侧） - 与我方对敌方的效果对称
-            enemy_left_icon_x = max(20, enemy_x - 200)  # 头像左侧，但不超出屏幕边界
+            enemy_left_icon_x = max(20, enemy_x - 200)  # 头像左侧,但不超出屏幕边界
             enemy_left_icon_y = enemy_status_y + 10  # 头像上方一点
             draw_status_icons(screen, enemy_pkm, enemy_left_icon_x, enemy_left_icon_y, caster_filter="enemy")
             
@@ -7030,7 +6967,7 @@ class PokemonGame:
                 
                 # 绘制台词文字框背景（半透明黑色）
                 line_box_surface = pygame.Surface((line_box_width, line_box_height), pygame.SRCALPHA)
-                line_box_surface.fill((0, 0, 0, 180))  # 黑色，70%透明度
+                line_box_surface.fill((0, 0, 0, 180))  # 黑色,70%透明度
                 screen.blit(line_box_surface, (enemy_x, line_box_y))
                 
                 # 绘制台词文字框边框
@@ -7049,7 +6986,7 @@ class PokemonGame:
                 player_status_y = 50
                 
                 # 玩家状态文字（16号字）- 调整文本位置向左移动以完全显示
-                player_text_x = SCREEN_WIDTH - 320  # 与HP条左侧对齐，调整我方顾问文本位置
+                player_text_x = SCREEN_WIDTH - 320  # 与HP条左侧对齐,调整我方顾问文本位置
                 player_advantages = ", ".join(player_pkm.advantages)
                 player_disadvantages = ", ".join(player_pkm.disadvantages)
                 player_status_text = f"你的 {player_pkm.name} (Lv.{player_pkm.level})"
@@ -7074,14 +7011,14 @@ class PokemonGame:
                 screen.blit(player_hp_surface, (player_hp_x + 2, player_status_y + 2))
                 pygame.draw.rect(screen, BLACK, (player_hp_x, player_status_y, player_hp_width, player_hp_height), 2)
                 
-                # HP文字 - 显示在HP条内部居中，带半透明白色背景
+                # HP文字 - 显示在HP条内部居中,带半透明白色背景
                 player_hp_text = f"HP: {player_pkm.hp}/{player_pkm.max_hp}"
                 player_hp_text_surface = battle_info_font.render(player_hp_text, True, BLACK)
                 player_hp_text_rect = player_hp_text_surface.get_rect(center=(player_hp_x + player_hp_width // 2, player_status_y + player_hp_height // 2))
                 
                 # 绘制HP文字的半透明白色背景
                 player_hp_text_bg = pygame.Surface((player_hp_text_rect.width + 6, player_hp_text_rect.height + 2), pygame.SRCALPHA)
-                player_hp_text_bg.fill((255, 255, 255, 128))  # 白色，50%透明度
+                player_hp_text_bg.fill((255, 255, 255, 128))  # 白色,50%透明度
                 screen.blit(player_hp_text_bg, (player_hp_text_rect.x - 3, player_hp_text_rect.y - 1))
                 
                 screen.blit(player_hp_text_surface, player_hp_text_rect)
@@ -7096,18 +7033,18 @@ class PokemonGame:
                 pygame.draw.rect(screen, WHITE, (player_sp_x, player_status_y, player_sp_width, player_sp_height))
                 player_sp_fill_width = max(0, min(int((player_sp_width - 4) * player_pkm.get_sp_percentage()), player_sp_width - 4))
                 player_sp_surface = pygame.Surface((player_sp_fill_width, player_sp_height - 4), pygame.SRCALPHA)
-                player_sp_surface.fill((*PURPLE, 128))  # 紫色，50%透明度
+                player_sp_surface.fill((*PURPLE, 128))  # 紫色,50%透明度
                 screen.blit(player_sp_surface, (player_sp_x + 2, player_status_y + 2))
                 pygame.draw.rect(screen, BLACK, (player_sp_x, player_status_y, player_sp_width, player_sp_height), 2)
                 
-                # SP文字 - 显示在SP条内部居中，带半透明白色背景
+                # SP文字 - 显示在SP条内部居中,带半透明白色背景
                 player_sp_text = f"SP: {player_pkm.sp}/{player_pkm.max_sp}"
                 player_sp_text_surface = battle_info_font.render(player_sp_text, True, BLACK)
                 player_sp_text_rect = player_sp_text_surface.get_rect(center=(player_sp_x + player_sp_width // 2, player_status_y + player_sp_height // 2))
                 
                 # 绘制SP文字的半透明白色背景
                 player_sp_text_bg = pygame.Surface((player_sp_text_rect.width + 6, player_sp_text_rect.height + 2), pygame.SRCALPHA)
-                player_sp_text_bg.fill((255, 255, 255, 128))  # 白色，50%透明度
+                player_sp_text_bg.fill((255, 255, 255, 128))  # 白色,50%透明度
                 screen.blit(player_sp_text_bg, (player_sp_text_rect.x - 3, player_sp_text_rect.y - 1))
                 
                 screen.blit(player_sp_text_surface, player_sp_text_rect)
@@ -7124,27 +7061,27 @@ class PokemonGame:
                 
                 # 绘制我方状态图标（在头像左侧） - 我方对自己的效果
                 # 确保我方自身增益图标显示在我方头像左侧
-                player_status_icon_x = max(player_x - 160, SCREEN_WIDTH // 2)  # 头像左侧，但不要太靠左影响敌方区域
+                player_status_icon_x = max(player_x - 160, SCREEN_WIDTH // 2)  # 头像左侧,但不要太靠左影响敌方区域
                 player_status_icon_y = player_status_y + 10  # 头像上方一点
                 draw_status_icons(screen, player_pkm, player_status_icon_x, player_status_icon_y, caster_filter="self")
                 
                 # 绘制敌方对我方施加的状态图标（在我方头像右侧） - 与敌方对自己的效果对称
-                player_right_icon_x = min(SCREEN_WIDTH - 100, player_x + 160)  # 头像右侧，但不超出屏幕边界
+                player_right_icon_x = min(SCREEN_WIDTH - 100, player_x + 160)  # 头像右侧,但不超出屏幕边界
                 player_right_icon_y = player_status_y + 10  # 头像上方一点
                 draw_status_icons(screen, player_pkm, player_right_icon_x, player_right_icon_y, caster_filter="enemy")
                 
                 # 我方必杀技台词文字框
                 if self.ally_line_display and self.ally_ultimate_line:
                     line_box_y = player_status_y + 160  # 头像下方10像素
-                    line_box_width = 300  # 与HP条宽度相同，与敌方对称
+                    line_box_width = 300  # 与HP条宽度相同,与敌方对称
                     line_box_height = 60
                     
-                    # 使用与HP条相同的x位置，实现对称布局
+                    # 使用与HP条相同的x位置,实现对称布局
                     line_box_x = SCREEN_WIDTH - 320  # 与HP条左侧对齐
                     
                     # 绘制台词文字框背景（半透明蓝色）
                     line_box_surface = pygame.Surface((line_box_width, line_box_height), pygame.SRCALPHA)
-                    line_box_surface.fill((0, 100, 200, 180))  # 蓝色，70%透明度
+                    line_box_surface.fill((0, 100, 200, 180))  # 蓝色,70%透明度
                     screen.blit(line_box_surface, (line_box_x, line_box_y))
                     
                     # 绘制台词文字框边框
@@ -7292,7 +7229,7 @@ class PokemonGame:
             
             # 绘制提示框背景
             tooltip_surface = pygame.Surface((tooltip_width, tooltip_height), pygame.SRCALPHA)
-            tooltip_surface.fill((255, 255, 255, 240))  # 白色，94%不透明
+            tooltip_surface.fill((255, 255, 255, 240))  # 白色,94%不透明
             screen.blit(tooltip_surface, (tooltip_x, tooltip_y))
             
             # 绘制边框
@@ -7328,7 +7265,7 @@ class PokemonGame:
         elif tile_type == TILE_TYPES['chest']:
             # 检查宝箱是否已经打开
             if self.map.is_chest_opened(self.player.x, self.player.y):
-                # 宝箱已经打开，什么都不做
+                # 宝箱已经打开,什么都不做
                 return
             
             # 宝箱奖励
@@ -7345,7 +7282,7 @@ class PokemonGame:
                         self.player.money += reward_value
                         reward_messages.append(f"获得了{reward_value}金币！")
             else:
-                # 如果map.open_chest没有返回奖励，使用原来的随机奖励逻辑作为备用
+                # 如果map.open_chest没有返回奖励,使用原来的随机奖励逻辑作为备用
                 reward_type = random.random()
                 
                 if reward_type < 0.4:  # 40%概率获得金钱
@@ -7429,12 +7366,12 @@ class PokemonGame:
             
             # 动态计算消息框尺寸
             base_width = 650
-            base_height = max(300, min(600, 80 + line_count * 25 + 80))  # 最小300，最大600
+            base_height = max(300, min(600, 80 + line_count * 25 + 80))  # 最小300,最大600
             msg_width, msg_height = base_width, base_height
             msg_x = (SCREEN_WIDTH - msg_width) // 2
             msg_y = (SCREEN_HEIGHT - msg_height) // 2
             
-            # 判断是否是训练中心消息，使用特殊样式
+            # 判断是否是训练中心消息,使用特殊样式
             is_training_message = any(keyword in message_text for keyword in ["HP恢复", "寄养", "领取", "训练中心"])
             is_chest_message = "宝箱" in message_text
             
@@ -7471,12 +7408,12 @@ class PokemonGame:
                     if text_y + 22 > msg_y + max_text_height:  # 防止文本超出消息框
                         break
                     
-                    # 处理过长的行，进行换行
-                    if len(line) > 50:  # 如果行太长，截断显示
+                    # 处理过长的行,进行换行
+                    if len(line) > 50:  # 如果行太长,截断显示
                         line = line[:47] + "..."
                     
                     text_surface = text_font.render(line, True, text_color)
-                    # 左对齐显示，而不是居中
+                    # 左对齐显示,而不是居中
                     screen.blit(text_surface, (msg_x + 20, text_y))
             
             # 显示提示文本
@@ -7490,7 +7427,7 @@ class PokemonGame:
 
     def draw_menu(self):
         try:
-            # 检查是否在战斗中打开背包，决定背景颜色
+            # 检查是否在战斗中打开背包,决定背景颜色
             is_battle_menu = len(self.menu_stack) > 0 and self.menu_stack[-1] in [GameState.BATTLE, GameState.BOSS_BATTLE]
             
             if is_battle_menu and self.state == GameState.MENU_BACKPACK:
@@ -7498,7 +7435,7 @@ class PokemonGame:
                 overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), ORANGE, 180)
                 screen.blit(overlay, (0, 0))
                 
-                # 绘制菜单标题栏 - 橙色，40%透明度
+                # 绘制菜单标题栏 - 橙色,40%透明度
                 title_surface = SurfaceFactory.create_transparent_surface((SCREEN_WIDTH//2, 60), ORANGE, 102)
                 screen.blit(title_surface, (SCREEN_WIDTH//4, 50))
                 pygame.draw.rect(screen, BLACK, (SCREEN_WIDTH//4, 50, SCREEN_WIDTH//2, 60), 2)
@@ -7507,7 +7444,7 @@ class PokemonGame:
                 overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), MINT_GREEN, 180)
                 screen.blit(overlay, (0, 0))
                 
-                # 绘制菜单标题栏 - 薄荷绿色，40%透明度
+                # 绘制菜单标题栏 - 薄荷绿色,40%透明度
                 title_surface = SurfaceFactory.create_transparent_surface((SCREEN_WIDTH//2, 60), MINT_GREEN, 102)
                 screen.blit(title_surface, (SCREEN_WIDTH//4, 50))
                 pygame.draw.rect(screen, BLACK, (SCREEN_WIDTH//4, 50, SCREEN_WIDTH//2, 60), 2)
@@ -7557,7 +7494,7 @@ class PokemonGame:
                 title_height = 60
                 title_x = SCREEN_WIDTH//2 - title_width//2
                 title_surface = pygame.Surface((title_width, title_height), pygame.SRCALPHA)
-                title_surface.fill((152, 251, 152, 102))  # 薄荷绿色，40%透明度
+                title_surface.fill((152, 251, 152, 102))  # 薄荷绿色,40%透明度
                 screen.blit(title_surface, (title_x, 50))
                 pygame.draw.rect(screen, BLACK, (title_x, 50, title_width, title_height), 2)
                 
@@ -7589,8 +7526,8 @@ class PokemonGame:
                     info_texts.append("")  # 技能之间的空行
                     # 检查技能是否存在于技能管理器中
                     skill = skill_manager.get_skill(move["name"])
-                    if skill and move["name"] in NEW_SKILLS_DATABASE:
-                        skill_data = NEW_SKILLS_DATABASE[move["name"]]
+                    if skill and move["name"] in UNIFIED_SKILLS_DATABASE:
+                        skill_data = UNIFIED_SKILLS_DATABASE[move["name"]]
                         category_name = {
                             SkillCategory.DIRECT_DAMAGE: "直接伤害",
                             SkillCategory.CONTINUOUS_DAMAGE: "连续伤害", 
@@ -7705,7 +7642,7 @@ class PokemonGame:
                 content_area_y = 150
                 content_area_height = SCREEN_HEIGHT - 200  # 留出空间给按钮
                 content_area_x = 240  # 内容区域起始x位置（顾问图片右侧）
-                content_width = SCREEN_WIDTH - content_area_x - 20  # 内容宽度，留出20像素给滚动条
+                content_width = SCREEN_WIDTH - content_area_x - 20  # 内容宽度,留出20像素给滚动条
                 
                 # 计算总内容高度
                 total_content_height = 0
@@ -7718,7 +7655,7 @@ class PokemonGame:
                 
                 # 创建可滚动的内容表面
                 if total_content_height > content_area_height:
-                    # 内容超出可见区域，需要滚动
+                    # 内容超出可见区域,需要滚动
                     max_scroll = max(0, total_content_height - content_area_height)
                     self.detail_scroll_offset = max(0, min(self.detail_scroll_offset, max_scroll))
                     
@@ -7748,7 +7685,7 @@ class PokemonGame:
                         pygame.draw.rect(screen, (128, 128, 128), (scrollbar_x, scrollbar_y, 10, scrollbar_height))
                         pygame.draw.rect(screen, BLACK, (scrollbar_x, content_area_y, 10, content_area_height), 1)
                 else:
-                    # 内容未超出，正常显示
+                    # 内容未超出,正常显示
                     current_y = content_area_y
                     for text in info_texts:
                         current_y = draw_multiline_text(
@@ -7811,7 +7748,7 @@ class PokemonGame:
                 
                 # 检查是否是技能忘记对话框
                 if hasattr(self, 'skill_forget_dialog') and self.skill_forget_dialog and self.skill_forget_dialog['active']:
-                    title = menu_font.render("workload不够用了，让我忘记一件事情", True, BLACK)
+                    title = menu_font.render("workload不够用了,让我忘记一件事情", True, BLACK)
                     screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, 65))
                     
                     # 显示要学习的技能信息
@@ -7850,7 +7787,7 @@ class PokemonGame:
             prev_x, prev_y = self.player.x, self.player.y
             # 消息状态处理 - 按任意键继续
             if self.state == GameState.MESSAGE:
-                # 检查消息来源，决定返回到哪个状态
+                # 检查消息来源,决定返回到哪个状态
                 if hasattr(self, 'battle_result') and self.battle_result and any(keyword in self.battle_result for keyword in ["HP恢复", "寄养", "领取", "训练中心"]):
                     self.state = GameState.TRAINING_CENTER  # 训练中心消息返回训练中心
                 else:
@@ -7934,7 +7871,7 @@ class PokemonGame:
             
             elif self.state == GameState.MENU_BACKPACK:
                 if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
-                    # 在弹窗状态下，ESC键关闭弹窗
+                    # 在弹窗状态下,ESC键关闭弹窗
                     if event.key == K_ESCAPE:
                         self.backpack_popup_state = False
                 elif self.player.backpack:
@@ -7999,7 +7936,7 @@ class PokemonGame:
                 for button in self.move_buttons:
                     button.check_hover(event.pos)
                     
-                    # 如果是技能按钮且正在悬浮，获取技能信息
+                    # 如果是技能按钮且正在悬浮,获取技能信息
                     if (button.active and button.action and button.action.startswith("move_") and 
                         self.state == GameState.BATTLE_MOVE_SELECT):
                         try:
@@ -8022,8 +7959,8 @@ class PokemonGame:
                                 if skill and hasattr(skill, 'description') and skill.description:
                                     skill_info["description"] = skill.description
                                     skill_info["sp_cost"] = skill.sp_cost
-                                elif move["name"] in NEW_SKILLS_DATABASE:
-                                    skill_data = NEW_SKILLS_DATABASE[move["name"]]
+                                elif move["name"] in UNIFIED_SKILLS_DATABASE:
+                                    skill_data = UNIFIED_SKILLS_DATABASE[move["name"]]
                                     skill_info["description"] = skill_data.get("description", "")
                                     skill_info["sp_cost"] = skill_data.get("sp_cost", 0)
                                 else:
@@ -8160,7 +8097,7 @@ class PokemonGame:
                                 self.skill_drag_start_y = event.pos[1]
                                 self.skill_drag_start_offset = self.skill_scroll_offset
                             else:
-                                # 点击滚动条其他位置，跳转到相应位置
+                                # 点击滚动条其他位置,跳转到相应位置
                                 player_pkm = self.player.get_active_pokemon()
                                 if player_pkm and hasattr(player_pkm, 'moves') and player_pkm.moves:
                                     total_skills = len(player_pkm.moves)
@@ -8178,7 +8115,7 @@ class PokemonGame:
                                         if new_offset != self.skill_scroll_offset:
                                             self.skill_scroll_offset = new_offset
                                             self.create_move_buttons()  # 重新创建按钮
-                            return  # 滚动条处理了事件，不再处理按钮点击
+                            return  # 滚动条处理了事件,不再处理按钮点击
                     
                     for button in self.move_buttons:
                         if button.check_click(event.pos) and button.action:
@@ -8306,10 +8243,10 @@ class PokemonGame:
                                 self.state = GameState.TRAINING_CENTER
                             elif button.action == "catch_normal":
                                 self.process_battle_turn(action="catch", ball_type="normal")
-                                # 不调用go_back()，让process_battle_turn处理状态转换
+                                # 不调用go_back(),让process_battle_turn处理状态转换
                             elif button.action == "catch_master":
                                 self.process_battle_turn(action="catch", ball_type="master")
-                                # 不调用go_back()，让process_battle_turn处理状态转换
+                                # 不调用go_back(),让process_battle_turn处理状态转换
                 
                 elif self.state == GameState.CAPTURE_SELECT:
                     for button in self.menu_buttons:
@@ -8318,10 +8255,10 @@ class PokemonGame:
                                 self.go_back()
                             elif button.action == "catch_normal":
                                 self.process_battle_turn(action="catch", ball_type="normal")
-                                # 不调用go_back()，让process_battle_turn处理状态转换
+                                # 不调用go_back(),让process_battle_turn处理状态转换
                             elif button.action == "catch_master":
                                 self.process_battle_turn(action="catch", ball_type="master")
-                                # 不调用go_back()，让process_battle_turn处理状态转换
+                                # 不调用go_back(),让process_battle_turn处理状态转换
                 
                 elif self.state == GameState.MENU_TARGET_SELECTION:
                     for button in self.menu_buttons:
@@ -8351,10 +8288,10 @@ class PokemonGame:
                                 self.go_back()
                             elif button.action == "catch_normal":
                                 self.process_battle_turn(action="catch", ball_type="normal")
-                                # 不调用go_back()，让process_battle_turn处理状态转换
+                                # 不调用go_back(),让process_battle_turn处理状态转换
                             elif button.action == "catch_master":
                                 self.process_battle_turn(action="catch", ball_type="master")
-                                # 不调用go_back()，让process_battle_turn处理状态转换
+                                # 不调用go_back(),让process_battle_turn处理状态转换
                 
                 elif self.state == GameState.SHOP:
                     # 检查是否在购买弹窗状态
@@ -8515,7 +8452,7 @@ class PokemonGame:
             shop_bg = ImageLoader.load_image("images/ui/shop_bg.png", (SCREEN_WIDTH, SCREEN_HEIGHT))
             screen.blit(shop_bg, (0, 0))
         except (pygame.error, FileNotFoundError, OSError):
-            # 如果背景图片不存在，使用默认背景
+            # 如果背景图片不存在,使用默认背景
             screen.fill((139, 69, 19))  # 棕色背景
             # 添加淡紫色半透明背景框
             purple_surface = pygame.Surface((SCREEN_WIDTH-100, SCREEN_HEIGHT-100), pygame.SRCALPHA)
@@ -8530,7 +8467,7 @@ class PokemonGame:
         
         # 绘制副标题
         subtitle_font = FontManager.get_font(16)
-        subtitle_text = subtitle_font.render("不论是小卖部还是售货机，冰冷的可乐永远是你在客户现场最大的慰藉", True, BLACK)
+        subtitle_text = subtitle_font.render("不论是小卖部还是售货机,冰冷的可乐永远是你在客户现场最大的慰藉", True, BLACK)
         screen.blit(subtitle_text, (SCREEN_WIDTH//2 - subtitle_text.get_width()//2, 75))
         
         # 绘制玩家金钱信息
@@ -8871,7 +8808,7 @@ class PokemonGame:
                 if heal_amount > 0:
                     return f"{target.name}的HP从{target.hp}恢复到{target.hp + heal_amount}"
                 else:
-                    return f"{target.name}的HP已满，无需恢复"
+                    return f"{target.name}的HP已满,无需恢复"
             else:
                 return "所有顾问HP已满"
                 
@@ -8903,7 +8840,7 @@ class PokemonGame:
                 restore_amount = min(30, self.player.max_ut - self.player.ut)  # 假设恢复30UT
                 return f"UT从{self.player.ut}恢复到{self.player.ut + restore_amount}"
             else:
-                return "UT已满，无需恢复"
+                return "UT已满,无需恢复"
                 
         elif item.item_type == "pokeball":
             return "只能在战斗中使用"
@@ -8937,7 +8874,7 @@ class PokemonGame:
             
         elif item.item_type == "special":
             # 特殊物品可能需要特定的使用方式
-            return "这是特殊物品，可能需要在特定情况下使用"
+            return "这是特殊物品,可能需要在特定情况下使用"
         else:
             return "似乎没有任何作用"
     
@@ -8970,7 +8907,7 @@ class PokemonGame:
             popup_width - 40
         )
         
-        # 如果没有效果，只显示取消按钮
+        # 如果没有效果,只显示取消按钮
         if effect_text == "似乎没有任何作用":
             cancel_rect = pygame.Rect(popup_x + popup_width//2 - 75, popup_y + popup_height - 80, 150, 40)
             pygame.draw.rect(screen, (255, 182, 193), cancel_rect)
@@ -9121,7 +9058,7 @@ class PokemonGame:
             tc_bg = ImageLoader.load_image("images/ui/training_center_bg.png", (SCREEN_WIDTH, SCREEN_HEIGHT))
             screen.blit(tc_bg, (0, 0))
         except (pygame.error, FileNotFoundError, OSError):
-            # 如果背景图片不存在，使用默认背景
+            # 如果背景图片不存在,使用默认背景
             screen.fill((100, 149, 237))  # 蓝色背景
             # 添加薄荷绿半透明背景框
             mint_surface = pygame.Surface((SCREEN_WIDTH-100, SCREEN_HEIGHT-100), pygame.SRCALPHA)
@@ -9443,9 +9380,9 @@ if __name__ == "__main__":
         
         print("游戏启动中...")
         game = PokemonGame()
-        print("游戏初始化完成，开始运行...")
+        print("游戏初始化完成,开始运行...")
         game.run()
-        print("游戏循环结束，正在清理资源...")
+        print("游戏循环结束,正在清理资源...")
         
     except KeyboardInterrupt:
         print("用户中断程序")
@@ -9459,9 +9396,9 @@ if __name__ == "__main__":
             pygame.quit()
             print("Pygame已安全关闭")
         except:
-            print("Pygame关闭时出现问题，但程序仍会退出")
+            print("Pygame关闭时出现问题,但程序仍会退出")
         
         try:
             sys.exit(0)
         except SystemExit:
-            pass  # 正常的退出异常，忽略
+            pass  # 正常的退出异常,忽略
