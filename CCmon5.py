@@ -1439,17 +1439,17 @@ class SkillManager:
         if not skill:
             return None, [f"技能 {skill_name} 不存在"]
         
-        # 检查SP消耗
-        if skill.sp_cost > 0:
-            if not user_pokemon.consume_sp(skill.sp_cost):
-                return None, [f"{user_pokemon.name}的SP不足,无法使用{skill_name}！"]
-        
         messages = []
         total_damage = 0
         
-        # 统一使用新的技能系统逻辑
+        # 统一使用新的技能系统逻辑（让Pokemon的use_skill方法处理SP消耗）
         if skill_name in UNIFIED_SKILLS_DATABASE:
             return self._use_unified_skill_logic(skill_name, user_pokemon, target_pokemon, allies)
+        
+        # 对于不在UNIFIED_SKILLS_DATABASE中的技能，在这里检查SP消耗
+        if skill.sp_cost > 0:
+            if not user_pokemon.consume_sp(skill.sp_cost):
+                return None, [f"{user_pokemon.name}的SP不足,无法使用{skill_name}！"]
         
         # 显示台词
         messages.append(f'"{skill.quote}"')
@@ -2230,7 +2230,7 @@ class PokemonConfig:
             "disadvantages": ["节操", "networking"],
             "growth_type": "medium_slow",
             "moves": [
-                {"name": "酒后逃逸", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.SELF_BUFF},
+                {"name": "酒后逃逸", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.SELF_BUFF, "sp_cost": 100},
                 {"name": "织条毯子", "power": 24, "type": ['共情', '节操']},
                 {"name": "酒精打击", "power": 45, "type": ['networking', '体力'], "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害,有18%几率造成1.5倍伤害"},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
@@ -2242,7 +2242,7 @@ class PokemonConfig:
             "disadvantages": ["PS", "韧性", "content", "耐心"],
             "growth_type": "medium_fast",
             "moves": [
-                {"name": "小嘴抹毒", "power": 40, "type": "networking", "category": SkillCategory.DOT},
+                {"name": "小嘴抹毒", "power": 40, "type": "networking", "category": SkillCategory.DOT, "sp_cost": 80},
                 {"name": "快乐小狗", "power": 28, "type": "共情", "category": SkillCategory.HOT},
                 {"name": "茶颜悦色", "power": 25, "type": "共情", "category": SkillCategory.HEAL},
                 {"name": "躺平", "power": 35, "type": "节操", "category": SkillCategory.HEAL}
@@ -2254,11 +2254,11 @@ class PokemonConfig:
             "disadvantages": ["PS", "韧性", "content", "耐心"],
             "growth_type": "medium_slow",
             "moves": [
-                {"name": "小嘴抹毒", "power": 40, "type": "networking", "category": SkillCategory.DOT},
+                {"name": "小嘴抹毒", "power": 40, "type": "networking", "category": SkillCategory.DOT, "sp_cost": 80},
                 {"name": "快乐小狗", "power": 28, "type": "共情", "category": SkillCategory.HOT},
                 {"name": "茶颜悦色", "power": 25, "type": "共情", "category": SkillCategory.HEAL},
                 {"name": "躺平", "power": 35, "type": "节操", "category": SkillCategory.HEAL},
-                {"name": "绝世骰手", "power": 120, "type": ['networking', '节操'], "category": SkillCategory.SPECIAL_ATTACK},
+                {"name": "绝世骰手", "power": 120, "type": ['networking', '节操'], "category": SkillCategory.SPECIAL_ATTACK, "sp_cost": 90},
                 {"name": "雪松杀手", "power": 85, "type": "勇气", "category": SkillCategory.DIRECT_ATTACK},
                 {"name": "钓鱼执法", "power": 75, "type": "networking", "category": SkillCategory.ENEMY_DEBUFF},
                 {"name": "PTO", "power": 0, "type": "勇气", "category": SkillCategory.DIRECT_HEAL}
@@ -2579,7 +2579,7 @@ class PokemonConfig:
                 {"name": "信不信我投诉你", "power": 75, "type": "节操"},
                 {"name": "PUA", "power": 15, "type": ["共情", "节操"]},
                 {"name": "开始抬杠", "power": 20, "type": ["结构化", "PS", "节操"]},
-                {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT}
+                {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT, "sp_cost": 45}
             ]
         },
         "平静的老李": {
@@ -2709,10 +2709,10 @@ class PokemonConfig:
                 {"name": "织条毯子", "power": 0, "type": ["共情", "节操"], "category": SkillCategory.CONTINUOUS_HEAL},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
                 {"name": "鼓舞", "power": 0, "type": "共情", "category": SkillCategory.TEAM_BUFF},
-                {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT},
+                {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT, "sp_cost": 45},
                 {"name": "躺平才是王道", "power": 0, "type": ["content", "勇气"], "category": SkillCategory.SELF_BUFF},
                 {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
-                {"name": "天下兵马大元帅", "power": 0, "type": ["勇气", "韧性", "体力"], "category": SkillCategory.ULTIMATE}
+                {"name": "天下兵马大元帅", "power": 0, "type": ["勇气", "韧性", "体力"], "category": SkillCategory.SPECIAL, "sp_cost": 90}
             ]
         },
         "拉膜圣手李小萱": {
@@ -2724,10 +2724,10 @@ class PokemonConfig:
                 {"name": "织条毯子", "power": 0, "type": ["共情", "节操"], "category": SkillCategory.CONTINUOUS_HEAL},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
                 {"name": "鼓舞", "power": 0, "type": "共情", "category": SkillCategory.TEAM_BUFF},
-                {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT},
+                {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT, "sp_cost": 45},
                 {"name": "躺平才是王道", "power": 0, "type": ["content", "勇气"], "category": SkillCategory.SELF_BUFF},
-                {"name": "无锡的女武神", "power": 0, "type": ["勇气", "韧性", "networking"], "category": SkillCategory.SELF_BUFF},
-                {"name": "天下兵马大元帅", "power": 0, "type": ["勇气", "韧性", "体力"], "category": SkillCategory.ULTIMATE}
+                {"name": "无锡的女武神", "power": 0, "type": ["勇气", "韧性", "networking"], "category": SkillCategory.SELF_BUFF, "sp_cost": 95},
+                {"name": "天下兵马大元帅", "power": 0, "type": ["勇气", "韧性", "体力"], "category": SkillCategory.SPECIAL, "sp_cost": 90}
             ]
         },
 
@@ -3095,7 +3095,7 @@ class ItemConfig:
         {"name": "泥潭中的小萱的船票", "description": "用于托马斯二次进化", "item_type": "evolution", "effect": "泥潭中的小萱的船票", "rarity": 0.02, "price": 1600},
         {"name": "穿膜工具套装", "description": "用于半血小萱进化为泥潭中的小萱", "item_type": "evolution", "effect": "穿膜工具套装", "rarity": 0.03, "price": 800},
         {"name": "挤出机灭火套装", "description": "用于泥潭中的小萱进化为拉膜圣手李小萱", "item_type": "evolution", "effect": "挤出机灭火套装", "rarity": 0.02, "price": 1400},
-        {"name": "经验糖果", "description": "获得50点经验值", "item_type": "exp_boost", "effect": 50, "rarity": 0.1, "price": 250},
+        {"name": "经验糖果", "description": "获得2000点经验值", "item_type": "exp_boost", "effect": 2000, "rarity": 0.1, "price": 250},
         {"name": "UT补充剂", "description": "将UT恢复至100点", "item_type": "ut_restore", "effect": 100, "rarity": 0.0, "price": 400},  # 普通战斗不掉落,仅BOSS战掉落
         {"name": "必杀技学习盲盒", "description": "使用后随机生成一个必杀技学习书", "item_type": "skill_blind_box", "effect": None, "rarity": 0.03, "price": 2500}
     ]
@@ -3265,7 +3265,7 @@ class Item:
         elif self.item_type == "attribute_enhancer":
             if target and hasattr(target, 'advantages'):
                 import random
-                all_types = ["共情"]
+                all_types = ["共情", "韧性", "勇气", "耐心", "体力", "networking", "节操", "PS", "结构化", "content"]
                 available_types = [t for t in all_types if t not in target.advantages]
                 if available_types:
                     new_advantage = random.choice(available_types)
@@ -3290,7 +3290,11 @@ class Item:
             return "这个宝石需要对顾问使用"
             
         elif self.item_type == "sp_restore":
-            return "SP系统尚未开放,暂时无法使用"
+            if target and hasattr(target, 'sp') and hasattr(target, 'max_sp'):
+                prev_sp = target.sp
+                target.sp = min(target.max_sp, self.effect)
+                return f"{target.name}的SP从{prev_sp}恢复到{target.sp}点！"
+            return "这个物品需要对顾问使用"
             
         elif self.item_type == "battle_prevent":
             if player:
@@ -4122,6 +4126,15 @@ class Pokemon:
                         # 这里可以添加石化效果的实现
                         messages.append(f"{target.name}被石化了{petrify_turns}回合！")
                     
+                    # 处理SP减少效果
+                    sp_drain = effects.get("sp_drain", 0)
+                    if sp_drain > 0:
+                        # 立即减少目标SP
+                        if hasattr(target, 'sp') and target.sp > 0:
+                            drained_sp = min(target.sp, sp_drain)
+                            target.sp -= drained_sp
+                            messages.append(f"{target.name}的SP减少了{drained_sp}点！")
+                    
                     return damage_per_turn, messages
                 else:
                     messages.append(f"{self.name}使用了{skill_name},但没有产生效果！")
@@ -4536,6 +4549,21 @@ class Pokemon:
             "caster": caster,
             "target": target
         })
+    
+    def clear_all_status_effects(self):
+        """清除所有状态效果（战斗结束时调用）"""
+        self.status_effects = {
+            "continuous_damage": [],
+            "continuous_heal": [],
+            "delayed_effects": [],
+            "stat_modifiers": {
+                "attack_multiplier": 1.0,
+                "defense_multiplier": 1.0,
+                "turns_remaining": 0,
+                "effect_name": "",
+                "caster": "self"
+            }
+        }
     
     def increment_battle_turn(self):
         """增加战斗回合计数器"""
@@ -5630,6 +5658,16 @@ class PokemonGame:
         self.menu_stack.append(self.state)
         self.move_buttons = []
         
+        # 初始化顾问切换滚动相关变量
+        if not hasattr(self, 'advisor_scroll_offset'):
+            self.advisor_scroll_offset = 0
+        if not hasattr(self, 'advisor_scrollbar_area'):
+            self.advisor_scrollbar_area = None
+        if not hasattr(self, 'advisor_slider_area'):
+            self.advisor_slider_area = None
+        if not hasattr(self, 'advisor_scrollbar_dragging'):
+            self.advisor_scrollbar_dragging = False
+        
         # 按钮位于最右侧边框处
         bottom_area_height = int(SCREEN_HEIGHT * 0.4)
         bottom_area_y = SCREEN_HEIGHT - bottom_area_height
@@ -5641,14 +5679,49 @@ class PokemonGame:
         
         available_pokemons = [i for i, pkm in enumerate(self.player.pokemon_team) if not pkm.is_fainted()]
         
-        for idx, i in enumerate(available_pokemons):
+        # 计算可见区域能容纳的最大顾问数
+        available_height = SCREEN_HEIGHT - switch_area_y - 80  # 留出取消按钮空间
+        max_visible_advisors = available_height // (button_height + button_spacing)
+        
+        # 创建滚动条（如果需要）
+        scrollbar_width = 15
+        scrollbar_x = switch_area_x + switch_area_width - scrollbar_width - 5
+        scrollbar_y = switch_area_y
+        scrollbar_height = available_height - 20
+        
+        if len(available_pokemons) > max_visible_advisors:
+            # 需要滚动条
+            max_scroll = max(0, len(available_pokemons) - max_visible_advisors)
+            self.advisor_scroll_offset = max(0, min(self.advisor_scroll_offset, max_scroll))
+            
+            # 存储滚动条区域用于点击检测
+            self.advisor_scrollbar_area = pygame.Rect(scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height)
+            
+            # 计算滑块位置和大小
+            slider_height = max(20, int(scrollbar_height * max_visible_advisors / len(available_pokemons)))
+            slider_y = scrollbar_y + int(self.advisor_scroll_offset * (scrollbar_height - slider_height) / max_scroll) if max_scroll > 0 else scrollbar_y
+            self.advisor_slider_area = pygame.Rect(scrollbar_x, slider_y, scrollbar_width, slider_height)
+        else:
+            self.advisor_scrollbar_area = None
+            self.advisor_slider_area = None
+            self.advisor_scroll_offset = 0
+        
+        # 确定可见的顾问范围
+        visible_start = self.advisor_scroll_offset
+        visible_end = min(visible_start + max_visible_advisors, len(available_pokemons))
+        
+        # 调整按钮宽度以为滚动条腾出空间
+        button_width = switch_area_width - 30 - (scrollbar_width if self.advisor_scrollbar_area else 0)
+        
+        # 创建可见顾问的按钮
+        for display_idx, list_idx in enumerate(range(visible_start, visible_end)):
+            i = available_pokemons[list_idx]
             pkm = self.player.pokemon_team[i]
             advantages = ", ".join(pkm.advantages)
             disadvantages = ", ".join(pkm.disadvantages)
             # 为BOSS战设置深色文字（橙色按钮上的黑色文字更易读）
             text_color = BLACK
-            button_y = switch_area_y + idx * (button_height + button_spacing)
-            button_width = switch_area_width - 20  # 调整按钮宽度以适应新区域
+            button_y = switch_area_y + display_idx * (button_height + button_spacing)
             self.move_buttons.append(
                 Button(switch_area_x + 10, button_y, button_width, button_height, 
                        f"{pkm.name} (Lv.{pkm.level}, HP: {pkm.hp}/{pkm.max_hp})", 
@@ -5898,7 +5971,8 @@ class PokemonGame:
                         self.battle_step = 6
                     else:
                         self.battle_messages.append("逃跑失败！")
-                        enemy_move = random.choice(enemy_pkm.moves)
+                        available_moves = self.get_available_moves_for_enemy(enemy_pkm)
+                        enemy_move = random.choice(available_moves) if available_moves else enemy_pkm.moves[0]
                         # 检查是否为自增益技能
                         skill_data = NEW_SKILLS_DATABASE.get(enemy_move["name"])
                         if skill_data and skill_data["category"] in [SkillCategory.SELF_BUFF, SkillCategory.DIRECT_HEAL, SkillCategory.CONTINUOUS_HEAL]:
@@ -6017,7 +6091,16 @@ class PokemonGame:
                     self.enemy_line_display = False
                     self.enemy_ultimate_line = None
                     
-                    enemy_move = random.choice(enemy_pkm.moves)
+                    # 选择敌方技能时检查SP消耗
+                    available_moves = self.get_available_moves_for_enemy(enemy_pkm)
+                    enemy_move = random.choice(available_moves) if available_moves else None
+                    
+                    if not enemy_move:
+                        # 如果没有可用技能，跳过敌方回合
+                        self.battle_messages.append(f"{enemy_pkm.name}没有可用的技能！")
+                        self.battle_step = 7
+                        self.animation_delay = 1000
+                        return
                     
                     # 检查技能是否存在于技能管理器中
                     skill = skill_manager.get_skill(enemy_move["name"])
@@ -6098,7 +6181,8 @@ class PokemonGame:
                     self.animation_delay = 2000
                 else:
                     self.battle_messages.append(f"{enemy_pkm.name}挣脱了精灵球！")
-                    enemy_move = random.choice(enemy_pkm.moves)
+                    available_moves = self.get_available_moves_for_enemy(enemy_pkm)
+                    enemy_move = random.choice(available_moves) if available_moves else enemy_pkm.moves[0]
                     # 检查是否为自增益技能
                     skill_data = NEW_SKILLS_DATABASE.get(enemy_move["name"])
                     if skill_data and skill_data["category"] in [SkillCategory.SELF_BUFF, SkillCategory.DIRECT_HEAL, SkillCategory.CONTINUOUS_HEAL]:
@@ -6285,6 +6369,26 @@ class PokemonGame:
             if pokemon.is_fainted():
                 pokemon.hp = 1
         self.battle_messages.append("所有顾问的HP恢复到1点！")
+    
+    def get_available_moves_for_enemy(self, enemy_pokemon):
+        """获取敌方可用的技能列表（考虑SP消耗）"""
+        available_moves = []
+        for move in enemy_pokemon.moves:
+            # 检查技能是否需要SP
+            skill = skill_manager.get_skill(move["name"])
+            if skill and skill.sp_cost > 0:
+                # 需要SP的技能，检查是否有足够SP
+                if enemy_pokemon.sp >= skill.sp_cost:
+                    available_moves.append(move)
+            else:
+                # 不需要SP的技能，直接可用
+                available_moves.append(move)
+        
+        # 如果没有可用技能，使用第一个技能（应该是基础技能）
+        if not available_moves:
+            available_moves = [enemy_pokemon.moves[0]] if enemy_pokemon.moves else []
+        
+        return available_moves
 
     def end_battle(self):
         try:
@@ -6312,6 +6416,13 @@ class PokemonGame:
             for pokemon in self.player.pokemon_team:
                 if pokemon.is_fainted():
                     pokemon.hp = 1
+                # 清除所有状态效果（战斗结束后重置）
+                pokemon.clear_all_status_effects()
+            
+            # 清除敌方顾问的状态效果
+            enemy_pkm = self.boss_pokemon if self.is_boss_battle else self.wild_pokemon
+            if enemy_pkm:
+                enemy_pkm.clear_all_status_effects()
                 
             # BOSS战胜利,增加计数器并刷新地图
             if self.is_boss_battle and player_victory:
@@ -6516,9 +6627,13 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加物品使用成功通知
                 self.notification_system.add_notification(f"成功使用了{item.name}！", "success")
+                # 显示详细结果
+                self.battle_messages = [f"对{target.name}使用了{item.name}", result]
             else:
                 # 添加物品使用信息通知
                 self.notification_system.add_notification(f"使用了{item.name}", "info")
+                # 显示详细结果
+                self.battle_messages = [f"使用了{item.name}", result]
                 
             return result
         # 添加物品使用失败通知
@@ -6543,10 +6658,13 @@ class PokemonGame:
                     self.player.remove_item(item_index)
                     # 添加治疗成功通知
                     self.notification_system.add_notification(f"对{target.name}使用了{item.name}！", "success")
+                    # 显示详细结果
+                    self.battle_messages = [f"使用了{item.name}", result]
                     return result
                 else:
                     # 添加治疗失败通知
                     self.notification_system.add_notification("所有顾问HP已满！", "info")
+                    self.battle_messages = ["所有顾问HP已满"]
                     return "所有顾问HP已满"
                     
             elif item.item_type == "ut_restore":
@@ -6554,6 +6672,8 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加UT恢复通知
                 self.notification_system.add_notification(f"使用了{item.name},恢复UT！", "success")
+                # 显示详细结果
+                self.battle_messages = [f"使用了{item.name}", result]
                 return result
                 
             elif item.item_type == "battle_prevent":
@@ -6561,6 +6681,8 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加PTO通知使用通知
                 self.notification_system.add_notification(f"使用了{item.name},战斗保护生效！", "success")
+                # 显示详细结果
+                self.battle_messages = [f"使用了{item.name}", result]
                 return result
                 
             elif item.item_type == "skill_blind_box":
@@ -6568,6 +6690,8 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加盲盒使用通知,显示详细结果
                 self.notification_system.add_notification(result, "success")
+                # 显示详细结果
+                self.battle_messages = [f"使用了{item.name}", result]
                 
                 # 调整选择索引到新生成的技能书（背包末尾）
                 if self.player.backpack:
@@ -6700,8 +6824,12 @@ class PokemonGame:
             if success:
                 self.player.remove_item(item_index)
                 self.notification_system.add_notification(f"成功对{target.name}使用了{item.name}！", "success")
+                # 添加详细的使用结果到战斗消息中显示
+                self.battle_messages = [f"使用了{item.name}", result]
             else:
                 self.notification_system.add_notification(result, "info")
+                # 失败时也显示结果
+                self.battle_messages = [result]
             
             # 清除待处理的物品使用
             self.pending_item_use = None
@@ -7205,6 +7333,19 @@ class PokemonGame:
                         slider_color = (80, 80, 80) if self.skill_scrollbar_dragging else (100, 100, 100)
                         pygame.draw.rect(screen, slider_color, self.skill_slider_area)
                         pygame.draw.rect(screen, BLACK, self.skill_slider_area, 1)
+                
+                # 绘制顾问切换界面的滚动条
+                if self.state == GameState.BATTLE_SWITCH_POKEMON and hasattr(self, 'advisor_scrollbar_area') and self.advisor_scrollbar_area:
+                    # 绘制滚动条背景
+                    pygame.draw.rect(screen, (200, 200, 200), self.advisor_scrollbar_area)
+                    pygame.draw.rect(screen, BLACK, self.advisor_scrollbar_area, 1)
+                    
+                    # 绘制滑块
+                    if hasattr(self, 'advisor_slider_area') and self.advisor_slider_area:
+                        # 根据是否正在拖拽选择颜色
+                        slider_color = (80, 80, 80) if hasattr(self, 'advisor_scrollbar_dragging') and self.advisor_scrollbar_dragging else (100, 100, 100)
+                        pygame.draw.rect(screen, slider_color, self.advisor_slider_area)
+                        pygame.draw.rect(screen, BLACK, self.advisor_slider_area, 1)
                 
             elif self.state == GameState.CAPTURE_ANIMATION:
                 capture_text = battle_info_font.render("精灵球在摇晃...", True, text_color)
@@ -7991,6 +8132,37 @@ class PokemonGame:
                                 self.skill_scroll_offset = new_offset
                                 self.create_move_buttons()  # 重新创建按钮
             
+            # 处理顾问切换滚动条拖拽
+            if (self.state == GameState.BATTLE_SWITCH_POKEMON and hasattr(self, 'advisor_scrollbar_dragging') 
+                and self.advisor_scrollbar_dragging and hasattr(self, 'advisor_scrollbar_area') and self.advisor_scrollbar_area):
+                # 计算拖拽距离
+                drag_distance = event.pos[1] - self.advisor_drag_start_y
+                
+                # 计算新的滚动偏移
+                available_pokemons = [i for i, pkm in enumerate(self.player.pokemon_team) if not pkm.is_fainted()]
+                total_advisors = len(available_pokemons)
+                bottom_area_height = int(SCREEN_HEIGHT * 0.4)
+                bottom_area_y = SCREEN_HEIGHT - bottom_area_height
+                switch_area_y = bottom_area_y + 20
+                available_height = SCREEN_HEIGHT - switch_area_y - 80
+                max_visible_advisors = available_height // 60  # button_height + button_spacing
+                max_scroll = max(0, total_advisors - max_visible_advisors)
+                
+                if max_scroll > 0:
+                    scrollbar_height = self.advisor_scrollbar_area.height
+                    slider_height = max(20, int(scrollbar_height * max_visible_advisors / total_advisors))
+                    drag_range = scrollbar_height - slider_height
+                    
+                    if drag_range > 0:
+                        # 将拖拽距离转换为滚动偏移
+                        drag_ratio = drag_distance / drag_range
+                        new_offset = self.advisor_drag_start_offset + int(drag_ratio * max_scroll)
+                        new_offset = max(0, min(new_offset, max_scroll))
+                        
+                        if new_offset != self.advisor_scroll_offset:
+                            self.advisor_scroll_offset = new_offset
+                            self.create_switch_buttons()  # 重新创建按钮
+            
             # 按钮hover效果
             elif self.state in [GameState.BATTLE, GameState.BOSS_BATTLE]:
                 for button in self.battle_buttons:
@@ -8053,6 +8225,8 @@ class PokemonGame:
                 # 停止拖拽滚动条
                 if self.skill_scrollbar_dragging:
                     self.skill_scrollbar_dragging = False
+                if hasattr(self, 'advisor_scrollbar_dragging') and self.advisor_scrollbar_dragging:
+                    self.advisor_scrollbar_dragging = False
         
         # 处理鼠标滚轮事件 - 支持新旧两种方式
         if event.type == MOUSEWHEEL:
@@ -8064,6 +8238,12 @@ class PokemonGame:
                         self.skill_scroll_offset -= 1
                         if old_offset != self.skill_scroll_offset:
                             self.create_move_buttons()  # 重新创建按钮
+                elif self.state == GameState.BATTLE_SWITCH_POKEMON:
+                    if hasattr(self, 'advisor_scroll_offset') and self.advisor_scroll_offset > 0:
+                        old_offset = self.advisor_scroll_offset
+                        self.advisor_scroll_offset -= 1
+                        if old_offset != self.advisor_scroll_offset:
+                            self.create_switch_buttons()  # 重新创建按钮
                 elif self.state == GameState.MENU_POKEMON_DETAIL:
                     if self.detail_scroll_offset > 0:
                         self.detail_scroll_offset -= 30
@@ -8082,6 +8262,21 @@ class PokemonGame:
                             self.skill_scroll_offset += 1
                             if old_offset != self.skill_scroll_offset:
                                 self.create_move_buttons()  # 重新创建按钮
+                elif self.state == GameState.BATTLE_SWITCH_POKEMON:
+                    # 计算最大滚动偏移
+                    available_pokemons = [i for i, pkm in enumerate(self.player.pokemon_team) if not pkm.is_fainted()]
+                    total_advisors = len(available_pokemons)
+                    bottom_area_height = int(SCREEN_HEIGHT * 0.4)
+                    bottom_area_y = SCREEN_HEIGHT - bottom_area_height
+                    switch_area_y = bottom_area_y + 20
+                    available_height = SCREEN_HEIGHT - switch_area_y - 80
+                    max_visible_advisors = available_height // 60
+                    max_scroll = max(0, total_advisors - max_visible_advisors)
+                    if hasattr(self, 'advisor_scroll_offset') and self.advisor_scroll_offset < max_scroll:
+                        old_offset = self.advisor_scroll_offset
+                        self.advisor_scroll_offset += 1
+                        if old_offset != self.advisor_scroll_offset:
+                            self.create_switch_buttons()  # 重新创建按钮
                 elif self.state == GameState.MENU_POKEMON_DETAIL:
                     self.detail_scroll_offset += 30
                 elif self.state == GameState.MENU_BACKPACK:
@@ -8181,6 +8376,40 @@ class PokemonGame:
                                         if new_offset != self.skill_scroll_offset:
                                             self.skill_scroll_offset = new_offset
                                             self.create_move_buttons()  # 重新创建按钮
+                            return  # 滚动条处理了事件,不再处理按钮点击
+                    
+                    # 检查顾问切换界面的滚动条点击事件
+                    if self.state == GameState.BATTLE_SWITCH_POKEMON and hasattr(self, 'advisor_scrollbar_area') and self.advisor_scrollbar_area:
+                        if self.advisor_scrollbar_area.collidepoint(event.pos):
+                            # 检查是否点击在滑块上
+                            if hasattr(self, 'advisor_slider_area') and self.advisor_slider_area and self.advisor_slider_area.collidepoint(event.pos):
+                                # 开始拖拽滑块
+                                self.advisor_scrollbar_dragging = True
+                                self.advisor_drag_start_y = event.pos[1]
+                                self.advisor_drag_start_offset = self.advisor_scroll_offset
+                            else:
+                                # 点击滚动条其他位置,跳转到相应位置
+                                available_pokemons = [i for i, pkm in enumerate(self.player.pokemon_team) if not pkm.is_fainted()]
+                                total_advisors = len(available_pokemons)
+                                bottom_area_height = int(SCREEN_HEIGHT * 0.4)
+                                bottom_area_y = SCREEN_HEIGHT - bottom_area_height
+                                switch_area_y = bottom_area_y + 20
+                                available_height = SCREEN_HEIGHT - switch_area_y - 80
+                                max_visible_advisors = available_height // 60
+                                max_scroll = max(0, total_advisors - max_visible_advisors)
+                                
+                                if max_scroll > 0:
+                                    click_y = event.pos[1] - self.advisor_scrollbar_area.y  # 相对于滚动条顶部的位置
+                                    scrollbar_height = self.advisor_scrollbar_area.height
+                                    
+                                    # 计算滚动比例
+                                    scroll_ratio = click_y / scrollbar_height
+                                    new_offset = int(scroll_ratio * max_scroll)
+                                    new_offset = max(0, min(new_offset, max_scroll))
+                                    
+                                    if new_offset != self.advisor_scroll_offset:
+                                        self.advisor_scroll_offset = new_offset
+                                        self.create_switch_buttons()  # 重新创建按钮
                             return  # 滚动条处理了事件,不再处理按钮点击
                     
                     for button in self.move_buttons:
