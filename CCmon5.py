@@ -706,13 +706,14 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "networking",
         "category": SkillCategory.MIXED_BUFF_DEBUFF,
-        "description": "使敌方防御力下降85%,我方攻击力提升20%",
+        "description": "使敌方防御力下降85%,我方攻击力提升20%,除释放者,我方全体SP增加65",
         "sp_cost": 40,
         "quote": "我真的没有在总经理办公室吃螺蛳粉",
         "effects": {
             "target_defense_multiplier": 0.15,
             "self_attack_multiplier": 1.2,
-            "turns": 3
+            "turns": 3,
+            "team_sp_boost": 65
         }
     },
     "摸下腹肌~~": {
@@ -893,12 +894,13 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["content", "勇气"],
         "category": SkillCategory.SELF_BUFF,
-        "description": "从下一回合开始回避任何技能2回合",
+        "description": "从下一回合开始回避任何技能2回合,除释放者,我方全体SP增加35",
         "sp_cost": 95,
         "quote": "你又不是朱总,我怕个Der",
         "effects": {
             "dodge_chance": 1.0,
-            "turns": 2
+            "turns": 2,
+            "team_sp_boost": 35
         }
     },
     "无偿加班": {
@@ -4349,6 +4351,17 @@ class Pokemon:
             # 处理回避/免疫效果
             if dodge_chance > 0:
                 self.add_dodge_effect(dodge_chance, turns, skill_name, "self")
+                
+                # 处理团队SP增加（除释放者外）
+                team_sp_boost = effects.get("team_sp_boost", 0)
+                if allies and team_sp_boost > 0:
+                    for ally in allies:
+                        if ally != self and not ally.is_fainted():  # 不包括使用者自己
+                            sp_gained = min(team_sp_boost, ally.max_sp - ally.sp)  # 不能超过最大SP
+                            ally.sp += sp_gained
+                            if sp_gained > 0:
+                                messages.append(f"{ally.name}获得了{sp_gained}点SP！")
+                
                 if dodge_chance >= 1.0:
                     messages.append(f"{self.name}使用了{skill_name}！获得了{turns}回合的免疫效果！")
                 else:
@@ -4701,6 +4714,16 @@ class Pokemon:
                 # 对自己应用增益效果
                 if self_attack_mult != 1.0 or self_defense_mult != 1.0:
                     self.add_stat_modifier(self_attack_mult, self_defense_mult, turns, skill_name, "self")
+                
+                # 处理团队SP增加（除释放者外）
+                team_sp_boost = effects.get("team_sp_boost", 0)
+                if allies and team_sp_boost > 0:
+                    for ally in allies:
+                        if ally != self and not ally.is_fainted():  # 不包括使用者自己
+                            sp_gained = min(team_sp_boost, ally.max_sp - ally.sp)  # 不能超过最大SP
+                            ally.sp += sp_gained
+                            if sp_gained > 0:
+                                messages.append(f"{ally.name}获得了{sp_gained}点SP！")
                 
                 effect_desc = []
                 if target_attack_mult < 1.0:
