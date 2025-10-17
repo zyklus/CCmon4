@@ -5709,6 +5709,7 @@ class PokemonGame:
         
         self.menu_stack = []
         self.pending_item_use = None  # 待处理的物品使用
+        self.item_result_popup = None  # 物品使用结果弹窗
         
         # 初始化通知系统
         self.notification_system = NotificationSystem()
@@ -7190,13 +7191,24 @@ class PokemonGame:
                     self.player.remove_item(item_index)
                     # 添加治疗成功通知
                     self.notification_system.add_notification(f"对{target.name}使用了{item.name}！", "success")
-                    # 显示详细结果
-                    self.battle_messages = [f"使用了{item.name}", result]
+                    # 显示物品使用结果弹窗
+                    self.item_result_popup = {
+                        "title": f"使用 {item.name}",
+                        "target": target.name,
+                        "result": result,
+                        "success": True
+                    }
                     return result
                 else:
                     # 添加治疗失败通知
                     self.notification_system.add_notification("所有顾问HP已满！", "info")
-                    self.battle_messages = ["所有顾问HP已满"]
+                    # 显示物品使用结果弹窗
+                    self.item_result_popup = {
+                        "title": f"使用 {item.name}",
+                        "target": "无目标",
+                        "result": "所有顾问HP已满",
+                        "success": False
+                    }
                     return "所有顾问HP已满"
                     
             elif item.item_type == "ut_restore":
@@ -7204,8 +7216,13 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加UT恢复通知
                 self.notification_system.add_notification(f"使用了{item.name},恢复UT！", "success")
-                # 显示详细结果
-                self.battle_messages = [f"使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.item_result_popup = {
+                    "title": f"使用 {item.name}",
+                    "target": "玩家",
+                    "result": result,
+                    "success": True
+                }
                 return result
                 
             elif item.item_type == "battle_prevent":
@@ -7213,8 +7230,13 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加PTO通知使用通知
                 self.notification_system.add_notification(f"使用了{item.name},战斗保护生效！", "success")
-                # 显示详细结果
-                self.battle_messages = [f"使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.item_result_popup = {
+                    "title": f"使用 {item.name}",
+                    "target": "玩家",
+                    "result": result,
+                    "success": True
+                }
                 return result
                 
             elif item.item_type == "skill_blind_box":
@@ -7424,12 +7446,22 @@ class PokemonGame:
             if success:
                 self.player.remove_item(item_index)
                 self.notification_system.add_notification(f"成功对{target.name}使用了{item.name}！", "success")
-                # 添加详细的使用结果到战斗消息中显示
-                self.battle_messages = [f"使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.item_result_popup = {
+                    "title": f"使用 {item.name}",
+                    "target": target.name,
+                    "result": result,
+                    "success": True
+                }
             else:
                 self.notification_system.add_notification(result, "info")
-                # 失败时也显示结果
-                self.battle_messages = [result]
+                # 显示物品使用失败弹窗
+                self.item_result_popup = {
+                    "title": f"使用 {item.name}",
+                    "target": target.name,
+                    "result": result,
+                    "success": False
+                }
             
             # 清除待处理的物品使用
             self.pending_item_use = None
@@ -8673,6 +8705,10 @@ class PokemonGame:
                 # 绘制按钮
                 for button in self.menu_buttons:
                     button.draw(screen)
+                
+                # 绘制物品使用结果弹窗
+                if hasattr(self, 'item_result_popup') and self.item_result_popup:
+                    self.draw_item_result_popup()
             
             elif self.state == GameState.BATTLE_REVIVE_SELECT:
                 font, small_font, battle_font, menu_font = get_fonts()
@@ -8815,8 +8851,14 @@ class PokemonGame:
                 elif event.key == K_ESCAPE:  # ESC退出商店
                     self.state = GameState.EXPLORING
             
-            elif self.state == GameState.MENU_BACKPACK:
-                if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
+                elif self.state == GameState.MENU_BACKPACK:
+                    # 检查物品结果弹窗的点击
+                    if hasattr(self, 'item_result_popup') and self.item_result_popup and hasattr(self, 'item_result_button'):
+                        if self.item_result_button.collidepoint(event.pos):
+                            self.item_result_popup = None
+                            return
+                    
+                    if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
                     # 在弹窗状态下,ESC键关闭弹窗
                     if event.key == K_ESCAPE:
                         self.backpack_popup_state = False
@@ -9310,6 +9352,13 @@ class PokemonGame:
                                 # 不调用go_back(),让process_battle_turn处理状态转换
                 
                 elif self.state == GameState.MENU_TARGET_SELECTION:
+                    # 检查物品结果弹窗的点击
+                    if hasattr(self, 'item_result_popup') and self.item_result_popup and hasattr(self, 'item_result_button'):
+                        if self.item_result_button.collidepoint(event.pos):
+                            self.item_result_popup = None
+                            self.go_back()
+                            return
+                    
                     for button in self.menu_buttons:
                         if button.check_click(event.pos) and button.action:
                             if button.action == "cancel":
@@ -9732,6 +9781,10 @@ class PokemonGame:
         # 检查是否在显示确认弹窗
         if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
             self.draw_item_use_popup()
+        
+        # 绘制物品使用结果弹窗
+        if hasattr(self, 'item_result_popup') and self.item_result_popup:
+            self.draw_item_result_popup()
             return
         
         if not self.player.backpack:
@@ -10060,6 +10113,66 @@ class PokemonGame:
             for i, message in enumerate(self.battle_messages[-2:]):  # 显示最近2条消息
                 message_text = message_font.render(message, True, BLACK)
                 screen.blit(message_text, (30, message_y + 10 + i * 25))
+    
+    def draw_item_result_popup(self):
+        """绘制物品使用结果弹窗"""
+        if not self.item_result_popup:
+            return
+            
+        popup_width = 450
+        popup_height = 250
+        popup_x = (SCREEN_WIDTH - popup_width) // 2
+        popup_y = (SCREEN_HEIGHT - popup_height) // 2
+        
+        # 绘制弹窗背景
+        popup_surface = pygame.Surface((popup_width, popup_height), pygame.SRCALPHA)
+        popup_surface.fill((255, 255, 255, 240))  # 半透明白色
+        screen.blit(popup_surface, (popup_x, popup_y))
+        pygame.draw.rect(screen, BLACK, (popup_x, popup_y, popup_width, popup_height), 3)
+        
+        # 绘制标题
+        title_font = FontManager.get_font(24)
+        title_color = GREEN if self.item_result_popup["success"] else RED
+        title_text = title_font.render(self.item_result_popup["title"], True, title_color)
+        title_x = popup_x + (popup_width - title_text.get_width()) // 2
+        screen.blit(title_text, (title_x, popup_y + 20))
+        
+        # 绘制目标信息
+        target_font = FontManager.get_font(18)
+        target_text = target_font.render(f"目标: {self.item_result_popup['target']}", True, BLACK)
+        target_x = popup_x + (popup_width - target_text.get_width()) // 2
+        screen.blit(target_text, (target_x, popup_y + 60))
+        
+        # 绘制结果信息
+        result_font = FontManager.get_font(16)
+        result_lines = self.item_result_popup["result"].split('\n')
+        result_y = popup_y + 100
+        
+        for line in result_lines:
+            if line.strip():
+                result_text = result_font.render(line.strip(), True, BLACK)
+                result_x = popup_x + (popup_width - result_text.get_width()) // 2
+                screen.blit(result_text, (result_x, result_y))
+                result_y += 25
+        
+        # 绘制确认按钮
+        button_width = 120
+        button_height = 40
+        button_x = popup_x + (popup_width - button_width) // 2
+        button_y = popup_y + popup_height - 60
+        
+        button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
+        button_color = (144, 238, 144) if self.item_result_popup["success"] else (255, 182, 193)
+        pygame.draw.rect(screen, button_color, button_rect)
+        pygame.draw.rect(screen, BLACK, button_rect, 2)
+        
+        button_text = FontManager.get_font(20).render("确定", True, BLACK)
+        text_x = button_rect.centerx - button_text.get_width() // 2
+        text_y = button_rect.centery - button_text.get_height() // 2
+        screen.blit(button_text, (text_x, text_y))
+        
+        # 保存按钮区域用于点击检测
+        self.item_result_button = button_rect
 
     def draw_purchase_popup(self):
         """绘制购买数量弹窗"""
