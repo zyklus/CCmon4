@@ -42,6 +42,26 @@ class UIRenderer:
         self.game = game_instance
         self.popup_renderer = PopupRenderer()
         self.ui_utils = UIUtils()
+    
+    def safe_get_player_attr(self, attr_name, default_value=None):
+        """安全地获取玩家属性"""
+        if (hasattr(self.game, 'player') and 
+            hasattr(self.game.player, attr_name)):
+            return getattr(self.game.player, attr_name)
+        return default_value
+    
+    def safe_get_game_attr(self, attr_path, default_value=None):
+        """安全地获取游戏属性（支持嵌套路径，如 'images.player'）"""
+        try:
+            obj = self.game
+            for attr in attr_path.split('.'):
+                if hasattr(obj, attr):
+                    obj = getattr(obj, attr)
+                else:
+                    return default_value
+            return obj
+        except (AttributeError, TypeError):
+            return default_value
         
     # ==================== 通用渲染函数 ====================
     
@@ -235,7 +255,10 @@ class UIRenderer:
                 screen.blit(self.game._map_surface, (MAP_START_X, MAP_START_Y))
             
             # 绘制玩家
-            if hasattr(self.game, 'player') and hasattr(self.game, 'images'):
+            if (hasattr(self.game, 'player') and 
+                hasattr(self.game.player, 'x') and 
+                hasattr(self.game.player, 'y') and 
+                hasattr(self.game, 'images')):
                 player_x = MAP_START_X + self.game.player.y * TILE_SIZE + 10
                 player_y = MAP_START_Y + self.game.player.x * TILE_SIZE + 10
                 if hasattr(self.game.images, 'player'):
@@ -260,14 +283,15 @@ class UIRenderer:
         screen.blit(menu_text, (60 - menu_text.get_width()//2, 30 - menu_text.get_height()//2))
         
         # 绘制金币信息
-        if hasattr(self.game, 'player'):
+        if hasattr(self.game, 'player') and hasattr(self.game.player, 'money'):
             money_surface = pygame.Surface((150, 40), pygame.SRCALPHA)
             money_surface.fill((152, 251, 152, 102))
             screen.blit(money_surface, (SCREEN_WIDTH - 160, 10))
             pygame.draw.rect(screen, BLACK, (SCREEN_WIDTH - 160, 10, 150, 40), 2)
             
             money_font = FontManager.get_font(20) if 'FontManager' in globals() else pygame.font.Font(None, 20)
-            money_text = money_font.render(f"金币: {self.game.player.money}", True, BLACK)
+            money_value = getattr(self.game.player, 'money', 0)
+            money_text = money_font.render(f"金币: {money_value}", True, BLACK)
             screen.blit(money_text, (SCREEN_WIDTH - 155, 20))
             
             # 绘制UT条
@@ -275,10 +299,11 @@ class UIRenderer:
     
     def _draw_ut_bar(self, screen):
         """绘制UT条"""
-        if not hasattr(self.game, 'player'):
+        ut_value = self.safe_get_player_attr('ut', 0)
+        if ut_value is None:
             return
         
-        ut_percentage = self.game.player.ut / 100.0 if self.game.player.ut > 0 else 0
+        ut_percentage = ut_value / 100.0 if ut_value > 0 else 0
         
         # 绘制背景
         pygame.draw.rect(screen, GRAY, (120, 10, 200, 40))
@@ -293,14 +318,19 @@ class UIRenderer:
         
         # 绘制UT文字
         font = FontManager.get_font(16) if 'FontManager' in globals() else pygame.font.Font(None, 16)
-        ut_text = font.render(f"UT: {self.game.player.ut}/100", True, BLACK)
+        ut_text = font.render(f"UT: {ut_value}/100", True, BLACK)
         screen.blit(ut_text, (125, 20))
         
         # 显示UT耗尽提示
-        if hasattr(self.game.player, 'ut_empty_counter') and self.game.player.ut_empty_counter > 0:
-            self.game.player.ut_empty_counter -= 1
-            if hasattr(self.game, 'images') and hasattr(self.game.images, 'ut_empty'):
-                screen.blit(self.game.images.ut_empty, (SCREEN_WIDTH//2 - 150, SCREEN_HEIGHT//2 - 100))
+        ut_empty_counter = self.safe_get_player_attr('ut_empty_counter', 0)
+        if ut_empty_counter > 0:
+            # 安全地减少计数器
+            if hasattr(self.game, 'player') and hasattr(self.game.player, 'ut_empty_counter'):
+                self.game.player.ut_empty_counter -= 1
+            
+            ut_empty_image = self.safe_get_game_attr('images.ut_empty')
+            if ut_empty_image:
+                screen.blit(ut_empty_image, (SCREEN_WIDTH//2 - 150, SCREEN_HEIGHT//2 - 100))
             
             warning_font = FontManager.get_font(24) if 'FontManager' in globals() else pygame.font.Font(None, 24)
             warning_text = warning_font.render("UT已耗尽！所有顾问等级下降！", True, RED)
@@ -416,10 +446,10 @@ class UIRenderer:
     
     def _draw_player_info(self, screen, font, text_color):
         """绘制玩家信息"""
-        if not hasattr(self.game, 'player'):
-            return
+        player_pkm = None
+        if hasattr(self.game, 'player') and hasattr(self.game.player, 'get_active_pokemon'):
+            player_pkm = self.game.player.get_active_pokemon()
         
-        player_pkm = self.game.player.get_active_pokemon()
         if not player_pkm:
             no_pokemon_text = font.render("你没有可用的顾问了！", True, text_color)
             screen.blit(no_pokemon_text, (SCREEN_WIDTH - 400, 100))
@@ -631,9 +661,10 @@ class UIRenderer:
             screen.blit(title_text, (SCREEN_WIDTH//2 - title_text.get_width()//2, 20))
             
             # 绘制金币信息
-            if hasattr(self.game, 'player'):
+            money_value = self.safe_get_player_attr('money', 0)
+            if money_value is not None:
                 money_font = FontManager.get_font(24) if 'FontManager' in globals() else pygame.font.Font(None, 24)
-                money_text = money_font.render(f"金币: {self.game.player.money}", True, BLACK)
+                money_text = money_font.render(f"金币: {money_value}", True, BLACK)
                 screen.blit(money_text, (20, 70))
             
             # 绘制商品列表
@@ -687,7 +718,8 @@ class UIRenderer:
             screen.blit(title_text, (SCREEN_WIDTH//2 - title_text.get_width()//2, 20))
             
             # 绘制物品列表
-            if hasattr(self.game, 'player') and hasattr(self.game.player, 'backpack'):
+            backpack = self.safe_get_player_attr('backpack', [])
+            if backpack is not None:
                 self._draw_backpack_items(screen)
             
             # 绘制按钮
@@ -705,12 +737,13 @@ class UIRenderer:
         start_y = 80
         item_height = 50
         
-        if not self.game.player.backpack:
+        backpack = self.safe_get_player_attr('backpack', [])
+        if not backpack:
             empty_text = item_font.render("背包是空的", True, BLACK)
             screen.blit(empty_text, (SCREEN_WIDTH//2 - empty_text.get_width()//2, start_y + 100))
             return
         
-        for i, item in enumerate(self.game.player.backpack):
+        for i, item in enumerate(backpack):
             item_y = start_y + i * item_height
             item_rect = pygame.Rect(20, item_y, SCREEN_WIDTH - 40, item_height - 5)
             

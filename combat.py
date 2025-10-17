@@ -39,6 +39,20 @@ class CombatManager:
         self.enemy_line_display = False
         self.ally_ultimate_line = None
         self.enemy_ultimate_line = None
+    
+    def safe_get_player_pokemon(self):
+        """安全地获取玩家当前顾问"""
+        if (hasattr(self.game, 'player') and 
+            hasattr(self.game.player, 'get_active_pokemon')):
+            return self.game.player.get_active_pokemon()
+        return None
+    
+    def safe_get_player_attr(self, attr_name, default_value=None):
+        """安全地获取玩家属性"""
+        if (hasattr(self.game, 'player') and 
+            hasattr(self.game.player, attr_name)):
+            return getattr(self.game.player, attr_name)
+        return default_value
         
     def start_battle(self, battle_type="wild", enemy_pokemon=None):
         """
@@ -51,8 +65,8 @@ class CombatManager:
         self.is_boss_battle = battle_type in ["boss", "mini_boss", "stage_boss"]
         
         # 重置战斗回合计数器
-        player_pkm = self.game.player.get_active_pokemon()
-        if player_pkm:
+        player_pkm = self.safe_get_player_pokemon()
+        if player_pkm and hasattr(player_pkm, 'battle_turn_counter'):
             player_pkm.battle_turn_counter = 0
         
         # 清除必杀技台词显示
@@ -100,7 +114,8 @@ class CombatManager:
             switch_index: 切换的顾问索引
         """
         try:
-            player_pkm = self.game.player.get_active_pokemon()
+            # 安全地获取玩家顾问
+            player_pkm = self.safe_get_player_pokemon()
             enemy_pkm = self.game.boss_pokemon if self.is_boss_battle else self.game.wild_pokemon
             
             if not player_pkm or not enemy_pkm:
