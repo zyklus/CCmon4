@@ -4871,6 +4871,7 @@ class GameState:
     SHOP = 16  # 商店界面
     TRAINING_CENTER = 17  # 训练中心界面
     MENU_TARGET_SELECTION = 18  # 目标选择状态
+    ITEM_RESULT_POPUP = 19  # 物品使用结果弹窗
 
 # 通知系统类
 class NotificationSystem:
@@ -5235,6 +5236,14 @@ class PokemonGame:
         self.menu_stack = []
         self.pending_item_use = None  # 待处理的物品使用
         
+        # 物品使用结果弹窗相关
+        self.item_result_popup = {
+            "visible": False,
+            "title": "",
+            "message": "",
+            "previous_state": None
+        }
+        
         # 初始化通知系统
         self.notification_system = NotificationSystem()
         
@@ -5368,6 +5377,25 @@ class PokemonGame:
             self.draw_shop()
         elif self.state == GameState.TRAINING_CENTER:
             self.draw_training_center()
+        elif self.state == GameState.ITEM_RESULT_POPUP:
+            # 先绘制之前的状态作为背景
+            if self.item_result_popup["previous_state"] == GameState.EXPLORING:
+                self.draw_exploration()
+            elif self.item_result_popup["previous_state"] in [GameState.BATTLE, GameState.BOSS_BATTLE, 
+                           GameState.BATTLE_MOVE_SELECT, GameState.BATTLE_ANIMATION,
+                           GameState.CAPTURE_ANIMATION, GameState.BATTLE_SWITCH_POKEMON]:
+                self.draw_battle()
+            elif self.item_result_popup["previous_state"] in [GameState.MENU_MAIN, GameState.MENU_POKEMON,
+                           GameState.MENU_POKEMON_DETAIL, GameState.MENU_BACKPACK,
+                           GameState.MENU_ITEM_USE, GameState.CAPTURE_SELECT, 
+                           GameState.MENU_TARGET_SELECTION]:
+                self.draw_menu()
+            elif self.item_result_popup["previous_state"] == GameState.SHOP:
+                self.draw_shop()
+            elif self.item_result_popup["previous_state"] == GameState.TRAINING_CENTER:
+                self.draw_training_center()
+            # 然后绘制弹窗
+            self.draw_item_result_popup()
         
         # 重置完全重绘标志
         self._need_full_redraw = False
@@ -6007,12 +6035,16 @@ class PokemonGame:
                         self.battle_messages.append("使用物品后,当前回合结束！")
                         # 添加战斗中物品使用成功通知
                         self.notification_system.add_notification(f"战斗中使用了{item.name}！", "success")
+                        # 显示物品使用结果弹窗
+                        self.show_item_result_popup(item.name, result)
                         self.battle_step = 7  # 直接结束回合,不让敌人攻击
                         self.animation_delay = 1000
                     else:
                         self.battle_messages.append("无法使用物品")
                         # 添加战斗中物品使用失败通知
                         self.notification_system.add_notification("战斗中无法使用物品！", "warning")
+                        # 显示物品使用失败弹窗
+                        self.show_item_result_popup("物品", "无法使用物品")
                         self.battle_step = 7
                         self.animation_delay = 1000
                         
@@ -6389,6 +6421,16 @@ class PokemonGame:
             available_moves = [enemy_pokemon.moves[0]] if enemy_pokemon.moves else []
         
         return available_moves
+    
+    def show_item_result_popup(self, item_name, result_message):
+        """显示物品使用结果弹窗"""
+        self.item_result_popup = {
+            "visible": True,
+            "title": f"使用了{item_name}",
+            "message": result_message,
+            "previous_state": self.state
+        }
+        self.state = GameState.ITEM_RESULT_POPUP
 
     def end_battle(self):
         try:
@@ -6627,14 +6669,12 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加物品使用成功通知
                 self.notification_system.add_notification(f"成功使用了{item.name}！", "success")
-                # 显示详细结果
-                self.battle_messages = [f"对{target.name}使用了{item.name}", result]
             else:
                 # 添加物品使用信息通知
                 self.notification_system.add_notification(f"使用了{item.name}", "info")
-                # 显示详细结果
-                self.battle_messages = [f"使用了{item.name}", result]
-                
+            
+            # 显示物品使用结果弹窗
+            self.show_item_result_popup(item.name, result)
             return result
         # 添加物品使用失败通知
         self.notification_system.add_notification("无法使用物品！", "warning")
@@ -6658,13 +6698,14 @@ class PokemonGame:
                     self.player.remove_item(item_index)
                     # 添加治疗成功通知
                     self.notification_system.add_notification(f"对{target.name}使用了{item.name}！", "success")
-                    # 显示详细结果
-                    self.battle_messages = [f"使用了{item.name}", result]
+                    # 显示物品使用结果弹窗
+                    self.show_item_result_popup(item.name, result)
                     return result
                 else:
                     # 添加治疗失败通知
                     self.notification_system.add_notification("所有顾问HP已满！", "info")
-                    self.battle_messages = ["所有顾问HP已满"]
+                    # 显示物品使用结果弹窗
+                    self.show_item_result_popup(item.name, "所有顾问HP已满")
                     return "所有顾问HP已满"
                     
             elif item.item_type == "ut_restore":
@@ -6672,8 +6713,8 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加UT恢复通知
                 self.notification_system.add_notification(f"使用了{item.name},恢复UT！", "success")
-                # 显示详细结果
-                self.battle_messages = [f"使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.show_item_result_popup(item.name, result)
                 return result
                 
             elif item.item_type == "battle_prevent":
@@ -6681,8 +6722,8 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加PTO通知使用通知
                 self.notification_system.add_notification(f"使用了{item.name},战斗保护生效！", "success")
-                # 显示详细结果
-                self.battle_messages = [f"使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.show_item_result_popup(item.name, result)
                 return result
                 
             elif item.item_type == "skill_blind_box":
@@ -6690,8 +6731,8 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加盲盒使用通知,显示详细结果
                 self.notification_system.add_notification(result, "success")
-                # 显示详细结果
-                self.battle_messages = [f"使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.show_item_result_popup(item.name, result)
                 
                 # 调整选择索引到新生成的技能书（背包末尾）
                 if self.player.backpack:
@@ -6824,12 +6865,11 @@ class PokemonGame:
             if success:
                 self.player.remove_item(item_index)
                 self.notification_system.add_notification(f"成功对{target.name}使用了{item.name}！", "success")
-                # 添加详细的使用结果到战斗消息中显示
-                self.battle_messages = [f"使用了{item.name}", result]
             else:
                 self.notification_system.add_notification(result, "info")
-                # 失败时也显示结果
-                self.battle_messages = [result]
+            
+            # 显示物品使用结果弹窗
+            self.show_item_result_popup(item.name, result)
             
             # 清除待处理的物品使用
             self.pending_item_use = None
@@ -8102,6 +8142,11 @@ class PokemonGame:
             elif self.state == GameState.TRAINING_CENTER:
                 if event.key == K_ESCAPE:  # ESC退出训练中心
                     self.state = GameState.EXPLORING
+            
+            elif self.state == GameState.ITEM_RESULT_POPUP:
+                if event.key == K_ESCAPE:  # ESC关闭弹窗
+                    self.item_result_popup["visible"] = False
+                    self.state = self.item_result_popup["previous_state"]
         
         # 鼠标事件处理
         if event.type == MOUSEMOTION:
@@ -8707,6 +8752,11 @@ class PokemonGame:
                                     self.state = GameState.MESSAGE
                             elif self.training_buttons['leave'].collidepoint(event.pos):
                                 self.state = GameState.EXPLORING
+                
+                elif self.state == GameState.ITEM_RESULT_POPUP:
+                    # 点击任意处关闭弹窗
+                    self.item_result_popup["visible"] = False
+                    self.state = self.item_result_popup["previous_state"]
 
     def open_deposit_menu(self):
         """打开寄养顾问菜单"""
@@ -9469,6 +9519,66 @@ class PokemonGame:
                 )
                 screen.blit(info_text, (70, deposited_y + 25 + i * 25))
         
+    def draw_item_result_popup(self):
+        """绘制物品使用结果弹窗"""
+        try:
+            if not self.item_result_popup["visible"]:
+                return
+            
+            # 弹窗尺寸
+            popup_width = 500
+            popup_height = 300
+            popup_x = SCREEN_WIDTH // 2 - popup_width // 2
+            popup_y = SCREEN_HEIGHT // 2 - popup_height // 2
+            
+            # 绘制半透明背景遮罩
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            overlay.set_alpha(180)
+            overlay.fill(BLACK)
+            screen.blit(overlay, (0, 0))
+            
+            # 绘制弹窗背景
+            popup_rect = pygame.Rect(popup_x, popup_y, popup_width, popup_height)
+            pygame.draw.rect(screen, WHITE, popup_rect)
+            pygame.draw.rect(screen, BLACK, popup_rect, 3)
+            
+            # 绘制标题
+            title_font = FontManager.get_font(24)
+            title_text = title_font.render(self.item_result_popup["title"], True, BLACK)
+            title_x = popup_x + (popup_width - title_text.get_width()) // 2
+            title_y = popup_y + 20
+            screen.blit(title_text, (title_x, title_y))
+            
+            # 绘制分隔线
+            line_y = title_y + title_text.get_height() + 10
+            pygame.draw.line(screen, BLACK, (popup_x + 20, line_y), (popup_x + popup_width - 20, line_y), 2)
+            
+            # 绘制消息内容
+            message_font = FontManager.get_font(18)
+            message_lines = self.item_result_popup["message"].split('\n')
+            
+            content_y = line_y + 20
+            line_height = 25
+            
+            for i, line in enumerate(message_lines):
+                if line.strip():  # 只绘制非空行
+                    message_text = message_font.render(line.strip(), True, BLACK)
+                    message_x = popup_x + 20
+                    current_y = content_y + i * line_height
+                    
+                    # 确保文字不超出弹窗范围
+                    if current_y + message_text.get_height() < popup_y + popup_height - 80:
+                        screen.blit(message_text, (message_x, current_y))
+            
+            # 绘制"点击关闭"提示
+            close_font = FontManager.get_font(16)
+            close_text = close_font.render("点击任意处关闭", True, GRAY)
+            close_x = popup_x + (popup_width - close_text.get_width()) // 2
+            close_y = popup_y + popup_height - 40
+            screen.blit(close_text, (close_x, close_y))
+            
+        except Exception as e:
+            print(f"绘制物品结果弹窗时出错: {e}")
 
     def draw_training_popup(self):
         """绘制训练中心弹窗"""
