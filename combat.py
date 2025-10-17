@@ -53,6 +53,49 @@ class CombatManager:
             hasattr(self.game.player, attr_name)):
             return getattr(self.game.player, attr_name)
         return default_value
+    
+    def _generate_enemy_pokemon(self, battle_type):
+        """生成敌方顾问"""
+        try:
+            # 导入必要的类
+            from CCmon5C import Pokemon, PokemonConfig
+            
+            if battle_type == "wild":
+                # 生成野生顾问
+                player_pos = (self.game.player.x, self.game.player.y)
+                tile_type = self.game.map.get_tile_type(player_pos[0], player_pos[1])
+                
+                # 选择野生顾问
+                advisor_name = PokemonConfig.get_field_advisor(tile_type)
+                
+                # 计算等级
+                player_default_pokemon = self.game.player.get_active_pokemon()
+                player_level = player_default_pokemon.level if player_default_pokemon else 1
+                enemy_level = self.game.map.get_wild_pokemon_level(player_pos[0], player_pos[1], player_level)
+                
+                # 创建野生顾问
+                enemy_pokemon = Pokemon(advisor_name, level=enemy_level)
+                return enemy_pokemon
+                
+            elif battle_type in ["mini_boss", "stage_boss"]:
+                # 生成BOSS顾问
+                if battle_type == "mini_boss":
+                    boss_list = PokemonConfig.mini_bosses
+                else:
+                    boss_list = PokemonConfig.stage_bosses
+                
+                if boss_list:
+                    boss_data = random.choice(boss_list)
+                    boss_pokemon = Pokemon(boss_data["name"], level=boss_data["level"])
+                    return boss_pokemon
+                
+        except Exception as e:
+            print(f"生成敌方顾问时出错: {e}")
+            # 如果出错，返回一个默认的顾问
+            from CCmon5C import Pokemon
+            return Pokemon("颓废的夏书文", level=1)
+        
+        return None
         
     def start_battle(self, battle_type="wild", enemy_pokemon=None):
         """
@@ -77,6 +120,15 @@ class CombatManager:
         
         if enemy_pokemon:
             # 使用提供的敌方顾问
+            if self.is_boss_battle:
+                self.game.boss_pokemon = enemy_pokemon
+                self.game.wild_pokemon = None
+            else:
+                self.game.wild_pokemon = enemy_pokemon
+                self.game.boss_pokemon = None
+        else:
+            # 生成敌方顾问
+            enemy_pokemon = self._generate_enemy_pokemon(battle_type)
             if self.is_boss_battle:
                 self.game.boss_pokemon = enemy_pokemon
                 self.game.wild_pokemon = None

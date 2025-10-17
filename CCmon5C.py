@@ -4058,6 +4058,7 @@ class PokemonGame:
         self.map = GameMap()
         self.player = Player("BA")
         self.images = self.load_images()
+        self.screen = None  # 将在run方法中设置
         self.wild_pokemon = None
         self.boss_pokemon = None  # 当前BOSS
         self.is_boss_battle = False  # 是否为BOSS战
@@ -5036,11 +5037,11 @@ class PokemonGame:
         
     def draw_exploration(self):
         """绘制探索界面，委托给UI渲染器"""
-        return self.ui_renderer.draw_exploration(screen)
+        return self.ui_renderer.draw_exploration(self.screen)
     
     def draw_battle(self):
         """绘制战斗界面，委托给UI渲染器"""
-        return self.ui_renderer.draw_battle(screen)
+        return self.ui_renderer.draw_battle(self.screen)
 
     def draw_skill_tooltip(self, screen, skill_info):
         """绘制技能悬浮提示框"""
@@ -6310,7 +6311,7 @@ class PokemonGame:
 
     def draw_shop(self):
         """绘制商店，委托给UI渲染器"""
-        return self.ui_renderer.draw_shop(screen)
+        return self.ui_renderer.draw_shop(self.screen)
     
     def draw_shop_old(self):
         """绘制商店界面"""
@@ -7247,6 +7248,7 @@ if __name__ == "__main__":
         
         print("游戏启动中...")
         game = PokemonGame()
+        game.screen = screen  # 设置screen引用
         print("游戏初始化完成，开始运行...")
         game.run()
         print("游戏循环结束，正在清理资源...")
