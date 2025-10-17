@@ -7162,15 +7162,36 @@ class PokemonGame:
                 self.notification_system.add_notification(f"成功使用了{item.name}！", "success")
                 # 显示详细结果
                 self.battle_messages = [f"对{target.name}使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.item_result_popup = {
+                    "title": f"使用 {item.name}",
+                    "target": target.name,
+                    "result": result,
+                    "success": True
+                }
             else:
                 # 添加物品使用信息通知
                 self.notification_system.add_notification(f"使用了{item.name}", "info")
                 # 显示详细结果
                 self.battle_messages = [f"使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.item_result_popup = {
+                    "title": f"使用 {item.name}",
+                    "target": target.name,
+                    "result": result,
+                    "success": False
+                }
                 
             return result
         # 添加物品使用失败通知
         self.notification_system.add_notification("无法使用物品！", "warning")
+        # 显示物品使用失败结果弹窗
+        self.item_result_popup = {
+            "title": "使用物品失败",
+            "target": "无目标",
+            "result": "无法使用物品",
+            "success": False
+        }
         return "无法使用物品"
     
     def use_item_directly(self, item_index):
@@ -8859,9 +8880,9 @@ class PokemonGame:
                             return
                     
                     if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
-                    # 在弹窗状态下,ESC键关闭弹窗
-                    if event.key == K_ESCAPE:
-                        self.backpack_popup_state = False
+                        # 在弹窗状态下,ESC键关闭弹窗
+                        if event.key == K_ESCAPE:
+                            self.backpack_popup_state = False
                 elif self.player.backpack:
                     # 上下键选择物品
                     if event.key == K_UP:
@@ -8877,8 +8898,9 @@ class PokemonGame:
                         if self.selected_item_index >= self.backpack_scroll_offset + max_visible_items:
                             self.backpack_scroll_offset = self.selected_item_index - max_visible_items + 1
                     elif event.key == K_RETURN:
-                        # 回车键使用物品
-                        self.backpack_popup_state = True
+                        # 回车键打开物品使用目标选择界面
+                        if 0 <= self.selected_item_index < len(self.player.backpack):
+                            self.open_item_use_menu(self.selected_item_index)
             
             elif self.state == GameState.TRAINING_CENTER:
                 if event.key == K_ESCAPE:  # ESC退出训练中心
@@ -9237,9 +9259,8 @@ class PokemonGame:
                             for action, rect in self.popup_buttons.items():
                                 if rect.collidepoint(event.pos):
                                     if action == "use":
-                                        # 执行物品使用
-                                        result = self.use_item_directly(self.selected_item_index)
-                                        self.battle_messages = [result]
+                                        # 打开物品使用目标选择界面
+                                        self.open_item_use_menu(self.selected_item_index)
                                         self.backpack_popup_state = False
                                     elif action == "cancel":
                                         self.backpack_popup_state = False
