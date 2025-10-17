@@ -29,9 +29,9 @@ from typing import List, Dict, Optional
 # ==================== 游戏常量和配置 ====================
 
 # 屏幕和地图配置
-SCREEN_WIDTH = 1280  # 统一界面宽度
-SCREEN_HEIGHT = 1280  # 统一界面高度
-TILE_SIZE = 107      # 调整格子尺寸以适配屏幕 (1280/720*60≈107)
+SCREEN_WIDTH = 720  # 统一界面宽度
+SCREEN_HEIGHT = 720  # 统一界面高度
+TILE_SIZE = 60     # 调整格子尺寸以适配屏幕 (1280/720*60≈107)
 MAP_SIZE = 12        # 保持12x12地图
 FPS = 30             # 帧率
 
@@ -967,7 +967,7 @@ UNIFIED_SKILLS_DATABASE = {
         "type": ["content", "PS", "结构化"],
         "category": SkillCategory.TEAM_BUFF,
         "description": "大幅提升团队攻击力和防御力",
-        "sp_cost": 45,
+        "sp_cost": 25,
         "quote": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性",
         "effects": {
             "team_attack_multiplier": 1.5,
@@ -980,7 +980,7 @@ UNIFIED_SKILLS_DATABASE = {
         "type": "PS",
         "category": SkillCategory.ENEMY_DEBUFF,
         "description": "降低敌人士气,减少其攻击力和防御力",
-        "sp_cost": 22,
+        "sp_cost": 2,
         "quote": "你们来前我们就开始做了",
         "effects": {
             "target_attack_multiplier": 0.7,
@@ -1046,7 +1046,7 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 60,
         "type": ["节操"],
         "category": SkillCategory.SPECIAL,
-        "sp_cost": 0,
+        "sp_cost": 40,
         "quote": "所所所所有损失从你们费用里扣！",
         "description": "强制扣除对方的效益,造成大量伤害"
     },
@@ -2245,7 +2245,9 @@ class PokemonConfig:
                 {"name": "小嘴抹毒", "power": 40, "type": "networking", "category": SkillCategory.DOT, "sp_cost": 80},
                 {"name": "快乐小狗", "power": 28, "type": "共情", "category": SkillCategory.HOT},
                 {"name": "茶颜悦色", "power": 25, "type": "共情", "category": SkillCategory.HEAL},
-                {"name": "躺平", "power": 35, "type": "节操", "category": SkillCategory.HEAL}
+                {"name": "躺平", "power": 35, "type": "节操", "category": SkillCategory.HEAL},
+                {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
+                {"name": "钓鱼执法", "power": 75, "type": "networking", "category": SkillCategory.ENEMY_DEBUFF}
             ]
         },
         "浪浪山吕瑞怡": {
@@ -2261,7 +2263,8 @@ class PokemonConfig:
                 {"name": "绝世骰手", "power": 120, "type": ['networking', '节操'], "category": SkillCategory.SPECIAL_ATTACK, "sp_cost": 90},
                 {"name": "雪松杀手", "power": 85, "type": "勇气", "category": SkillCategory.DIRECT_ATTACK},
                 {"name": "钓鱼执法", "power": 75, "type": "networking", "category": SkillCategory.ENEMY_DEBUFF},
-                {"name": "PTO", "power": 0, "type": "勇气", "category": SkillCategory.DIRECT_HEAL}
+                {"name": "PTO", "power": 0, "type": "勇气", "category": SkillCategory.DIRECT_HEAL},
+                {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
             ]
         },
         "沉默的傅雪松": {
@@ -2356,7 +2359,8 @@ class PokemonConfig:
                 {"name": "表没对齐", "power": 0, "type": "networking", "category": SkillCategory.ENEMY_DEBUFF},
                 {"name": "画饼术", "power": 18, "type": ["共情", "节操"], "category": SkillCategory.SELF_BUFF},
                 {"name": "PTO", "power": 0, "type": ["勇气", "节操"], "category": SkillCategory.DIRECT_HEAL},
-                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"}
+                {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
+                {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
             ]
         },
         "大嘴Delia": {
@@ -2434,7 +2438,7 @@ class PokemonConfig:
                 {"name": "马总的关爱", "power": 40, "type": ["共情", "体力"], "category": SkillCategory.DOT},
                 {"name": "我有意见！", "power": 75, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "躺平", "power": 0, "type": "防御", "category": SkillCategory.STAT_CHANGE},
-                {"name": "我来自珠海", "power": 150, "type": ["共情", "PS", "体力"]},
+                {"name": "我来自珠海", "power": 150, "type": ["共情", "PS", "体力"], "category": SkillCategory.ULTIMATE},
                 {"name": "奶茶攻击", "power": 40, "type": ["networking", "共情"]},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
             ]
@@ -2450,7 +2454,7 @@ class PokemonConfig:
                 {"name": "鲁莽", "power": 0, "type": ['勇气'], "category": SkillCategory.SELF_BUFF},
                 {"name": "我有意见！", "power": 75, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "沉默的牛马", "power": 40, "type": ['共情', 'PS'], "category": SkillCategory.MULTI_HIT},
-                {"name": "浆板下水", "power": 45, "type": ["共情", "体力"]}
+                {"name": "无锡的羔羊", "power": 200, "type": ["共情", "content", "韧性"], "category": SkillCategory.ULTIMATE}
             ]
         },
         "人畜无害的孙皓": {
@@ -2511,7 +2515,8 @@ class PokemonConfig:
                 {"name": "初级扯皮", "power": 30, "type": "节操"}, 
                 {"name": "磨磨蹭蹭", "power": 25, "type": "节操"}, 
                 {"name": "在你来前", "power": 40, "type": "节操"}, 
-                {"name": "感到冒犯", "power": 35, "type": "勇气", "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"}
+                {"name": "感到冒犯", "power": 35, "type": "勇气", "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         "王小容": {
@@ -2523,7 +2528,8 @@ class PokemonConfig:
                 {"name": "初级扯皮", "power": 30, "type": "节操"}, 
                 {"name": "技术创新", "power": 45, "type": "content", "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}, 
                 {"name": "在你来前", "power": 40, "type": "节操"}, 
-                {"name": "感到冒犯", "power": 35, "type": "勇气", "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"}
+                {"name": "感到冒犯", "power": 35, "type": "勇气", "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         # BOSS顾问数据
@@ -2542,7 +2548,8 @@ class PokemonConfig:
                 {"name": "27岁500强总监", "power": 30, "type": "节操", "category": SkillCategory.DOT},
                 {"name": "PUA", "power": 15, "type": ["共情", "节操"]},
                 {"name": "腐蚀", "power": 11, "type": ["节操", "体力"], "category": SkillCategory.DOT},
-                {"name": "哼哼唧唧", "power": 15, "type": "节操"}
+                {"name": "哼哼唧唧", "power": 15, "type": "节操"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         "宇宙质量总监ZZZ": {
@@ -2560,7 +2567,8 @@ class PokemonConfig:
                 {"name": "我和他谈笑风生", "power": 35, "type": "节操", "category": SkillCategory.DOT},
                 {"name": "PUA", "power": 15, "type": ["共情", "节操"]},
                 {"name": "画饼术", "power": 18, "type": ["共情", "节操"]},
-                {"name": "团队增殖", "power": 15, "type": ["networking", "节操"]}
+                {"name": "团队增殖", "power": 15, "type": ["networking", "节操"]}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         "HR总监JJZ": {
@@ -2579,7 +2587,8 @@ class PokemonConfig:
                 {"name": "信不信我投诉你", "power": 75, "type": "节操"},
                 {"name": "PUA", "power": 15, "type": ["共情", "节操"]},
                 {"name": "开始抬杠", "power": 20, "type": ["结构化", "PS", "节操"]},
-                {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT, "sp_cost": 45}
+                {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT, "sp_cost": 45}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         "平静的老李": {
@@ -2598,7 +2607,8 @@ class PokemonConfig:
                 {"name": "深呼吸", "power": 80, "type": "节操", "category": SkillCategory.SPECIAL},
                 {"name": "开始抬杠", "power": 20, "type": ["结构化", "PS", "节操"]},
                 {"name": "大海无量", "power": 10, "type": ["韧性", "体力"], "category": SkillCategory.DOT},
-                {"name": "熬夜攻击", "power": 15, "type": ["韧性", "体力"], "category": SkillCategory.DOT}
+                {"name": "熬夜攻击", "power": 15, "type": ["韧性", "体力"], "category": SkillCategory.DOT}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         "暴怒的老李": {
@@ -2617,7 +2627,8 @@ class PokemonConfig:
                 {"name": "扣除效益", "power": 60, "type": "节操", "category": SkillCategory.SPECIAL},
                 {"name": "大海无量", "power": 10, "type": ["韧性", "体力"], "category": SkillCategory.DOT},
                 {"name": "无偿加班", "power": 20, "type": "节操"},
-                {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"}
+                {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         "平地挖坑刚子": {
@@ -2635,7 +2646,8 @@ class PokemonConfig:
                 {"name": "我在XX时代", "power": 85, "type": "节操"},
                 {"name": "骚扰专家", "power": 35, "type": "节操", "category": SkillCategory.DOT},
                 {"name": "开始抬杠", "power": 20, "type": ["结构化", "PS", "节操"]},
-                {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"}
+                {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         # 新增的野外顾问
@@ -2648,7 +2660,8 @@ class PokemonConfig:
                 {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "感到冒犯", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"},
                 {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"},
-                {"name": "技术创新", "power": 80, "type": ["content", "PS", "结构化"], "category": SkillCategory.TEAM_BUFF, "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}
+                {"name": "技术创新", "power": 80, "type": ["content", "PS", "结构化"], "category": SkillCategory.TEAM_BUFF, "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         "何须强": {
@@ -2660,7 +2673,8 @@ class PokemonConfig:
                 {"name": "磨磨蹭蹭", "power": 0, "type": "节操", "category": SkillCategory.CONTINUOUS_HEAL},
                 {"name": "开始抬杠", "power": 0, "type": ["结构化", "PS", "节操"], "category": SkillCategory.SELF_BUFF},
                 {"name": "感到冒犯", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"},
-                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"}
+                {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         "张新炜": {
@@ -2672,7 +2686,8 @@ class PokemonConfig:
                 {"name": "哼哼唧唧", "power": 0, "type": "节操", "category": SkillCategory.ENEMY_DEBUFF},
                 {"name": "开始抬杠", "power": 0, "type": ["结构化", "PS", "节操"], "category": SkillCategory.SELF_BUFF},
                 {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
-                {"name": "心灵震爆", "power": 70, "type": ["共情", "PS"]}
+                {"name": "心灵震爆", "power": 70, "type": ["共情", "PS"]}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         "严斤": {
@@ -2684,7 +2699,8 @@ class PokemonConfig:
                 {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "感到冒犯", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 8, "quote": "外包又出花样了", "description": "连续3回合造成伤害"},
                 {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"},
-                {"name": "技术创新", "power": 80, "type": ["content", "PS", "结构化"], "category": SkillCategory.TEAM_BUFF, "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}
+                {"name": "技术创新", "power": 80, "type": ["content", "PS", "结构化"], "category": SkillCategory.TEAM_BUFF, "sp_cost": 45, "quote": "该方案采用的都是市面上已有的技术,并没有见到你们的独创性", "description": "大幅提升团队攻击力和防御力"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ]
         },
         "半血小萱": {
@@ -2748,7 +2764,8 @@ class PokemonConfig:
                 {"name": "27岁500强总监", "power": 30, "type": "节操", "category": SkillCategory.DOT},
                 {"name": "PUA", "power": 15, "type": ["共情", "节操"]},
                 {"name": "腐蚀", "power": 11, "type": ["节操", "体力"], "category": SkillCategory.DOT},
-                {"name": "哼哼唧唧", "power": 15, "type": "节操"}
+                {"name": "哼哼唧唧", "power": 15, "type": "节操"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ],
             "reward": {
                 "pokemon": "讲课的Raymond",
@@ -2769,7 +2786,8 @@ class PokemonConfig:
                 {"name": "我和他谈笑风生", "power": 35, "type": "节操", "category": SkillCategory.DOT},
                 {"name": "PUA", "power": 15, "type": ["共情", "节操"]},
                 {"name": "画饼术", "power": 18, "type": ["共情", "节操"]},
-                {"name": "团队增殖", "power": 15, "type": ["networking", "节操"]}
+                {"name": "团队增殖", "power": 15, "type": ["networking", "节操"]}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ],
             "reward": {
                 "pokemon": "做表的Delia",
@@ -2790,7 +2808,8 @@ class PokemonConfig:
                 {"name": "我在XX时代", "power": 85, "type": "节操"},
                 {"name": "骚扰专家", "power": 35, "type": "节操", "category": SkillCategory.DOT},
                 {"name": "开始抬杠", "power": 20, "type": ["结构化", "PS", "节操"]},
-                {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"}
+                {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ],
             "reward": {
                 "pokemon": "害羞的吕瑞怡",
@@ -2816,7 +2835,8 @@ class PokemonConfig:
                 {"name": "信不信我投诉你", "power": 75, "type": "节操"},
                 {"name": "PUA", "power": 15, "type": ["共情", "节操"]},
                 {"name": "开始抬杠", "power": 20, "type": ["结构化", "PS", "节操"]},
-                {"name": "熬夜攻击", "power": 15, "type": ["韧性", "体力"], "category": SkillCategory.DOT}
+                {"name": "熬夜攻击", "power": 15, "type": ["韧性", "体力"], "category": SkillCategory.DOT}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ],
             "reward": {
                 "pokemon": "人畜无害的孙皓",
@@ -2838,7 +2858,8 @@ class PokemonConfig:
                 {"name": "深呼吸", "power": 80, "type": "节操", "category": SkillCategory.SPECIAL},
                 {"name": "开始抬杠", "power": 20, "type": ["结构化", "PS", "节操"]},
                 {"name": "大海无量", "power": 10, "type": ["韧性", "体力"], "category": SkillCategory.DOT},
-                {"name": "熬夜攻击", "power": 15, "type": ["韧性", "体力"], "category": SkillCategory.DOT}
+                {"name": "熬夜攻击", "power": 15, "type": ["韧性", "体力"], "category": SkillCategory.DOT}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ],
             "reward": {
                 "pokemon": "流浪的宏宇",
@@ -2860,7 +2881,8 @@ class PokemonConfig:
                 {"name": "扣除效益", "power": 60, "type": "节操", "category": SkillCategory.SPECIAL},
                 {"name": "大海无量", "power": 10, "type": ["韧性", "体力"], "category": SkillCategory.DOT},
                 {"name": "无偿加班", "power": 20, "type": "节操"},
-                {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"}
+                {"name": "既要又要还要", "power": 11, "type": "节操", "category": SkillCategory.DOT, "sp_cost": 12, "quote": "我相信群众里面一定有能人", "description": "连续4回合造成伤害"}, 
+                {"name": "唧唧歪歪", "power": 28, "type": "共情"}
             ],
             "reward": {
                 "pokemon": "超神隋总",
@@ -3030,8 +3052,10 @@ class GameInitialConfig:
             {"name": "蚝汁傅雪松", "level": 40, "sp": 100},
             {"name": "全旋托马斯", "level": 40, "sp": 100},
             {"name": "ValueConcernRaymond", "level": 40, "sp": 100},
-            {"name": "做表的Delia", "level": 15, "sp": 100},
-            {"name": "大嘴Delia", "level": 34, "sp": 100}
+            {"name": "浪浪山吕瑞怡", "level": 40, "sp": 100},
+            {"name": "大嘴Delia", "level": 34, "sp": 100},
+            {"name": "进击的夏书文", "level": 40, "sp": 100},
+            {"name": "超神隋总", "level": 40, "sp": 100}
         ],
         "money": 600000,  # 60万
         "items": [
