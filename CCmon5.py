@@ -566,7 +566,7 @@ UNIFIED_SKILLS_DATABASE = {
         }
     },
     "织条毯子": {
-        "power": 20,
+        "power": 40,
         "type": ["共情", "节操"],
         "category": SkillCategory.DIRECT_DAMAGE,
         "description": "造成自身攻击力40%伤害",
@@ -4021,6 +4021,19 @@ class Pokemon:
         skill_data = NEW_SKILLS_DATABASE[skill_name]
         messages = []
         
+        # 对于REVIVE技能，先检查是否有可复活的队友，再消耗SP
+        category = skill_data.get("category")
+        if category == SkillCategory.REVIVE:
+            if allies:
+                fainted_allies = [ally for ally in allies if ally != self and ally.is_fainted()]
+                if not fainted_allies:
+                    # 没有可复活的队友，不消耗SP，直接返回
+                    messages.append(f"{self.name}使用了{skill_name}，但没有需要复活的队友！")
+                    return 0, messages
+            else:
+                # 没有队友，不消耗SP，直接返回
+                return 0, [f"{self.name}使用了{skill_name},但没有队友！"]
+        
         # 检查SP消耗
         if skill_data["sp_cost"] > 0:
             if not self.consume_sp(skill_data["sp_cost"]):
@@ -4173,8 +4186,31 @@ class Pokemon:
         elif category == SkillCategory.SELF_BUFF:
             # 改变己方属性多回合
             
+            # 处理G总,你不懂OPS特殊逻辑
+            if skill_name == "G总,你不懂OPS":
+                # 设置延迟伤害效果
+                delayed_damage_percentage = 2.4  # 240%攻击力
+                delayed_turns = 2
+                
+                # 添加延迟伤害状态效果
+                delayed_damage = {
+                    "name": skill_name,
+                    "type": "delayed_damage",
+                    "turns_remaining": delayed_turns,
+                    "damage_percentage": delayed_damage_percentage,
+                    "target": "enemy"
+                }
+                
+                # 将延迟伤害效果添加到状态效果中
+                if not hasattr(self, 'delayed_effects'):
+                    self.delayed_effects = []
+                self.delayed_effects.append(delayed_damage)
+                
+                messages.append(f"{self.name}使用了{skill_name}！将在{delayed_turns}回合后造成巨额伤害！")
+                return 0, messages
+            
             # 处理无锡的女武神特殊逻辑
-            if skill_name == "无锡的女武神":
+            elif skill_name == "无锡的女武神":
                 # 恢复所有顾问血量（不包括自己）
                 heal_percentage = effects.get("heal_percentage", 1.0)
                 total_heal = 0
@@ -4671,7 +4707,7 @@ class Pokemon:
                 return 0, [f"{self.name}使用了{skill_name},但没有目标！"]
         
         elif category == SkillCategory.REVIVE:
-            # 复活技能 - 这个方法现在只是检查是否可以使用，实际复活逻辑在战斗系统中处理
+            # 复活技能 - SP已在前面检查和消耗，这里处理复活逻辑
             if allies:
                 fainted_allies = [ally for ally in allies if ally != self and ally.is_fainted()]
                 
@@ -4679,9 +4715,11 @@ class Pokemon:
                     # 返回特殊值表示需要选择复活目标
                     return -1, [f"{self.name}准备使用{skill_name}，请选择要复活的顾问！"]
                 else:
+                    # 这种情况不应该发生，因为前面已经检查过了
                     messages.append(f"{self.name}使用了{skill_name}，但没有需要复活的队友！")
                     return 0, messages
             else:
+                # 这种情况不应该发生，因为前面已经检查过了
                 return 0, [f"{self.name}使用了{skill_name},但没有队友！"]
         
         return 0, messages
@@ -4712,6 +4750,21 @@ class Pokemon:
             if effect["turns"] <= 0:
                 self.status_effects["continuous_heal"].remove(effect)
                 messages.append(f"{self.name}的{effect['name']}效果消失了！")
+        
+        # 处理G总,你不懂OPS的延迟伤害效果
+        if hasattr(self, 'delayed_effects'):
+            for effect in self.delayed_effects[:]:
+                if effect["type"] == "delayed_damage":
+                    effect["turns_remaining"] -= 1
+                    if effect["turns_remaining"] <= 0:
+                        # 时间到了，造成伤害
+                        if target_pokemon and effect["target"] == "enemy":
+                            damage = int(self.attack * effect["damage_percentage"])
+                            actual_damage = target_pokemon.take_damage(damage)
+                            messages.append(f"{effect['name']}的延迟效果触发！对{target_pokemon.name}造成{actual_damage}点巨额伤害！")
+                        self.delayed_effects.remove(effect)
+                    else:
+                        messages.append(f"{effect['name']}还有{effect['turns_remaining']}回合生效！")
         
         # 处理延迟效果
         for effect in self.status_effects["delayed_effects"][:]:
@@ -4812,6 +4865,9 @@ class Pokemon:
                 "caster": "self"
             }
         }
+        # 清除G总,你不懂OPS的延迟效果
+        if hasattr(self, 'delayed_effects'):
+            self.delayed_effects = []
     
     def increment_battle_turn(self):
         """增加战斗回合计数器"""
@@ -5120,6 +5176,7 @@ class GameState:
     TRAINING_CENTER = 17  # 训练中心界面
     MENU_TARGET_SELECTION = 18  # 目标选择状态
     BATTLE_REVIVE_SELECT = 19  # 复活技能目标选择状态
+    BATTLE_END_RESULT = 20  # 战斗结束结果显示状态
 
 # 通知系统类
 class NotificationSystem:
@@ -5603,7 +5660,8 @@ class PokemonGame:
             self.draw_exploration()
         elif self.state in [GameState.BATTLE, GameState.BOSS_BATTLE, 
                            GameState.BATTLE_MOVE_SELECT, GameState.BATTLE_ANIMATION,
-                           GameState.CAPTURE_ANIMATION, GameState.BATTLE_SWITCH_POKEMON]:
+                           GameState.CAPTURE_ANIMATION, GameState.BATTLE_SWITCH_POKEMON,
+                           GameState.BATTLE_END_RESULT]:
             self.draw_battle()
         elif self.state in [GameState.MENU_MAIN, GameState.MENU_POKEMON,
                            GameState.MENU_POKEMON_DETAIL, GameState.MENU_BACKPACK,
@@ -6718,6 +6776,7 @@ class PokemonGame:
                 self.map.can_refresh = True  # 击败BOSS后允许地图刷新
                 self.map.refresh_map()
                 self.shop.refresh_shop()  # 同时刷新商店物品
+                self._map_dirty = True  # 标记地图需要重新渲染
                 self.battle_messages.append("地图已刷新,新的BOSS出现了！")
                 self.battle_messages.append("商店物品也已更新！")
             
@@ -6733,16 +6792,13 @@ class PokemonGame:
                     self.player.x, self.player.y = 3, 3
                     self.battle_messages.append("BOSS战失败,被送回安全区域！")
             
-            self.state = GameState.EXPLORING
-            self.wild_pokemon = None
-            self.boss_pokemon = None
-            self.is_boss_battle = False
-            self.battle_buttons = []
-            self.move_buttons = []
-            self.battle_messages = []
+            # 新的战斗结束行为：留在战斗界面显示结果
+            self.state = GameState.BATTLE_END_RESULT
+            # 保留战斗消息以显示结果
+            # self.battle_messages = []  # 不清除消息，保留显示
             self.current_turn = None
             self.animation_delay = 1000
-            self.menu_stack = []
+            # 不清除 wild_pokemon, boss_pokemon 等，以便显示结果界面
         except Exception as e:
             print(f"结束战斗时出错: {e}")
             self.state = GameState.EXPLORING
@@ -7014,6 +7070,46 @@ class PokemonGame:
                 self.open_target_selection_menu("skill_book")
                 return "请选择要学习必杀技的顾问"
                 
+            elif item.item_type == "exp_boost":
+                # 经验糖果：需要选择使用的顾问
+                self.pending_item_use = {
+                    "item_index": item_index,
+                    "item": item,
+                    "type": "exp_boost"
+                }
+                self.open_target_selection_menu("exp_boost")
+                return "请选择要使用经验糖果的顾问"
+                
+            elif item.item_type == "attribute_enhancer":
+                # 属性增强器：需要选择使用的顾问
+                self.pending_item_use = {
+                    "item_index": item_index,
+                    "item": item,
+                    "type": "attribute_enhancer"
+                }
+                self.open_target_selection_menu("attribute_enhancer")
+                return "请选择要使用属性增强器的顾问"
+                
+            elif item.item_type == "sp_enhancer":
+                # SP增强器：需要选择使用的顾问
+                self.pending_item_use = {
+                    "item_index": item_index,
+                    "item": item,
+                    "type": "sp_enhancer"
+                }
+                self.open_target_selection_menu("sp_enhancer")
+                return "请选择要使用SP增强器的顾问"
+                
+            elif item.item_type == "upgrade_gem":
+                # 升级宝石：需要选择使用的顾问
+                self.pending_item_use = {
+                    "item_index": item_index,
+                    "item": item,
+                    "type": "upgrade_gem"
+                }
+                self.open_target_selection_menu("upgrade_gem")
+                return "请选择要使用升级宝石的顾问"
+                
             else:
                 # 添加物品无法使用通知
                 self.notification_system.add_notification("这个物品无法直接使用", "warning")
@@ -7049,6 +7145,26 @@ class PokemonGame:
                 button_text += " ✓"
             elif item_type == "skill_book":
                 # 所有顾问都可以学习必杀技
+                button_text += " ✓"
+            elif item_type == "exp_boost":
+                # 所有顾问都可以使用经验糖果
+                button_text += " ✓"
+            elif item_type == "attribute_enhancer":
+                # 检查顾问是否还能获得新属性
+                all_types = ["共情", "韧性", "勇气", "耐心", "体力", "networking", "节操", "PS", "结构化", "content"]
+                available_types = [t for t in all_types if t not in pokemon.advantages]
+                if available_types:
+                    button_text += " ✓"
+                else:
+                    button_text += " ✗"
+            elif item_type == "sp_enhancer":
+                # 检查顾问是否已经使用过EM guidebook
+                if hasattr(pokemon, 'has_em_guidebook') and pokemon.has_em_guidebook:
+                    button_text += " ✗"
+                else:
+                    button_text += " ✓"
+            elif item_type == "upgrade_gem":
+                # 所有顾问都可以使用升级宝石
                 button_text += " ✓"
             
             self.menu_buttons.append(
@@ -7100,6 +7216,14 @@ class PokemonGame:
                 success = "提升" in result or "增加" in result
             elif item_data["type"] == "skill_book":
                 success = "学会了" in result or "学习了" in result
+            elif item_data["type"] == "exp_boost":
+                success = "获得了" in result and "经验值" in result
+            elif item_data["type"] == "attribute_enhancer":
+                success = "获得了新的优点属性" in result
+            elif item_data["type"] == "sp_enhancer":
+                success = "SP上限提升" in result
+            elif item_data["type"] == "upgrade_gem":
+                success = "提升到Lv" in result
             
             if success:
                 self.player.remove_item(item_index)
@@ -7254,6 +7378,50 @@ class PokemonGame:
                 self.state = GameState.EXPLORING
                 self.menu_buttons = []
         
+    def draw_battle_end_result(self):
+        """绘制战斗结束结果界面"""
+        try:
+            # 绘制背景
+            if self.is_boss_battle and self.images.boss_battle_bg:
+                bg_scaled = pygame.transform.scale(self.images.boss_battle_bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
+                screen.blit(bg_scaled, (0, 0))
+            elif self.images.battle_bg:
+                bg_scaled = pygame.transform.scale(self.images.battle_bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
+                screen.blit(bg_scaled, (0, 0))
+            else:
+                screen.fill(BATTLE_BG_COLOR)
+            
+            # 绘制半透明覆盖层
+            overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), BLACK, 128)
+            screen.blit(overlay, (0, 0))
+            
+            # 获取字体
+            font, small_font, battle_font, menu_font = get_fonts()
+            
+            # 绘制标题
+            title_text = "战斗结束"
+            title_surface = menu_font.render(title_text, True, WHITE)
+            title_x = SCREEN_WIDTH // 2 - title_surface.get_width() // 2
+            screen.blit(title_surface, (title_x, 50))
+            
+            # 绘制战斗消息
+            message_y = 120
+            for message in self.battle_messages:
+                if message.strip():  # 只显示非空消息
+                    message_surface = small_font.render(message, True, WHITE)
+                    message_x = SCREEN_WIDTH // 2 - message_surface.get_width() // 2
+                    screen.blit(message_surface, (message_x, message_y))
+                    message_y += 30
+            
+            # 绘制提示信息
+            hint_text = "按任意键继续..."
+            hint_surface = small_font.render(hint_text, True, YELLOW)
+            hint_x = SCREEN_WIDTH // 2 - hint_surface.get_width() // 2
+            screen.blit(hint_surface, (hint_x, SCREEN_HEIGHT - 80))
+            
+        except Exception as e:
+            print(f"绘制战斗结束结果界面时出错: {e}")
+    
     def draw_exploration(self):
         try:
             # 使用缓存的地图surface
@@ -7317,8 +7485,13 @@ class PokemonGame:
     def draw_battle(self):
         try:
             enemy_pkm = self.boss_pokemon if self.is_boss_battle else self.wild_pokemon
-            if not enemy_pkm:
+            if not enemy_pkm and self.state != GameState.BATTLE_END_RESULT:
                 self.state = GameState.EXPLORING
+                return
+            
+            # 特殊处理战斗结束结果状态
+            if self.state == GameState.BATTLE_END_RESULT:
+                self.draw_battle_end_result()
                 return
                 
             # 确定文字颜色（BOSS战使用蓝色）
@@ -8304,6 +8477,19 @@ class PokemonGame:
                     self.state = GameState.TRAINING_CENTER  # 训练中心消息返回训练中心
                 else:
                     self.state = GameState.EXPLORING  # 其他消息返回探索状态
+                return
+            
+            # 战斗结束结果状态处理 - 按任意键关闭战斗界面
+            if self.state == GameState.BATTLE_END_RESULT:
+                # 清理战斗相关数据并返回探索状态
+                self.state = GameState.EXPLORING
+                self.wild_pokemon = None
+                self.boss_pokemon = None
+                self.is_boss_battle = False
+                self.battle_buttons = []
+                self.move_buttons = []
+                self.battle_messages = []
+                self.menu_stack = []
                 return
             
             # 通用ESC键处理
