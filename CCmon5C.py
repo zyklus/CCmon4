@@ -26,6 +26,15 @@ from dataclasses import dataclass, field
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from typing import List, Dict, Optional
 
+# 导入模块化的组件
+from skills import (
+    SkillAttribute, EffectType, SkillEffect, Skill, SkillCategory, 
+    SkillManager, SP_CONFIG, UNIFIED_SKILLS_DATABASE, ULTIMATE_LINES_DATABASE,
+    skill_manager
+)
+from combat import CombatManager, BattleAction, BattleResult
+from ui_renderer import UIRenderer
+
 # ==================== 游戏常量和配置 ====================
 
 # 屏幕和地图配置
@@ -63,124 +72,91 @@ PURPLE = (128, 0, 128)  # 紫色用于SP条
 
 # ==================== 游戏枚举和数据结构 ====================
 
-# 技能属性枚举
-class SkillAttribute(Enum):
-    """技能属性枚举"""
-    NETWORKING = "networking"
-    EMPATHY = "共情"
-    CONTENT = "content"
-    PHYSICAL = "体力"
-    PS = "PS"
-    COURAGE = "勇气"
-    INTEGRITY = "节操"
-    RESILIENCE = "韧性"
-    PATIENCE = "耐心"
-
-class EffectType(Enum):
-    """技能效果类型"""
-    DAMAGE = "伤害"
-    HEAL = "治疗"
-    BUFF = "增益"
-    DEBUFF = "减益"
-    DODGE = "回避"
-    REVIVE = "复活"
-    DOT = "持续伤害"
-    HOT = "持续治疗"
-    SPECIAL = "特殊"
-    IGNORE_DEFENSE = "无视防御伤害"
-
-@dataclass(slots=True)
-class SkillEffect:
-    """技能效果"""
-    effect_type: EffectType
-    value: float
-    duration: int = 1
-    probability: float = 1.0
-    target: str = "enemy"  # "self", "ally", "all_allies", "enemy", "all_enemies"
-    description: str = ""
-
-@dataclass(slots=True)
-class Skill:
-    """技能类"""
-    name: str
-    attributes: List[SkillAttribute]
-    effects: List[SkillEffect]
-    sp_cost: int
-    quote: str
-    description: str = ""  # 技能描述
-    
-    def __str__(self):
-        attrs = ", ".join([attr.value for attr in self.attributes])
-        return f"{self.name} [{attrs}] - SP: {self.sp_cost}"
-
-# 技能分类枚举
-class SkillCategory:
-    DIRECT_DAMAGE = "direct_damage"           # 直接伤害（无需SP发动，发动后积攒SP）
-    CONTINUOUS_DAMAGE = "continuous_damage"   # 连续多回合伤害（无需SP发动，发动后积攒SP）
-    DIRECT_HEAL = "direct_heal"              # 直接治疗（无需SP发动，发动后不积攒SP）
-    CONTINUOUS_HEAL = "continuous_heal"       # 连续多回合治疗（无需SP发动，发动后不积攒SP）
-    HEAL = "heal"                            # 通用治疗技能
-    SELF_BUFF = "self_buff"                  # 改变己方属性多回合（无需SP发动，发动后不积攒SP）
-    ENEMY_DEBUFF = "enemy_debuff"            # 改变敌方属性多回合（无需SP发动，发动后不积攒SP）
-    TEAM_BUFF = "team_buff"                  # 改变团队属性多回合（无需SP发动，发动后不积攒SP）
-    TEAM_DEBUFF = "team_debuff"              # 改变敌方团队属性多回合（无需SP发动，发动后不积攒SP）
-    SPECIAL_ATTACK = "special_attack"         # 必杀技等（需SP发动，发动后不积攒SP）
-    DIRECT_ATTACK = "direct_attack"          # 直接攻击技能
-    DOT = "dot"                              # 持续伤害效果
-    HOT = "hot"                              # 持续治疗效果
-    TEAM_HEAL = "team_heal"                  # 团队治疗
-    MULTI_HIT = "multi_hit"                  # 多段攻击
-    REVIVE = "revive"                        # 复活技能
-    MIXED_BUFF_DEBUFF = "mixed_buff_debuff"  # 混合增益/减益效果
-    HOT_DOT = "hot_dot"                      # 持续治疗和伤害效果
-    ULTIMATE = "ultimate"                    # 终极技能
-    SPECIAL = "special"                      # 特殊技能
-    STAT_CHANGE = "stat_change"              # 属性改变技能
-
-# SP系统配置
-SP_CONFIG = {
-    "initial_sp": 0,           # 初始SP
-    "max_sp": 100,            # 默认SP上限
-    "max_sp_with_guidebook": 120,  # 使用EM guidebook后的SP上限
-    "sp_gain_on_attack": 15,   # 攻击时获得的SP
-    "sp_gain_on_defend": 10,   # 被攻击时获得的SP
-}
+# 技能相关的枚举和类已移动到 skills.py 模块
 
 # ==================== 技能数据库 ====================
 
-# 统一技能数据库
-UNIFIED_SKILLS_DATABASE = {
-    # 基础技能
-    "酒仙": {
-        "power": 0,
-        "type": "体力",
-        "category": SkillCategory.DIRECT_HEAL,
-        "description": "立即回复40%生命",
-        "sp_cost": 0,
-        "quote": "双倍IPA治疗失眠",
-        "effects": {
-            "heal_percentage": 0.4
+# 技能数据库已移动到 skills.py 模块
+# 技能管理系统已移动到 skills.py 模块
+
+# ==================== 字体管理系统 ====================
+
+class FontManager:
+    """优化的字体管理器"""
+    _fonts = {}
+    _chinese_fonts = {}
+    
+    @classmethod
+    def get_font(cls, size=24, chinese=True):
+        """统一的字体获取方法"""
+        cache = cls._chinese_fonts if chinese else cls._fonts
+        if size not in cache:
+            if chinese:
+                cache[size] = cls._load_chinese_font(size)
+            else:
+                cache[size] = pygame.font.Font(None, size)
+        return cache[size]
+    
+    @classmethod
+    def _load_chinese_font(cls, size):
+        """加载中文字体"""
+        # 确保pygame字体模块已初始化
+        if not pygame.get_init():
+            pygame.init()
+        if not pygame.font.get_init():
+            pygame.font.init()
+            
+        font_names = ["SimHei", "WenQuanYi Micro Hei", "Heiti TC", "Microsoft YaHei", "Arial Unicode MS"]
+        
+        for font_name in font_names:
+            try:
+                return pygame.font.SysFont(font_name, size)
+            except (pygame.error, OSError):
+                continue
+        
+        # 如果没有找到中文字体，使用默认字体
+        return pygame.font.Font(None, size)
+    
+    @classmethod
+    def get_common_fonts(cls):
+        """获取常用字体集合"""
+        return {
+            'font': cls.get_font(20),
+            'small_font': cls.get_font(16),
+            'battle_font': cls.get_font(20),
+            'menu_font': cls.get_font(20),
+            'large_font': cls.get_font(32),
+            'title_font': cls.get_font(24)
         }
-    },
-    "鼓舞": {
-        "power": 0,
-        "type": "共情",
-        "category": SkillCategory.CONTINUOUS_HEAL,
-        "description": "连续3回合回复20%生命",
-        "sp_cost": 0,
-        "quote": "鼓舞士气提升战斗力",
-        "effects": {
-            "heal_percentage": 0.2,
-            "turns": 3
-        }
-    },
-    "鲁莽": {
-        "power": 0,
-        "type": "体力",
-        "category": SkillCategory.SELF_BUFF,
-        "description": "连续3回合攻击增加40%，防御降低40%",
-        "sp_cost": 0,
-        "quote": "干他",
+
+# 保持向后兼容的函数
+def load_chinese_font(size):
+    """保持向后兼容"""
+    return FontManager.get_font(size, chinese=True)
+
+def get_fonts():
+    """保持向后兼容的字体获取函数"""
+    fonts = FontManager.get_common_fonts()
+    return fonts['font'], fonts['small_font'], fonts['battle_font'], fonts['menu_font']
+
+# ==================== 图像管理系统 ====================
+
+# 图像加载类
+class ImageLoader:
+    _image_cache = {}
+    _scaled_cache = {}
+    
+    @staticmethod
+    def clear_cache():
+        """清空图像缓存"""
+        ImageLoader._image_cache.clear()
+        ImageLoader._scaled_cache.clear()
+        
+    @staticmethod
+    def create_default_image(size, path=""):
+        """创建默认图像"""
+        surface = pygame.Surface(size, pygame.SRCALPHA)
+        surface.fill((100, 100, 100, 128))  # 半透明灰色
         "effects": {
             "attack_multiplier": 1.4,
             "defense_multiplier": 0.6,
@@ -5387,6 +5363,10 @@ class PokemonGame:
         self.is_boss_battle = False  # 是否为BOSS战
         self.battle_buttons = []
         self.move_buttons = []
+        
+        # 初始化模块化组件
+        self.combat_manager = CombatManager(self)
+        self.ui_renderer = UIRenderer(self)
         self.battle_messages = []
         self.battle_step = 0
         self.current_turn = None
