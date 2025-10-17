@@ -4222,6 +4222,11 @@ class PokemonGame:
     
     def _optimized_render(self):
         """优化的渲染方法"""
+        # 检查并更新地图surface
+        if self._map_dirty or self._map_surface is None:
+            self._map_surface = self._create_optimized_map_surface()
+            self._map_dirty = False
+        
         # 绘制当前状态
         if self.state == GameState.EXPLORING:
             self.draw_exploration()
