@@ -4078,14 +4078,22 @@ class Pokemon:
     
     def use_skill(self, skill_name, target=None, allies=None, global_turn=None):
         """使用技能（新的技能系统）"""
-        # 设置当前全局回合计数器，供延迟效果使用
-        if global_turn is not None:
-            self._current_global_turn = global_turn
-        if skill_name not in NEW_SKILLS_DATABASE:
-            return None, []
-        
-        skill_data = NEW_SKILLS_DATABASE[skill_name]
-        messages = []
+        try:
+            # 设置当前全局回合计数器，供延迟效果使用
+            if global_turn is not None:
+                self._current_global_turn = global_turn
+            if skill_name not in NEW_SKILLS_DATABASE:
+                return None, [f"技能 {skill_name} 不存在于技能数据库中"]
+            
+            skill_data = NEW_SKILLS_DATABASE[skill_name]
+            messages = []
+            
+            # 继续执行原有的技能逻辑
+        except Exception as e:
+            print(f"使用技能 {skill_name} 时出错: {e}")
+            import traceback
+            traceback.print_exc()
+            return None, [f"技能 {skill_name} 使用失败: {str(e)}"]
         
         # 对于REVIVE技能，先检查是否有可复活的队友，再消耗SP
         category = skill_data.get("category")
@@ -6345,11 +6353,15 @@ class PokemonGame:
                     # 检查技能是否存在于技能管理器中
                     skill = skill_manager.get_skill(move["name"])
                     if skill:
-                        # 设置全局回合计数器
-                        player_pkm._current_global_turn = self.global_battle_turn
-                        # 使用统一的技能管理器,传递队友信息以支持团队技能
-                        allies = [pokemon for pokemon in self.player.pokemon_team]  # 包含所有队友，包括死亡的
-                        damage, skill_messages = skill_manager.use_skill_on_pokemon(move["name"], player_pkm, enemy_pkm, allies)
+                        try:
+                            # 设置全局回合计数器
+                            player_pkm._current_global_turn = self.global_battle_turn
+                            # 使用统一的技能管理器,传递队友信息以支持团队技能
+                            allies = [pokemon for pokemon in self.player.pokemon_team]  # 包含所有队友，包括死亡的
+                            damage, skill_messages = skill_manager.use_skill_on_pokemon(move["name"], player_pkm, enemy_pkm, allies)
+                        except Exception as e:
+                            print(f"使用技能 {move['name']} 时出错: {e}")
+                            damage, skill_messages = 0, [f"技能 {move['name']} 使用失败！"]
                         
                         # 检查是否是复活技能需要选择目标
                         if damage == -1 and move["name"] in NEW_SKILLS_DATABASE:
@@ -6602,16 +6614,20 @@ class PokemonGame:
                     # 检查技能是否存在于技能管理器中
                     skill = skill_manager.get_skill(enemy_move["name"])
                     if skill:
-                        # 设置全局回合计数器
-                        enemy_pkm._current_global_turn = self.global_battle_turn
-                        # 判断技能目标并使用统一的技能管理器
-                        skill_data = NEW_SKILLS_DATABASE.get(enemy_move["name"])
-                        if skill_data and skill_data["category"] in [SkillCategory.SELF_BUFF, SkillCategory.DIRECT_HEAL, SkillCategory.CONTINUOUS_HEAL]:
-                            # 对自己使用的技能
-                            damage, skill_messages = skill_manager.use_skill_on_pokemon(enemy_move["name"], enemy_pkm, enemy_pkm)
-                        else:
-                            # 对玩家使用的技能
-                            damage, skill_messages = skill_manager.use_skill_on_pokemon(enemy_move["name"], enemy_pkm, player_pkm)
+                        try:
+                            # 设置全局回合计数器
+                            enemy_pkm._current_global_turn = self.global_battle_turn
+                            # 判断技能目标并使用统一的技能管理器
+                            skill_data = NEW_SKILLS_DATABASE.get(enemy_move["name"])
+                            if skill_data and skill_data["category"] in [SkillCategory.SELF_BUFF, SkillCategory.DIRECT_HEAL, SkillCategory.CONTINUOUS_HEAL]:
+                                # 对自己使用的技能
+                                damage, skill_messages = skill_manager.use_skill_on_pokemon(enemy_move["name"], enemy_pkm, enemy_pkm)
+                            else:
+                                # 对玩家使用的技能
+                                damage, skill_messages = skill_manager.use_skill_on_pokemon(enemy_move["name"], enemy_pkm, player_pkm)
+                        except Exception as e:
+                            print(f"敌方使用技能 {enemy_move['name']} 时出错: {e}")
+                            damage, skill_messages = 0, [f"敌方技能 {enemy_move['name']} 使用失败！"]
                         self.current_turn["enemy_damage"] = damage if damage is not None else 0
                         self.current_turn["enemy_type_multiplier"] = 1.0
                         
@@ -7838,11 +7854,13 @@ class PokemonGame:
             
             enemy_status_y += enemy_sp_height + 15
             
-            # 敌方头像（左侧）
+            # 敌方头像（左侧）- 确保与我方图像高度一致
             enemy_img = self.images.pokemon.get(enemy_pkm.name, 
                                               ImageLoader.create_default_image((150, 150), 
                                                                               f"pokemon_{enemy_pkm.name}"))
-            screen.blit(enemy_img, (enemy_x, enemy_status_y))
+            # 缩放敌方图像到统一高度150像素
+            enemy_img_scaled = pygame.transform.scale(enemy_img, (150, 150))
+            screen.blit(enemy_img_scaled, (enemy_x, enemy_status_y))
             
             # 敌方标识已移除
             
@@ -7985,11 +8003,13 @@ class PokemonGame:
                 
                 player_status_y += player_exp_height + 10
                 
-                # 玩家头像（右侧）
+                # 玩家头像（右侧）- 确保与敌方图像高度一致
                 pkm_img = self.images.pokemon.get(player_pkm.name, 
                                                 ImageLoader.create_default_image((150, 150), 
                                                                                 f"pokemon_{player_pkm.name}"))
-                screen.blit(pkm_img, (player_x, player_status_y))
+                # 缩放我方图像到统一高度150像素
+                pkm_img_scaled = pygame.transform.scale(pkm_img, (150, 150))
+                screen.blit(pkm_img_scaled, (player_x, player_status_y))
                 
                 # 我方顾问标识已移除
                 
@@ -8872,17 +8892,17 @@ class PokemonGame:
                 elif event.key == K_ESCAPE:  # ESC退出商店
                     self.state = GameState.EXPLORING
             
-                elif self.state == GameState.MENU_BACKPACK:
-                    # 检查物品结果弹窗的点击
-                    if hasattr(self, 'item_result_popup') and self.item_result_popup and hasattr(self, 'item_result_button'):
-                        if self.item_result_button.collidepoint(event.pos):
-                            self.item_result_popup = None
-                            return
-                    
-                    if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
-                        # 在弹窗状态下,ESC键关闭弹窗
-                        if event.key == K_ESCAPE:
-                            self.backpack_popup_state = False
+            elif self.state == GameState.MENU_BACKPACK:
+                # 检查是否有物品结果弹窗显示
+                if hasattr(self, 'item_result_popup') and self.item_result_popup:
+                    # 在弹窗状态下，ESC键和回车键都关闭弹窗
+                    if event.key == K_ESCAPE or event.key == K_RETURN:
+                        self.item_result_popup = None
+                        return
+                elif hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
+                    # 在弹窗状态下,ESC键关闭弹窗
+                    if event.key == K_ESCAPE:
+                        self.backpack_popup_state = False
                 elif self.player.backpack:
                     # 上下键选择物品
                     if event.key == K_UP:
