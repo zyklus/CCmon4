@@ -217,13 +217,14 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "networking",
         "category": SkillCategory.TEAM_BUFF,
-        "description": "消耗95SP,所有顾问攻击力提升35%,血量下降5%,从下一回合开始持续4回合",
+        "description": "消耗95SP,所有顾问攻击力提升35%,血量下降5%,从下一回合开始持续4回合,除释放者,我方全体SP增加70",
         "sp_cost": 95,
         "quote": "我都两杯了,你快点",
         "effects": {
             "team_attack_multiplier": 1.35,
             "team_hp_cost": 0.05,
-            "turns": 4
+            "turns": 4,
+            "team_sp_boost": 70
         }
     },
     "酒后逃逸": {
@@ -705,13 +706,14 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": "networking",
         "category": SkillCategory.MIXED_BUFF_DEBUFF,
-        "description": "使敌方防御力下降85%,我方攻击力提升20%",
+        "description": "使敌方防御力下降85%,我方攻击力提升20%,除释放者,我方全体SP增加65",
         "sp_cost": 40,
         "quote": "我真的没有在总经理办公室吃螺蛳粉",
         "effects": {
             "target_defense_multiplier": 0.15,
             "self_attack_multiplier": 1.2,
-            "turns": 3
+            "turns": 3,
+            "team_sp_boost": 65
         }
     },
     "摸下腹肌~~": {
@@ -892,12 +894,13 @@ UNIFIED_SKILLS_DATABASE = {
         "power": 0,
         "type": ["content", "勇气"],
         "category": SkillCategory.SELF_BUFF,
-        "description": "从下一回合开始回避任何技能2回合",
+        "description": "从下一回合开始回避任何技能2回合,除释放者,我方全体SP增加35",
         "sp_cost": 95,
         "quote": "你又不是朱总,我怕个Der",
         "effects": {
             "dodge_chance": 1.0,
-            "turns": 2
+            "turns": 2,
+            "team_sp_boost": 35
         }
     },
     "无偿加班": {
@@ -1465,7 +1468,9 @@ class SkillManager:
     
     def _use_unified_skill_logic(self, skill_name: str, user_pokemon, target_pokemon=None, allies=None):
         """使用统一的技能系统逻辑"""
-        return user_pokemon.use_skill(skill_name, target_pokemon, allies)
+        # 从用户Pokemon获取全局回合计数器（如果有的话）
+        global_turn = getattr(user_pokemon, '_current_global_turn', None)
+        return user_pokemon.use_skill(skill_name, target_pokemon, allies, global_turn)
     
     def _apply_effect(self, effect: SkillEffect, user_stats: Dict, target_stats: Dict = None) -> str:
         """应用技能效果"""
@@ -1990,7 +1995,8 @@ def draw_status_icons(surface, pokemon, x, y, icon_size=30, spacing=5, caster_fi
         delay_rect = delay_text.get_rect(center=(current_x + icon_size//2, y + icon_size//2 - 5))
         surface.blit(delay_text, delay_rect)
         
-        # 绘制剩余回合数
+        # 绘制剩余回合数 - 需要从外部传入全局回合计数器
+        # 这里暂时使用个人回合计数器，实际使用时需要传入全局计数器
         remaining_turns = effect["trigger_turn"] - pokemon.battle_turn_counter
         if remaining_turns > 0:
             turns_text = font.render(str(remaining_turns), True, ORANGE)
@@ -2020,6 +2026,39 @@ def draw_status_icons(surface, pokemon, x, y, icon_size=30, spacing=5, caster_fi
         # 绘制治疗数值
         heal_text = font.render(str(effect["heal"]), True, GREEN)
         surface.blit(heal_text, (current_x + icon_size + 2, y + icon_size - 15))
+        
+        # 绘制剩余回合数
+        turns_text = font.render(str(effect["turns"]), True, YELLOW)
+        surface.blit(turns_text, (current_x + icon_size - 8, y - 5))
+        
+        current_x += icon_size + spacing + 20
+        icon_count += 1
+    
+    # 检查回避/免疫效果
+    for effect in pokemon.status_effects.get("dodge_effects", []):
+        effect_caster = effect.get("caster", "self")  # 默认为自己施放
+        # 应用施放者过滤
+        if caster_filter and effect_caster != caster_filter:
+            continue
+            
+        # 绘制免疫图标背景
+        icon_rect = pygame.Rect(current_x, y, icon_size, icon_size)
+        if effect["dodge_chance"] >= 1.0:
+            # 100%回避（免疫）- 金色背景
+            pygame.draw.rect(surface, (255, 215, 0, 180), icon_rect)  # 金色背景
+            pygame.draw.rect(surface, (255, 215, 0), icon_rect, 2)
+            # 绘制免疫文字
+            immune_text = font.render("免疫", True, BLACK)
+            immune_rect = immune_text.get_rect(center=(current_x + icon_size//2, y + icon_size//2))
+            surface.blit(immune_text, immune_rect)
+        else:
+            # 部分回避 - 蓝色背景
+            pygame.draw.rect(surface, (0, 100, 200, 180), icon_rect)  # 蓝色背景
+            pygame.draw.rect(surface, BLUE, icon_rect, 2)
+            # 绘制回避文字
+            dodge_text = font.render("回避", True, WHITE)
+            dodge_rect = dodge_text.get_rect(center=(current_x + icon_size//2, y + icon_size//2))
+            surface.blit(dodge_text, dodge_rect)
         
         # 绘制剩余回合数
         turns_text = font.render(str(effect["turns"]), True, YELLOW)
@@ -3620,19 +3659,19 @@ class GameMap:
         # BOSS地块（类型6,旧版本兼容）必定触发BOSS战
         if tile_type == 6:
             return "boss"
-        # 其他地块的普通遇敌概率（调整为20-30%）
+        # 其他地块的普通遇敌概率（调整为原来的1/3，约8%）
         elif tile_type == 0:  # 食品地
-            return "wild" if random.random() < 0.25 else None
+            return "wild" if random.random() < 0.083 else None
         elif tile_type == 1:  # office
-            return "wild" if random.random() < 0.25 else None
+            return "wild" if random.random() < 0.083 else None
         elif tile_type == 2:  # 客户现场
-            return "wild" if random.random() < 0.25 else None
+            return "wild" if random.random() < 0.083 else None
         elif tile_type == 3:  # retro
-            return "wild" if random.random() < 0.25 else None
+            return "wild" if random.random() < 0.083 else None
         elif tile_type == 4:  # 培训
-            return "wild" if random.random() < 0.25 else None
+            return "wild" if random.random() < 0.083 else None
         elif tile_type == 5:  # beach
-            return "wild" if random.random() < 0.25 else None
+            return "wild" if random.random() < 0.083 else None
         return None
         
     def is_chest_opened(self, x, y):
@@ -4037,8 +4076,11 @@ class Pokemon:
         
         return max(1, final_damage), type_multiplier
     
-    def use_skill(self, skill_name, target=None, allies=None):
+    def use_skill(self, skill_name, target=None, allies=None, global_turn=None):
         """使用技能（新的技能系统）"""
+        # 设置当前全局回合计数器，供延迟效果使用
+        if global_turn is not None:
+            self._current_global_turn = global_turn
         if skill_name not in NEW_SKILLS_DATABASE:
             return None, []
         
@@ -4113,6 +4155,12 @@ class Pokemon:
                     hp_based_damage = int(target.hp * current_hp_damage_percentage)
                     base_damage = max(base_damage, hp_based_damage)
                 
+                # 检查目标是否有回避/免疫效果
+                is_dodged, dodge_effect_name = target.check_dodge()
+                if is_dodged:
+                    messages.append(f"{target.name}的{dodge_effect_name}生效！完全回避了攻击！")
+                    return 0, messages
+                
                 # 计算属性克制
                 type_multiplier = target.calculate_type_effectiveness(skill_data["type"])
                 final_damage = int(base_damage * type_multiplier)
@@ -4151,11 +4199,17 @@ class Pokemon:
                     # 计算每回合伤害
                     damage_per_turn = int(self.attack * dot_percentage)
                     
-                    # 添加持续伤害效果
-                    target.add_continuous_damage(damage_per_turn, turns, skill_name, "enemy")
+                    # 获取SP减少效果
+                    sp_drain = effects.get("sp_drain", 0)
+                    
+                    # 添加持续伤害效果（包含SP减少）
+                    target.add_continuous_damage(damage_per_turn, turns, skill_name, "enemy", sp_drain)
                     
                     messages.append(f"{self.name}使用了{skill_name}！")
-                    messages.append(f"{target.name}将在接下来{turns}回合内每回合受到{damage_per_turn}点伤害！")
+                    if sp_drain > 0:
+                        messages.append(f"{target.name}将在接下来{turns}回合内每回合受到{damage_per_turn}点伤害并减少{sp_drain}点SP！")
+                    else:
+                        messages.append(f"{target.name}将在接下来{turns}回合内每回合受到{damage_per_turn}点伤害！")
                     
                     # 处理额外效果（如麻痹、石化等）
                     paralyze_chance = effects.get("paralyze_chance", 0)
@@ -4169,15 +4223,6 @@ class Pokemon:
                         petrify_turns = effects.get("petrify_turns", 1)
                         # 这里可以添加石化效果的实现
                         messages.append(f"{target.name}被石化了{petrify_turns}回合！")
-                    
-                    # 处理SP减少效果
-                    sp_drain = effects.get("sp_drain", 0)
-                    if sp_drain > 0:
-                        # 立即减少目标SP
-                        if hasattr(target, 'sp') and target.sp > 0:
-                            drained_sp = min(target.sp, sp_drain)
-                            target.sp -= drained_sp
-                            messages.append(f"{target.name}的SP减少了{drained_sp}点！")
                     
                     return damage_per_turn, messages
                 else:
@@ -4279,12 +4324,13 @@ class Pokemon:
                             ally.add_stat_modifier(1.0 + all_allies_attack_buff, 1.0, team_buff_turns, f"{skill_name}·团队加持", "self")
                             messages.append(f"{ally.name}的攻击力提升{int(all_allies_attack_buff*100)}%！")
                 
-                # 4回合后自身血量恢复为100%
+                # 4回合后自身血量恢复为100% - 使用全局回合计数器
                 delayed_heal = effects.get("delayed_heal", {})
                 if delayed_heal:
                     delay_turns = delayed_heal.get("turns", 4)
                     heal_percentage_delayed = delayed_heal.get("percentage", 1.0)
-                    self.add_delayed_effect("heal_percentage", heal_percentage_delayed, delay_turns, f"{skill_name}·重生", "self", "self")
+                    global_turn = getattr(self, '_current_global_turn', None)
+                    self.add_delayed_effect("heal_percentage", heal_percentage_delayed, delay_turns, f"{skill_name}·重生", "self", "self", global_turn)
                 
                 # 自身攻击力翻倍
                 attack_mult = effects.get("attack_multiplier", 2.0)
@@ -4299,20 +4345,48 @@ class Pokemon:
             # 通用SELF_BUFF处理
             attack_mult = effects.get("attack_multiplier", 1.0)
             defense_mult = effects.get("defense_multiplier", 1.0)
+            dodge_chance = effects.get("dodge_chance", 0)
             turns = effects.get("turns", 1)
-            self.add_stat_modifier(attack_mult, defense_mult, turns, skill_name, "self")
             
-            buff_desc = []
-            if attack_mult > 1.0:
-                buff_desc.append(f"攻击力提升{int((attack_mult-1)*100)}%")
-            elif attack_mult < 1.0:
-                buff_desc.append(f"攻击力下降{int((1-attack_mult)*100)}%")
-            if defense_mult > 1.0:
-                buff_desc.append(f"防御力提升{int((defense_mult-1)*100)}%")
-            elif defense_mult < 1.0:
-                buff_desc.append(f"防御力下降{int((1-defense_mult)*100)}%")
+            # 处理回避/免疫效果
+            if dodge_chance > 0:
+                self.add_dodge_effect(dodge_chance, turns, skill_name, "self")
+                
+                # 处理团队SP增加（除释放者外）
+                team_sp_boost = effects.get("team_sp_boost", 0)
+                if allies and team_sp_boost > 0:
+                    for ally in allies:
+                        if ally != self and not ally.is_fainted():  # 不包括使用者自己
+                            sp_gained = min(team_sp_boost, ally.max_sp - ally.sp)  # 不能超过最大SP
+                            ally.sp += sp_gained
+                            if sp_gained > 0:
+                                messages.append(f"{ally.name}获得了{sp_gained}点SP！")
+                
+                if dodge_chance >= 1.0:
+                    messages.append(f"{self.name}使用了{skill_name}！获得了{turns}回合的免疫效果！")
+                else:
+                    messages.append(f"{self.name}使用了{skill_name}！获得了{turns}回合的回避效果！")
+                return 0, messages
             
-            messages.append(f"{self.name}使用了{skill_name},{', '.join(buff_desc)},持续{turns}回合！")
+            # 处理属性修改效果
+            if attack_mult != 1.0 or defense_mult != 1.0:
+                self.add_stat_modifier(attack_mult, defense_mult, turns, skill_name, "self")
+                
+                buff_desc = []
+                if attack_mult > 1.0:
+                    buff_desc.append(f"攻击力提升{int((attack_mult-1)*100)}%")
+                elif attack_mult < 1.0:
+                    buff_desc.append(f"攻击力下降{int((1-attack_mult)*100)}%")
+                if defense_mult > 1.0:
+                    buff_desc.append(f"防御力提升{int((defense_mult-1)*100)}%")
+                elif defense_mult < 1.0:
+                    buff_desc.append(f"防御力下降{int((1-defense_mult)*100)}%")
+                
+                messages.append(f"{self.name}使用了{skill_name},{', '.join(buff_desc)},持续{turns}回合！")
+                return 0, messages
+            
+            # 如果没有特殊效果，返回默认消息
+            messages.append(f"{self.name}使用了{skill_name}！")
             return 0, messages
         
         elif category == SkillCategory.ENEMY_DEBUFF:
@@ -4408,6 +4482,16 @@ class Pokemon:
                         ally.hp = max(1, ally.hp - hp_loss)  # 血量不会降到0以下
                         total_effect += hp_loss
                         messages.append(f"{ally.name}失去了{hp_loss}点血量！")
+            
+            # 处理团队SP增加（除释放者外）
+            team_sp_boost = effects.get("team_sp_boost", 0)
+            if allies and team_sp_boost > 0:
+                for ally in allies:
+                    if ally != self and not ally.is_fainted():  # 不包括使用者自己
+                        sp_gained = min(team_sp_boost, ally.max_sp - ally.sp)  # 不能超过最大SP
+                        ally.sp += sp_gained
+                        if sp_gained > 0:
+                            messages.append(f"{ally.name}获得了{sp_gained}点SP！")
             
             messages.append(f"{self.name}使用了{skill_name}！全队攻击力大幅提升！")
             return total_effect, messages
@@ -4510,14 +4594,18 @@ class Pokemon:
                 attack_mult = effects.get("attack_multiplier", 0.8)
                 self.add_stat_modifier(attack_mult, 1.0, invincible_turns, f"{skill_name}·价值关怀", "self")
                 
-                # 2回合后造成240%伤害并自杀
+                # 2回合后造成240%伤害并自杀 - 使用全局回合计数器
                 final_damage_percentage = effects.get("final_damage_percentage", 2.4)
                 if target:
-                    self.add_delayed_effect("damage_percentage", final_damage_percentage, 2, f"{skill_name}·最终爆发", "self", "enemy")
+                    # 需要从外部传入全局回合计数器，这里先使用个人计数器
+                    # 实际使用时需要在战斗系统中传入全局计数器
+                    global_turn = getattr(self, '_current_global_turn', None)
+                    self.add_delayed_effect("damage_percentage", final_damage_percentage, 2, f"{skill_name}·最终爆发", "self", "enemy", global_turn)
                 
-                # 自杀效果
+                # 自杀效果 - 使用全局回合计数器
                 if effects.get("self_sacrifice", False):
-                    self.add_delayed_effect("self_sacrifice", 0, 2, f"{skill_name}·献身", "self", "self")
+                    global_turn = getattr(self, '_current_global_turn', None)
+                    self.add_delayed_effect("self_sacrifice", 0, 2, f"{skill_name}·献身", "self", "self", global_turn)
                 
                 messages.append(f"{self.name}使用了{skill_name}！无敌2回合,攻击力变为80%！")
                 messages.append(f"2回合后将造成{int(final_damage_percentage*100)}%攻击力伤害并献身！")
@@ -4626,6 +4714,16 @@ class Pokemon:
                 # 对自己应用增益效果
                 if self_attack_mult != 1.0 or self_defense_mult != 1.0:
                     self.add_stat_modifier(self_attack_mult, self_defense_mult, turns, skill_name, "self")
+                
+                # 处理团队SP增加（除释放者外）
+                team_sp_boost = effects.get("team_sp_boost", 0)
+                if allies and team_sp_boost > 0:
+                    for ally in allies:
+                        if ally != self and not ally.is_fainted():  # 不包括使用者自己
+                            sp_gained = min(team_sp_boost, ally.max_sp - ally.sp)  # 不能超过最大SP
+                            ally.sp += sp_gained
+                            if sp_gained > 0:
+                                messages.append(f"{ally.name}获得了{sp_gained}点SP！")
                 
                 effect_desc = []
                 if target_attack_mult < 1.0:
@@ -4748,7 +4846,7 @@ class Pokemon:
         
         return 0, messages
     
-    def apply_status_effects(self, target_pokemon=None):
+    def apply_status_effects(self, target_pokemon=None, global_turn=None):
         """应用状态效果（每回合调用）"""
         messages = []
         
@@ -4757,6 +4855,14 @@ class Pokemon:
             damage = effect["damage"]
             self.hp = max(0, self.hp - damage)
             messages.append(f"{self.name}受到{effect['name']}的持续伤害{damage}点！")
+            
+            # 处理SP减少效果
+            sp_drain = effect.get("sp_drain", 0)
+            if sp_drain > 0 and hasattr(self, 'sp') and self.sp > 0:
+                drained_sp = min(self.sp, sp_drain)
+                self.sp -= drained_sp
+                messages.append(f"{self.name}的SP减少了{drained_sp}点！")
+            
             effect["turns"] -= 1
             if effect["turns"] <= 0:
                 self.status_effects["continuous_damage"].remove(effect)
@@ -4792,7 +4898,10 @@ class Pokemon:
         
         # 处理延迟效果
         for effect in self.status_effects["delayed_effects"][:]:
-            if effect["trigger_turn"] <= self.battle_turn_counter:
+            # 根据效果类型选择使用全局回合计数器还是个人回合计数器
+            current_turn = global_turn if effect.get("use_global_turn", False) and global_turn is not None else self.battle_turn_counter
+            
+            if effect["trigger_turn"] <= current_turn:
                 effect_type = effect["effect_type"]
                 value = effect["value"]
                 name = effect["name"]
@@ -4833,15 +4942,23 @@ class Pokemon:
                 messages.append(f"{self.name}的{self.status_effects['stat_modifiers']['effect_name']}效果消失了！")
                 self.status_effects["stat_modifiers"]["effect_name"] = ""
         
+        # 处理回避/免疫效果
+        for effect in self.status_effects["dodge_effects"][:]:  # 使用切片复制列表以避免修改时出错
+            effect["turns"] -= 1
+            if effect["turns"] <= 0:
+                messages.append(f"{self.name}的{effect['name']}效果消失了！")
+                self.status_effects["dodge_effects"].remove(effect)
+        
         return messages
     
-    def add_continuous_damage(self, damage, turns, name, caster="self"):
+    def add_continuous_damage(self, damage, turns, name, caster="self", sp_drain=0):
         """添加连续伤害效果"""
         self.status_effects["continuous_damage"].append({
             "damage": damage,
             "turns": turns,
             "name": name,
-            "caster": caster  # 记录施放者
+            "caster": caster,  # 记录施放者
+            "sp_drain": sp_drain  # 每回合SP减少量
         })
     
     def add_continuous_heal(self, heal, turns, name, caster="self"):
@@ -4863,17 +4980,43 @@ class Pokemon:
             "caster": caster  # 记录施放者
         }
     
-    def add_delayed_effect(self, effect_type, value, delay_turns, name, caster="self", target="enemy"):
+    def add_delayed_effect(self, effect_type, value, delay_turns, name, caster="self", target="enemy", global_turn=None):
         """添加延迟效果"""
-        trigger_turn = self.battle_turn_counter + delay_turns
+        # 使用全局战斗回合计数器，如果没有提供则使用个人计数器作为后备
+        if global_turn is not None:
+            trigger_turn = global_turn + delay_turns
+        else:
+            trigger_turn = self.battle_turn_counter + delay_turns
+        
         self.status_effects["delayed_effects"].append({
             "effect_type": effect_type,  # "damage", "heal", "damage_percentage", "heal_percentage", "self_sacrifice"
             "value": value,
             "trigger_turn": trigger_turn,
             "name": name,
             "caster": caster,
-            "target": target
+            "target": target,
+            "use_global_turn": global_turn is not None  # 标记是否使用全局回合计数
         })
+    
+    def add_dodge_effect(self, dodge_chance, turns, name, caster="self"):
+        """添加回避/免疫效果"""
+        self.status_effects["dodge_effects"].append({
+            "dodge_chance": dodge_chance,
+            "turns": turns,
+            "name": name,
+            "caster": caster
+        })
+    
+    def check_dodge(self):
+        """检查是否有回避效果生效"""
+        for effect in self.status_effects["dodge_effects"]:
+            if effect["turns"] > 0:
+                dodge_chance = effect["dodge_chance"]
+                if dodge_chance >= 1.0:  # 100%回避（免疫）
+                    return True, effect["name"]
+                elif random.random() < dodge_chance:
+                    return True, effect["name"]
+        return False, ""
     
     def clear_all_status_effects(self):
         """清除所有状态效果（战斗结束时调用）"""
@@ -4887,7 +5030,8 @@ class Pokemon:
                 "turns_remaining": 0,
                 "effect_name": "",
                 "caster": "self"
-            }
+            },
+            "dodge_effects": []  # 新增回避/免疫效果
         }
         # 清除G总,你不懂OPS的延迟效果
         if hasattr(self, 'delayed_effects'):
@@ -5529,6 +5673,7 @@ class PokemonGame:
         self.current_turn = None
         self.animation_timer = 0
         self.animation_delay = 1000
+        self.global_battle_turn = 0  # 全局战斗回合计数器，不受顾问切换影响
         self.menu_buttons = []
         self.selected_pokemon_index = 0
         self.selected_item_index = 0
@@ -5564,6 +5709,7 @@ class PokemonGame:
         
         self.menu_stack = []
         self.pending_item_use = None  # 待处理的物品使用
+        self.item_result_popup = None  # 物品使用结果弹窗
         
         # 初始化通知系统
         self.notification_system = NotificationSystem()
@@ -5777,6 +5923,8 @@ class PokemonGame:
         self.is_boss_battle = battle_type in ["boss", "mini_boss", "stage_boss"]
         
         # 重置战斗回合计数器
+        self.global_battle_turn = 0  # 重置全局战斗回合计数器
+        
         player_pkm = self.player.get_active_pokemon()
         if player_pkm:
             player_pkm.battle_turn_counter = 0
@@ -6197,6 +6345,8 @@ class PokemonGame:
                     # 检查技能是否存在于技能管理器中
                     skill = skill_manager.get_skill(move["name"])
                     if skill:
+                        # 设置全局回合计数器
+                        player_pkm._current_global_turn = self.global_battle_turn
                         # 使用统一的技能管理器,传递队友信息以支持团队技能
                         allies = [pokemon for pokemon in self.player.pokemon_team]  # 包含所有队友，包括死亡的
                         damage, skill_messages = skill_manager.use_skill_on_pokemon(move["name"], player_pkm, enemy_pkm, allies)
@@ -6368,8 +6518,13 @@ class PokemonGame:
                 move = player_pkm.moves[self.current_turn["move_idx"]]
                 skill = skill_manager.get_skill(move["name"])
                 if not skill:
-                    enemy_pkm.take_damage(self.current_turn["damage"])
-                    self.battle_messages.append(f"{enemy_pkm.name}受到了{self.current_turn['damage']}点伤害！")
+                    # 检查敌人是否有回避/免疫效果
+                    is_dodged, dodge_effect_name = enemy_pkm.check_dodge()
+                    if is_dodged:
+                        self.battle_messages.append(f"{enemy_pkm.name}的{dodge_effect_name}生效！完全回避了攻击！")
+                    else:
+                        enemy_pkm.take_damage(self.current_turn["damage"])
+                        self.battle_messages.append(f"{enemy_pkm.name}受到了{self.current_turn['damage']}点伤害！")
                 self.battle_step = 2
                 self.animation_delay = 1000
                 
@@ -6447,6 +6602,8 @@ class PokemonGame:
                     # 检查技能是否存在于技能管理器中
                     skill = skill_manager.get_skill(enemy_move["name"])
                     if skill:
+                        # 设置全局回合计数器
+                        enemy_pkm._current_global_turn = self.global_battle_turn
                         # 判断技能目标并使用统一的技能管理器
                         skill_data = NEW_SKILLS_DATABASE.get(enemy_move["name"])
                         if skill_data and skill_data["category"] in [SkillCategory.SELF_BUFF, SkillCategory.DIRECT_HEAL, SkillCategory.CONTINUOUS_HEAL]:
@@ -6553,8 +6710,13 @@ class PokemonGame:
                 # 只有在使用旧技能系统时才需要手动处理伤害（新技能系统已经在use_skill中处理了伤害）
                 # 这里简化处理,如果enemy_damage > 0说明使用的是旧技能系统
                 if self.current_turn["enemy_damage"] > 0:
-                    player_pkm.take_damage(self.current_turn["enemy_damage"])
-                    self.battle_messages.append(f"你的{player_pkm.name}受到了{self.current_turn['enemy_damage']}点伤害！")
+                    # 检查玩家顾问是否有回避/免疫效果
+                    is_dodged, dodge_effect_name = player_pkm.check_dodge()
+                    if is_dodged:
+                        self.battle_messages.append(f"你的{player_pkm.name}的{dodge_effect_name}生效！完全回避了攻击！")
+                    else:
+                        player_pkm.take_damage(self.current_turn["enemy_damage"])
+                        self.battle_messages.append(f"你的{player_pkm.name}受到了{self.current_turn['enemy_damage']}点伤害！")
                 
                 self.battle_step = 5
                 self.animation_delay = 1000
@@ -6585,21 +6747,24 @@ class PokemonGame:
                 
             elif self.battle_step == 7:
                 # 回合结束前应用状态效果
-                # 增加回合计数器
+                # 增加全局回合计数器
+                self.global_battle_turn += 1
+                
+                # 增加个人回合计数器（保持兼容性）
                 if player_pkm:
                     player_pkm.increment_battle_turn()
                 if enemy_pkm:
                     enemy_pkm.increment_battle_turn()
                 
-                # 应用玩家顾问的状态效果（包括延迟效果）
+                # 应用玩家顾问的状态效果（包括延迟效果），传入全局回合计数器
                 if player_pkm:
-                    status_messages = player_pkm.apply_status_effects(enemy_pkm)
+                    status_messages = player_pkm.apply_status_effects(enemy_pkm, self.global_battle_turn)
                     for msg in status_messages:
                         self.battle_messages.append(msg)
                 
-                # 应用敌方顾问的状态效果（包括延迟效果）
+                # 应用敌方顾问的状态效果（包括延迟效果），传入全局回合计数器
                 if enemy_pkm:
-                    status_messages = enemy_pkm.apply_status_effects(player_pkm)
+                    status_messages = enemy_pkm.apply_status_effects(player_pkm, self.global_battle_turn)
                     for msg in status_messages:
                         self.battle_messages.append(msg)
                 
@@ -6639,6 +6804,11 @@ class PokemonGame:
                 
                 self.battle_step = 6
                 self.animation_delay = 2000
+                
+            elif self.battle_step == 99:
+                # 战斗结果显示状态，等待用户按键退出
+                # 这个状态不做任何处理，等待用户输入
+                pass
                 
         except Exception as e:
             print(f"战斗动画更新出错: {e}")
@@ -6816,12 +6986,15 @@ class PokemonGame:
                     self.player.x, self.player.y = 3, 3
                     self.battle_messages.append("BOSS战失败,被送回安全区域！")
             
-            # 新的战斗结束行为：留在战斗界面显示结果
-            self.state = GameState.BATTLE_END_RESULT
-            # 保留战斗消息以显示结果
-            # self.battle_messages = []  # 不清除消息，保留显示
+            # 新的战斗结束行为：在战斗界面显示结果并等待按键退出
+            self.state = GameState.BATTLE
+            self.battle_step = 99  # 特殊状态：显示战斗结果
+            
+            # 添加退出提示
+            self.battle_messages.append("按任意键或点击鼠标退出战斗")
+            
             self.current_turn = None
-            self.animation_delay = 1000
+            self.animation_delay = 0
             # 不清除 wild_pokemon, boss_pokemon 等，以便显示结果界面
         except Exception as e:
             print(f"结束战斗时出错: {e}")
@@ -7018,13 +7191,24 @@ class PokemonGame:
                     self.player.remove_item(item_index)
                     # 添加治疗成功通知
                     self.notification_system.add_notification(f"对{target.name}使用了{item.name}！", "success")
-                    # 显示详细结果
-                    self.battle_messages = [f"使用了{item.name}", result]
+                    # 显示物品使用结果弹窗
+                    self.item_result_popup = {
+                        "title": f"使用 {item.name}",
+                        "target": target.name,
+                        "result": result,
+                        "success": True
+                    }
                     return result
                 else:
                     # 添加治疗失败通知
                     self.notification_system.add_notification("所有顾问HP已满！", "info")
-                    self.battle_messages = ["所有顾问HP已满"]
+                    # 显示物品使用结果弹窗
+                    self.item_result_popup = {
+                        "title": f"使用 {item.name}",
+                        "target": "无目标",
+                        "result": "所有顾问HP已满",
+                        "success": False
+                    }
                     return "所有顾问HP已满"
                     
             elif item.item_type == "ut_restore":
@@ -7032,8 +7216,13 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加UT恢复通知
                 self.notification_system.add_notification(f"使用了{item.name},恢复UT！", "success")
-                # 显示详细结果
-                self.battle_messages = [f"使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.item_result_popup = {
+                    "title": f"使用 {item.name}",
+                    "target": "玩家",
+                    "result": result,
+                    "success": True
+                }
                 return result
                 
             elif item.item_type == "battle_prevent":
@@ -7041,8 +7230,13 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加PTO通知使用通知
                 self.notification_system.add_notification(f"使用了{item.name},战斗保护生效！", "success")
-                # 显示详细结果
-                self.battle_messages = [f"使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.item_result_popup = {
+                    "title": f"使用 {item.name}",
+                    "target": "玩家",
+                    "result": result,
+                    "success": True
+                }
                 return result
                 
             elif item.item_type == "skill_blind_box":
@@ -7252,12 +7446,22 @@ class PokemonGame:
             if success:
                 self.player.remove_item(item_index)
                 self.notification_system.add_notification(f"成功对{target.name}使用了{item.name}！", "success")
-                # 添加详细的使用结果到战斗消息中显示
-                self.battle_messages = [f"使用了{item.name}", result]
+                # 显示物品使用结果弹窗
+                self.item_result_popup = {
+                    "title": f"使用 {item.name}",
+                    "target": target.name,
+                    "result": result,
+                    "success": True
+                }
             else:
                 self.notification_system.add_notification(result, "info")
-                # 失败时也显示结果
-                self.battle_messages = [result]
+                # 显示物品使用失败弹窗
+                self.item_result_popup = {
+                    "title": f"使用 {item.name}",
+                    "target": target.name,
+                    "result": result,
+                    "success": False
+                }
             
             # 清除待处理的物品使用
             self.pending_item_use = None
@@ -7513,9 +7717,10 @@ class PokemonGame:
                 self.state = GameState.EXPLORING
                 return
             
-            # 特殊处理战斗结束结果状态
+            # 旧的战斗结束结果界面已被移除，现在在战斗界面内显示结果
             if self.state == GameState.BATTLE_END_RESULT:
-                self.draw_battle_end_result()
+                # 重定向到探索状态，因为我们不再使用单独的结果界面
+                self.state = GameState.EXPLORING
                 return
                 
             # 确定文字颜色（BOSS战使用蓝色）
@@ -7720,7 +7925,44 @@ class PokemonGame:
                 
                 screen.blit(player_sp_text_surface, player_sp_text_rect)
                 
-                player_status_y += player_sp_height + 15
+                player_status_y += player_sp_height + 10
+                
+                # 玩家经验条 - 统一宽度与HP/SP条相同
+                player_exp_width = 300
+                player_exp_height = 15
+                player_exp_x = SCREEN_WIDTH - 320  # 与HP/SP条位置对齐
+                pygame.draw.rect(screen, WHITE, (player_exp_x, player_status_y, player_exp_width, player_exp_height))
+                
+                # 计算经验百分比
+                exp_to_next = player_pkm.exp_to_next_level
+                current_exp = player_pkm.exp
+                if exp_to_next > 0:
+                    exp_percentage = current_exp / (current_exp + exp_to_next)
+                else:
+                    exp_percentage = 1.0  # 满级
+                
+                player_exp_fill_width = max(0, min(int((player_exp_width - 4) * exp_percentage), player_exp_width - 4))
+                player_exp_surface = pygame.Surface((player_exp_fill_width, player_exp_height - 4), pygame.SRCALPHA)
+                player_exp_surface.fill((*YELLOW, 128))  # 黄色,50%透明度
+                screen.blit(player_exp_surface, (player_exp_x + 2, player_status_y + 2))
+                pygame.draw.rect(screen, BLACK, (player_exp_x, player_status_y, player_exp_width, player_exp_height), 2)
+                
+                # 经验文字 - 显示在经验条内部居中,带半透明白色背景
+                if exp_to_next > 0:
+                    player_exp_text = f"EXP: {current_exp}/{current_exp + exp_to_next}"
+                else:
+                    player_exp_text = f"EXP: MAX"
+                player_exp_text_surface = battle_info_font.render(player_exp_text, True, BLACK)
+                player_exp_text_rect = player_exp_text_surface.get_rect(center=(player_exp_x + player_exp_width // 2, player_status_y + player_exp_height // 2))
+                
+                # 绘制经验文字的半透明白色背景
+                player_exp_text_bg = pygame.Surface((player_exp_text_rect.width + 6, player_exp_text_rect.height + 2), pygame.SRCALPHA)
+                player_exp_text_bg.fill((255, 255, 255, 128))  # 白色,50%透明度
+                screen.blit(player_exp_text_bg, (player_exp_text_rect.x - 3, player_exp_text_rect.y - 1))
+                
+                screen.blit(player_exp_text_surface, player_exp_text_rect)
+                
+                player_status_y += player_exp_height + 10
                 
                 # 玩家头像（右侧）
                 pkm_img = self.images.pokemon.get(player_pkm.name, 
@@ -8463,6 +8705,10 @@ class PokemonGame:
                 # 绘制按钮
                 for button in self.menu_buttons:
                     button.draw(screen)
+                
+                # 绘制物品使用结果弹窗
+                if hasattr(self, 'item_result_popup') and self.item_result_popup:
+                    self.draw_item_result_popup()
             
             elif self.state == GameState.BATTLE_REVIVE_SELECT:
                 font, small_font, battle_font, menu_font = get_fonts()
@@ -8513,6 +8759,20 @@ class PokemonGame:
                 self.battle_buttons = []
                 self.move_buttons = []
                 self.battle_messages = []
+                self.menu_stack = []
+                return
+            
+            # 战斗结果显示状态处理 - 按任意键关闭战斗界面
+            if self.state == GameState.BATTLE and hasattr(self, 'battle_step') and self.battle_step == 99:
+                # 清理战斗相关数据并返回探索状态
+                self.state = GameState.EXPLORING
+                self.wild_pokemon = None
+                self.boss_pokemon = None
+                self.is_boss_battle = False
+                self.battle_buttons = []
+                self.move_buttons = []
+                self.battle_messages = []
+                self.battle_step = 0
                 self.menu_stack = []
                 return
             
@@ -8591,8 +8851,14 @@ class PokemonGame:
                 elif event.key == K_ESCAPE:  # ESC退出商店
                     self.state = GameState.EXPLORING
             
-            elif self.state == GameState.MENU_BACKPACK:
-                if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
+                elif self.state == GameState.MENU_BACKPACK:
+                    # 检查物品结果弹窗的点击
+                    if hasattr(self, 'item_result_popup') and self.item_result_popup and hasattr(self, 'item_result_button'):
+                        if self.item_result_button.collidepoint(event.pos):
+                            self.item_result_popup = None
+                            return
+                    
+                    if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
                     # 在弹窗状态下,ESC键关闭弹窗
                     if event.key == K_ESCAPE:
                         self.backpack_popup_state = False
@@ -8845,6 +9111,20 @@ class PokemonGame:
                         self.open_main_menu()
                 
                 elif self.state in [GameState.BATTLE, GameState.BOSS_BATTLE]:
+                    # 检查是否在战斗结果显示状态
+                    if hasattr(self, 'battle_step') and self.battle_step == 99:
+                        # 任意点击都退出战斗
+                        self.state = GameState.EXPLORING
+                        self.wild_pokemon = None
+                        self.boss_pokemon = None
+                        self.is_boss_battle = False
+                        self.battle_buttons = []
+                        self.move_buttons = []
+                        self.battle_messages = []
+                        self.battle_step = 0
+                        self.menu_stack = []
+                        return
+                    
                     for button in self.battle_buttons:
                         if button.check_click(event.pos) and button.action:
                             # 清除我方必杀技台词显示（任何按钮操作都会清除）
@@ -9072,6 +9352,13 @@ class PokemonGame:
                                 # 不调用go_back(),让process_battle_turn处理状态转换
                 
                 elif self.state == GameState.MENU_TARGET_SELECTION:
+                    # 检查物品结果弹窗的点击
+                    if hasattr(self, 'item_result_popup') and self.item_result_popup and hasattr(self, 'item_result_button'):
+                        if self.item_result_button.collidepoint(event.pos):
+                            self.item_result_popup = None
+                            self.go_back()
+                            return
+                    
                     for button in self.menu_buttons:
                         if button.check_click(event.pos) and button.action:
                             if button.action == "cancel":
@@ -9494,6 +9781,10 @@ class PokemonGame:
         # 检查是否在显示确认弹窗
         if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
             self.draw_item_use_popup()
+        
+        # 绘制物品使用结果弹窗
+        if hasattr(self, 'item_result_popup') and self.item_result_popup:
+            self.draw_item_result_popup()
             return
         
         if not self.player.backpack:
@@ -9822,6 +10113,66 @@ class PokemonGame:
             for i, message in enumerate(self.battle_messages[-2:]):  # 显示最近2条消息
                 message_text = message_font.render(message, True, BLACK)
                 screen.blit(message_text, (30, message_y + 10 + i * 25))
+    
+    def draw_item_result_popup(self):
+        """绘制物品使用结果弹窗"""
+        if not self.item_result_popup:
+            return
+            
+        popup_width = 450
+        popup_height = 250
+        popup_x = (SCREEN_WIDTH - popup_width) // 2
+        popup_y = (SCREEN_HEIGHT - popup_height) // 2
+        
+        # 绘制弹窗背景
+        popup_surface = pygame.Surface((popup_width, popup_height), pygame.SRCALPHA)
+        popup_surface.fill((255, 255, 255, 240))  # 半透明白色
+        screen.blit(popup_surface, (popup_x, popup_y))
+        pygame.draw.rect(screen, BLACK, (popup_x, popup_y, popup_width, popup_height), 3)
+        
+        # 绘制标题
+        title_font = FontManager.get_font(24)
+        title_color = GREEN if self.item_result_popup["success"] else RED
+        title_text = title_font.render(self.item_result_popup["title"], True, title_color)
+        title_x = popup_x + (popup_width - title_text.get_width()) // 2
+        screen.blit(title_text, (title_x, popup_y + 20))
+        
+        # 绘制目标信息
+        target_font = FontManager.get_font(18)
+        target_text = target_font.render(f"目标: {self.item_result_popup['target']}", True, BLACK)
+        target_x = popup_x + (popup_width - target_text.get_width()) // 2
+        screen.blit(target_text, (target_x, popup_y + 60))
+        
+        # 绘制结果信息
+        result_font = FontManager.get_font(16)
+        result_lines = self.item_result_popup["result"].split('\n')
+        result_y = popup_y + 100
+        
+        for line in result_lines:
+            if line.strip():
+                result_text = result_font.render(line.strip(), True, BLACK)
+                result_x = popup_x + (popup_width - result_text.get_width()) // 2
+                screen.blit(result_text, (result_x, result_y))
+                result_y += 25
+        
+        # 绘制确认按钮
+        button_width = 120
+        button_height = 40
+        button_x = popup_x + (popup_width - button_width) // 2
+        button_y = popup_y + popup_height - 60
+        
+        button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
+        button_color = (144, 238, 144) if self.item_result_popup["success"] else (255, 182, 193)
+        pygame.draw.rect(screen, button_color, button_rect)
+        pygame.draw.rect(screen, BLACK, button_rect, 2)
+        
+        button_text = FontManager.get_font(20).render("确定", True, BLACK)
+        text_x = button_rect.centerx - button_text.get_width() // 2
+        text_y = button_rect.centery - button_text.get_height() // 2
+        screen.blit(button_text, (text_x, text_y))
+        
+        # 保存按钮区域用于点击检测
+        self.item_result_button = button_rect
 
     def draw_purchase_popup(self):
         """绘制购买数量弹窗"""
