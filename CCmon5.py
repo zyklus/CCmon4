@@ -2693,7 +2693,7 @@ class PokemonConfig:
             "disadvantages": ["体力", "content", "勇气", "耐心"],
             "growth_type": "medium_fast",
             "moves": [
-                {"name": "织条毯子", "power": 0, "type": ["共情", "节操"], "category": SkillCategory.CONTINUOUS_HEAL},
+                {"name": "织条毯子", "power": 20, "type": ["共情", "节操"], "category": SkillCategory.DIRECT_DAMAGE},
                 {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "躺平", "power": 0, "type": "节操", "category": SkillCategory.DIRECT_HEAL},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
@@ -2706,7 +2706,7 @@ class PokemonConfig:
             "disadvantages": ["体力", "content", "耐心"],
             "growth_type": "medium_slow",
             "moves": [
-                {"name": "织条毯子", "power": 0, "type": ["共情", "节操"], "category": SkillCategory.CONTINUOUS_HEAL},
+                {"name": "织条毯子", "power": 20, "type": ["共情", "节操"], "category": SkillCategory.DIRECT_DAMAGE},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
                 {"name": "鼓舞", "power": 0, "type": "共情", "category": SkillCategory.TEAM_BUFF},
                 {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT, "sp_cost": 45},
@@ -2721,7 +2721,7 @@ class PokemonConfig:
             "disadvantages": ["体力", "耐心"],
             "growth_type": "slow",
             "moves": [
-                {"name": "织条毯子", "power": 0, "type": ["共情", "节操"], "category": SkillCategory.CONTINUOUS_HEAL},
+                {"name": "织条毯子", "power": 20, "type": ["共情", "节操"], "category": SkillCategory.DIRECT_DAMAGE},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
                 {"name": "鼓舞", "power": 0, "type": "共情", "category": SkillCategory.TEAM_BUFF},
                 {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT, "sp_cost": 45},
@@ -4037,19 +4037,26 @@ class Pokemon:
             if target:
                 effects = skill_data["effects"]
                 
-                # 检查是否有随机伤害百分比范围
-                damage_percentage_min = effects.get("damage_percentage_min", 0)
-                damage_percentage_max = effects.get("damage_percentage_max", 0)
+                # 检查是否有直接伤害值
+                direct_damage = effects.get("direct_damage", 0)
                 
-                if damage_percentage_min > 0 and damage_percentage_max > 0:
-                    # 随机伤害百分比
-                    random_percentage = random.uniform(damage_percentage_min, damage_percentage_max)
-                    base_damage_percentage = random_percentage
+                if direct_damage > 0:
+                    # 使用直接伤害值
+                    base_damage = direct_damage
                 else:
-                    # 使用固定伤害百分比
-                    base_damage_percentage = effects.get("base_damage_percentage", skill_data.get("power", 0) / 100.0)
-                
-                base_damage = int(self.attack * base_damage_percentage)
+                    # 检查是否有随机伤害百分比范围
+                    damage_percentage_min = effects.get("damage_percentage_min", 0)
+                    damage_percentage_max = effects.get("damage_percentage_max", 0)
+                    
+                    if damage_percentage_min > 0 and damage_percentage_max > 0:
+                        # 随机伤害百分比
+                        random_percentage = random.uniform(damage_percentage_min, damage_percentage_max)
+                        base_damage_percentage = random_percentage
+                    else:
+                        # 使用固定伤害百分比
+                        base_damage_percentage = effects.get("base_damage_percentage", skill_data.get("power", 0) / 100.0)
+                    
+                    base_damage = int(self.attack * base_damage_percentage)
                 
                 # 检查暴击
                 crit_chance = effects.get("crit_chance", 0)
@@ -4172,17 +4179,24 @@ class Pokemon:
                 heal_percentage = effects.get("heal_percentage", 1.0)
                 total_heal = 0
                 
-                # 恢复所有队友血量（不包括使用者自己）
+                # 恢复所有队友血量（不包括使用者自己），包括复活死亡的队友
                 if allies:
                     for ally in allies:
-                        if ally != self and not ally.is_fainted():  # 不包括自己,不治疗已倒下的队友
+                        if ally != self:  # 不包括自己
                             ally_heal_amount = int(ally.max_hp * heal_percentage)
                             old_ally_hp = ally.hp
-                            ally.hp = min(ally.max_hp, ally.hp + ally_heal_amount)
-                            ally_actual_heal = ally.hp - old_ally_hp
-                            total_heal += ally_actual_heal
-                            if ally_actual_heal > 0:
-                                messages.append(f"{ally.name}恢复了{ally_actual_heal}点血量！")
+                            
+                            # 如果队友已死亡，先复活再治疗
+                            if ally.is_fainted():
+                                ally.hp = ally_heal_amount
+                                total_heal += ally_heal_amount
+                                messages.append(f"{ally.name}复活并恢复了{ally_heal_amount}点血量！")
+                            else:
+                                ally.hp = min(ally.max_hp, ally.hp + ally_heal_amount)
+                                ally_actual_heal = ally.hp - old_ally_hp
+                                total_heal += ally_actual_heal
+                                if ally_actual_heal > 0:
+                                    messages.append(f"{ally.name}恢复了{ally_actual_heal}点血量！")
                 
                 # 自身血量降为1（技能的核心牺牲效果）
                 old_self_hp = self.hp
@@ -4198,10 +4212,10 @@ class Pokemon:
                 all_allies_attack_buff = effects.get("all_allies_attack_buff", 0.2)
                 team_buff_turns = effects.get("turns", 999)  # 持续整场战斗
                 
-                # 给所有队友添加攻击力增益
+                # 给所有队友添加攻击力增益（包括刚复活的）
                 if allies:
                     for ally in allies:
-                        if ally != self and not ally.is_fainted():  # 不包括自己
+                        if ally != self and not ally.is_fainted():  # 不包括自己，但包括刚复活的
                             ally.add_stat_modifier(1.0 + all_allies_attack_buff, 1.0, team_buff_turns, f"{skill_name}·团队加持", "self")
                             messages.append(f"{ally.name}的攻击力提升{int(all_allies_attack_buff*100)}%！")
                 
@@ -4245,12 +4259,15 @@ class Pokemon:
             # 改变敌方属性多回合
             if target:
                 target_attack_mult = effects.get("target_attack_multiplier", 1.0)
+                target_defense_mult = effects.get("target_defense_multiplier", 1.0)
                 turns = effects["turns"]
-                target.add_stat_modifier(target_attack_mult, 1.0, turns, skill_name, "enemy")
+                target.add_stat_modifier(target_attack_mult, target_defense_mult, turns, skill_name, "enemy")
                 
                 debuff_desc = []
                 if target_attack_mult < 1.0:
                     debuff_desc.append(f"攻击力下降{int((1-target_attack_mult)*100)}%")
+                if target_defense_mult < 1.0:
+                    debuff_desc.append(f"防御力下降{int((1-target_defense_mult)*100)}%")
                 
                 messages.append(f"{self.name}使用了{skill_name},{target.name}{', '.join(debuff_desc)},持续{turns}回合！")
                 return 0, messages
@@ -4345,16 +4362,31 @@ class Pokemon:
             
             if allies and team_heal_percentage > 0:
                 for ally in allies:
-                    if not ally.is_fainted():  # 包括使用者自己
-                        if turns > 1:
-                            # 持续治疗
+                    # 包括使用者自己和死亡的队友
+                    if turns > 1:
+                        # 持续治疗（死亡的队友不能接受持续治疗，需要先复活）
+                        if ally.is_fainted():
+                            # 复活并立即治疗
+                            heal_amount = int(ally.max_hp * team_heal_percentage)
+                            ally.hp = heal_amount
+                            total_heal += heal_amount
+                            messages.append(f"{ally.name}复活并恢复了{heal_amount}点血量！")
+                        else:
                             heal_per_turn = int(ally.max_hp * team_heal_percentage)
                             ally.add_continuous_heal(heal_per_turn, turns, f"{skill_name}·团队治疗")
                             total_heal += heal_per_turn * turns
                             messages.append(f"{ally.name}将在接下来{turns}回合内每回合回复{heal_per_turn}点HP！")
+                    else:
+                        # 立即治疗
+                        heal_amount = int(ally.max_hp * team_heal_percentage)
+                        
+                        if ally.is_fainted():
+                            # 复活并治疗
+                            ally.hp = heal_amount
+                            total_heal += heal_amount
+                            messages.append(f"{ally.name}复活并恢复了{heal_amount}点血量！")
                         else:
-                            # 立即治疗
-                            heal_amount = int(ally.max_hp * team_heal_percentage)
+                            # 普通治疗
                             old_hp = ally.hp
                             ally.hp = min(ally.max_hp, ally.hp + heal_amount)
                             actual_heal = ally.hp - old_hp
@@ -4435,6 +4467,222 @@ class Pokemon:
             else:
                 messages.append(f"{self.name}使用了{skill_name}！")
                 return 0, messages
+        
+        elif category == SkillCategory.MULTI_HIT:
+            # 多段攻击技能
+            if target:
+                effects = skill_data["effects"]
+                total_damage = 0
+                
+                # 处理沉默的牛马技能
+                if skill_name == "沉默的牛马":
+                    hit_count = effects.get("hit_count", 3)
+                    damage_percentage = effects.get("damage_percentage", 0.4)
+                    bonus_damage_chance = effects.get("bonus_damage_chance", 0.4)
+                    bonus_damage_percentage = effects.get("bonus_damage_percentage", 0.1)
+                    
+                    messages.append(f"{self.name}使用了{skill_name}！")
+                    
+                    for i in range(hit_count):
+                        # 计算基础伤害
+                        base_damage = int(self.attack * damage_percentage)
+                        
+                        # 检查是否触发额外伤害
+                        if random.random() < bonus_damage_chance:
+                            bonus_damage = int(self.attack * bonus_damage_percentage)
+                            base_damage += bonus_damage
+                            messages.append(f"第{i+1}次攻击触发额外伤害！")
+                        
+                        # 应用伤害
+                        actual_damage = target.take_damage(base_damage)
+                        total_damage += actual_damage
+                        messages.append(f"第{i+1}次攻击对{target.name}造成{actual_damage}点伤害！")
+                        
+                        # 如果目标死亡，停止攻击
+                        if target.is_fainted():
+                            messages.append(f"{target.name}倒下了！")
+                            break
+                    
+                    return total_damage, messages
+                
+                # 处理DGL逼我的技能
+                elif skill_name == "DGL逼我的":
+                    first_hit_percentage = effects.get("first_hit_percentage", 1.8)
+                    second_hit_chance = effects.get("second_hit_chance", 0.4)
+                    second_hit_percentage = effects.get("second_hit_percentage", 1.2)
+                    
+                    messages.append(f"{self.name}使用了{skill_name}！")
+                    
+                    # 第一次攻击
+                    first_damage = int(self.attack * first_hit_percentage)
+                    actual_damage = target.take_damage(first_damage)
+                    total_damage += actual_damage
+                    messages.append(f"第一次攻击对{target.name}造成{actual_damage}点伤害！")
+                    
+                    # 检查是否触发第二次攻击
+                    if not target.is_fainted() and random.random() < second_hit_chance:
+                        second_damage = int(self.attack * second_hit_percentage)
+                        actual_damage = target.take_damage(second_damage)
+                        total_damage += actual_damage
+                        messages.append(f"触发第二次攻击！对{target.name}造成{actual_damage}点伤害！")
+                    
+                    return total_damage, messages
+                
+                # 其他多段攻击技能的通用处理
+                else:
+                    hit_count = effects.get("hit_count", 3)
+                    damage_percentage = effects.get("damage_percentage", 0.4)
+                    
+                    messages.append(f"{self.name}使用了{skill_name}！")
+                    
+                    for i in range(hit_count):
+                        base_damage = int(self.attack * damage_percentage)
+                        actual_damage = target.take_damage(base_damage)
+                        total_damage += actual_damage
+                        messages.append(f"第{i+1}次攻击对{target.name}造成{actual_damage}点伤害！")
+                        
+                        if target.is_fainted():
+                            messages.append(f"{target.name}倒下了！")
+                            break
+                    
+                    return total_damage, messages
+            else:
+                return 0, [f"{self.name}使用了{skill_name},但没有目标！"]
+        
+        elif category == SkillCategory.MIXED_BUFF_DEBUFF:
+            # 混合增益减益效果
+            if target:
+                effects = skill_data["effects"]
+                target_attack_mult = effects.get("target_attack_multiplier", 1.0)
+                target_defense_mult = effects.get("target_defense_multiplier", 1.0)
+                self_attack_mult = effects.get("self_attack_multiplier", 1.0)
+                self_defense_mult = effects.get("self_defense_multiplier", 1.0)
+                turns = effects.get("turns", 3)
+                
+                # 对目标应用减益效果
+                if target_attack_mult != 1.0 or target_defense_mult != 1.0:
+                    target.add_stat_modifier(target_attack_mult, target_defense_mult, turns, skill_name, "enemy")
+                
+                # 对自己应用增益效果
+                if self_attack_mult != 1.0 or self_defense_mult != 1.0:
+                    self.add_stat_modifier(self_attack_mult, self_defense_mult, turns, skill_name, "self")
+                
+                effect_desc = []
+                if target_attack_mult < 1.0:
+                    effect_desc.append(f"{target.name}攻击力下降{int((1-target_attack_mult)*100)}%")
+                if target_defense_mult < 1.0:
+                    effect_desc.append(f"{target.name}防御力下降{int((1-target_defense_mult)*100)}%")
+                if self_attack_mult > 1.0:
+                    effect_desc.append(f"{self.name}攻击力提升{int((self_attack_mult-1)*100)}%")
+                if self_defense_mult > 1.0:
+                    effect_desc.append(f"{self.name}防御力提升{int((self_defense_mult-1)*100)}%")
+                
+                messages.append(f"{self.name}使用了{skill_name}！")
+                if effect_desc:
+                    messages.append(f"{', '.join(effect_desc)},持续{turns}回合！")
+                return 0, messages
+            else:
+                return 0, [f"{self.name}使用了{skill_name},但没有目标！"]
+        
+        elif category == SkillCategory.HOT_DOT:
+            # 持续治疗和伤害效果
+            if target:
+                effects = skill_data["effects"]
+                heal_percentage = effects.get("heal_percentage", 0)
+                dot_percentage = effects.get("dot_percentage", 0)
+                turns = effects.get("turns", 3)
+                
+                total_effect = 0
+                
+                # 给自己添加持续治疗
+                if heal_percentage > 0:
+                    heal_per_turn = int(self.max_hp * heal_percentage)
+                    self.add_continuous_heal(heal_per_turn, turns, f"{skill_name}·治疗")
+                    total_effect += heal_per_turn * turns
+                    messages.append(f"{self.name}将在接下来{turns}回合内每回合回复{heal_per_turn}点HP！")
+                
+                # 给目标添加持续伤害
+                if dot_percentage > 0:
+                    damage_per_turn = int(self.attack * dot_percentage)
+                    target.add_continuous_damage(damage_per_turn, turns, f"{skill_name}·伤害", "enemy")
+                    total_effect += damage_per_turn * turns
+                    messages.append(f"{target.name}将在接下来{turns}回合内每回合受到{damage_per_turn}点伤害！")
+                
+                messages.append(f"{self.name}使用了{skill_name}！")
+                return total_effect, messages
+            else:
+                return 0, [f"{self.name}使用了{skill_name},但没有目标！"]
+        
+        elif category == SkillCategory.ULTIMATE:
+            # 终极技能
+            if target:
+                effects = skill_data["effects"]
+                
+                # 处理我来自珠海技能
+                if skill_name == "我来自珠海":
+                    damage_multiplier = effects.get("damage_multiplier", 1.5)
+                    execute_threshold = effects.get("execute_threshold", 0.2)
+                    
+                    # 检查是否触发斩杀效果
+                    if target.get_hp_percentage() < execute_threshold:
+                        target.hp = 0
+                        messages.append(f"{self.name}使用了{skill_name}！")
+                        messages.append(f"{target.name}的HP低于{int(execute_threshold*100)}%,直接被击败！")
+                        return target.max_hp, messages
+                    else:
+                        # 造成普通伤害
+                        base_damage = int(self.attack * damage_multiplier)
+                        
+                        # 计算属性克制
+                        type_multiplier = target.calculate_type_effectiveness(skill_data["type"])
+                        final_damage = int(base_damage * type_multiplier)
+                        
+                        # 应用防御减免
+                        defense_reduction = target.defense // 2
+                        actual_damage = max(1, final_damage - defense_reduction)
+                        
+                        target.hp = max(0, target.hp - actual_damage)
+                        messages.append(f"{self.name}使用了{skill_name}！")
+                        messages.append(f"对{target.name}造成{actual_damage}点伤害！")
+                        return actual_damage, messages
+                
+                # 其他终极技能的通用处理
+                else:
+                    power = skill_data.get("power", 0)
+                    if power > 0:
+                        base_damage = int(self.attack * (power / 100.0))
+                        
+                        # 计算属性克制
+                        type_multiplier = target.calculate_type_effectiveness(skill_data["type"])
+                        final_damage = int(base_damage * type_multiplier)
+                        
+                        # 应用防御减免
+                        defense_reduction = target.defense // 2
+                        actual_damage = max(1, final_damage - defense_reduction)
+                        
+                        target.hp = max(0, target.hp - actual_damage)
+                        messages.append(f"{self.name}使用了{skill_name}！")
+                        messages.append(f"对{target.name}造成{actual_damage}点伤害！")
+                        return actual_damage, messages
+                    else:
+                        messages.append(f"{self.name}使用了{skill_name},但没有产生效果！")
+                        return 0, messages
+            else:
+                return 0, [f"{self.name}使用了{skill_name},但没有目标！"]
+        
+        elif category == SkillCategory.REVIVE:
+            # 复活技能 - 这个方法现在只是检查是否可以使用，实际复活逻辑在战斗系统中处理
+            if allies:
+                fainted_allies = [ally for ally in allies if ally != self and ally.is_fainted()]
+                
+                if fainted_allies:
+                    # 返回特殊值表示需要选择复活目标
+                    return -1, [f"{self.name}准备使用{skill_name}，请选择要复活的顾问！"]
+                else:
+                    messages.append(f"{self.name}使用了{skill_name}，但没有需要复活的队友！")
+                    return 0, messages
+            else:
+                return 0, [f"{self.name}使用了{skill_name},但没有队友！"]
         
         return 0, messages
     
@@ -4871,6 +5119,7 @@ class GameState:
     SHOP = 16  # 商店界面
     TRAINING_CENTER = 17  # 训练中心界面
     MENU_TARGET_SELECTION = 18  # 目标选择状态
+    BATTLE_REVIVE_SELECT = 19  # 复活技能目标选择状态
 
 # 通知系统类
 class NotificationSystem:
@@ -5867,8 +6116,19 @@ class PokemonGame:
                     skill = skill_manager.get_skill(move["name"])
                     if skill:
                         # 使用统一的技能管理器,传递队友信息以支持团队技能
-                        allies = [pokemon for pokemon in self.player.pokemon_team if not pokemon.is_fainted()]
+                        allies = [pokemon for pokemon in self.player.pokemon_team]  # 包含所有队友，包括死亡的
                         damage, skill_messages = skill_manager.use_skill_on_pokemon(move["name"], player_pkm, enemy_pkm, allies)
+                        
+                        # 检查是否是复活技能需要选择目标
+                        if damage == -1 and move["name"] in NEW_SKILLS_DATABASE:
+                            skill_data = NEW_SKILLS_DATABASE[move["name"]]
+                            if skill_data["category"] == SkillCategory.REVIVE:
+                                # 进入复活目标选择状态
+                                self.revive_skill_name = move["name"]
+                                self.revive_skill_user = player_pkm
+                                self.open_revive_selection_menu()
+                                return
+                        
                         self.current_turn["damage"] = damage if damage is not None else 0
                         self.current_turn["type_multiplier"] = 1.0
                         
@@ -6260,6 +6520,26 @@ class PokemonGame:
                     status_messages = enemy_pkm.apply_status_effects(player_pkm)
                     for msg in status_messages:
                         self.battle_messages.append(msg)
+                
+                # 检查状态效果是否导致战斗结束
+                if enemy_pkm and enemy_pkm.is_fainted():
+                    self.battle_messages.append(f"{enemy_pkm.name}倒下了！")
+                    self.end_battle()
+                    return
+                elif player_pkm and player_pkm.is_fainted():
+                    self.battle_messages.append(f"你的{player_pkm.name}倒下了！")
+                    # 检查是否还有其他可用顾问
+                    if not any(pkm.hp > 0 for pkm in self.player.pokemon_team):
+                        self.battle_messages.append("你的顾问全部倒下了！")
+                        self.end_battle()
+                        return
+                    else:
+                        # 自动切换到下一个可用顾问
+                        next_pkm = self.player.get_next_available_pokemon()
+                        if next_pkm:
+                            advantages, disadvantages = get_type_advantages(next_pkm.types, enemy_pkm.types)
+                            self.battle_messages.append(f"派出了{next_pkm.name} (Lv.{next_pkm.level})！")
+                            self.battle_messages.append(f"优点: {advantages}, 缺点: {disadvantages}")
                 
                 self.state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
                 self.animation_delay = 1000
@@ -7672,14 +7952,19 @@ class PokemonGame:
                 screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, 65))
                 
                 # 高亮显示当前默认出战顾问
-                for i, button in enumerate(self.menu_buttons[:-2]):
-                    if i == self.player.default_pokemon_index:
-                        pygame.draw.rect(screen, HIGHLIGHT, button.rect.inflate(6, 6), 3)
-                    button.draw(screen)
-                
-                # 绘制最后两个按钮
-                for button in self.menu_buttons[-2:]:
-                    button.draw(screen)
+                if len(self.menu_buttons) >= 2:
+                    for i, button in enumerate(self.menu_buttons[:-2]):
+                        if i == self.player.default_pokemon_index:
+                            pygame.draw.rect(screen, HIGHLIGHT, button.rect.inflate(6, 6), 3)
+                        button.draw(screen)
+                    
+                    # 绘制最后两个按钮
+                    for button in self.menu_buttons[-2:]:
+                        button.draw(screen)
+                else:
+                    # 如果按钮数量少于2个，直接绘制所有按钮
+                    for button in self.menu_buttons:
+                        button.draw(screen)
                     
                 # Ensure fonts are loaded
                 font, small_font, battle_font, menu_font = get_fonts()
@@ -7981,6 +8266,26 @@ class PokemonGame:
                 # 绘制按钮
                 for button in self.menu_buttons:
                     button.draw(screen)
+            
+            elif self.state == GameState.BATTLE_REVIVE_SELECT:
+                font, small_font, battle_font, menu_font = get_fonts()
+                
+                # 绘制半透明背景
+                overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), BLACK, 128)
+                screen.blit(overlay, (0, 0))
+                
+                # 绘制标题
+                title = menu_font.render("选择要复活的顾问", True, WHITE)
+                screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, 100))
+                
+                # 绘制技能信息
+                if hasattr(self, 'revive_skill_name'):
+                    skill_info = small_font.render(f"使用技能: {self.revive_skill_name}", True, WHITE)
+                    screen.blit(skill_info, (SCREEN_WIDTH//2 - skill_info.get_width()//2, 120))
+                
+                # 绘制按钮
+                for button in self.menu_buttons:
+                    button.draw(screen)
                     
         except Exception as e:
             print(f"绘制菜单时出错: {e}")
@@ -8211,7 +8516,8 @@ class PokemonGame:
                             pass
             elif self.state in [GameState.MENU_MAIN, GameState.MENU_POKEMON,
                                GameState.MENU_POKEMON_DETAIL, GameState.MENU_BACKPACK,
-                               GameState.MENU_ITEM_USE, GameState.MENU_TARGET_SELECTION]:
+                               GameState.MENU_ITEM_USE, GameState.MENU_TARGET_SELECTION,
+                               GameState.BATTLE_REVIVE_SELECT]:
                 for button in self.menu_buttons:
                     button.check_hover(event.pos)
             elif self.state == GameState.EXPLORING:
@@ -8588,6 +8894,46 @@ class PokemonGame:
                                 self.process_battle_turn(action="catch", ball_type="master")
                                 # 不调用go_back(),让process_battle_turn处理状态转换
                 
+                elif self.state == GameState.BATTLE_REVIVE_SELECT:
+                    for button in self.menu_buttons:
+                        if button.check_click(event.pos) and button.action:
+                            if button.action == "cancel_revive":
+                                # 取消复活技能
+                                self.go_back()
+                            elif button.action.startswith("revive_"):
+                                # 选择了要复活的顾问
+                                target_index = int(button.action.split("_")[1])
+                                
+                                # 找到死亡的队友
+                                fainted_allies = [pokemon for pokemon in self.player.pokemon_team 
+                                                 if pokemon != self.revive_skill_user and pokemon.is_fainted()]
+                                
+                                if 0 <= target_index < len(fainted_allies):
+                                    target_ally = fainted_allies[target_index]
+                                    
+                                    # 执行复活
+                                    if hasattr(self, 'revive_skill_name'):
+                                        skill_data = NEW_SKILLS_DATABASE[self.revive_skill_name]
+                                        revive_hp_percentage = skill_data["effects"].get("revive_hp_percentage", 0.9)
+                                        heal_amount = int(target_ally.max_hp * revive_hp_percentage)
+                                        target_ally.hp = heal_amount
+                                        
+                                        # 添加战斗消息
+                                        self.battle_messages.append(f"{self.revive_skill_user.name}使用了{self.revive_skill_name}！")
+                                        self.battle_messages.append(f"{target_ally.name}复活了，恢复了{heal_amount}点血量！")
+                                        
+                                        # 设置战斗回合数据
+                                        self.current_turn["damage"] = heal_amount
+                                        self.current_turn["type_multiplier"] = 1.0
+                                        
+                                        # 清理复活状态
+                                        delattr(self, 'revive_skill_name')
+                                        delattr(self, 'revive_skill_user')
+                                        
+                                        # 返回战斗状态并继续处理回合
+                                        self.state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
+                                        self.battle_step = 1  # 继续战斗流程
+                
                 elif self.state == GameState.SHOP:
                     # 检查是否在购买弹窗状态
                     if hasattr(self, 'shop_popup_state') and self.shop_popup_state:
@@ -8730,6 +9076,30 @@ class PokemonGame:
             )
         self.menu_buttons.append(Button(50, 100 + len(deposited_info) * 50 + 20, 200, 40, "返回", "back"))
         self.state = GameState.MENU_MAIN  # 临时使用菜单状态
+    
+    def open_revive_selection_menu(self):
+        """打开复活技能目标选择菜单"""
+        self.menu_buttons = []
+        
+        # 找到所有死亡的队友
+        fainted_allies = [pokemon for pokemon in self.player.pokemon_team 
+                         if pokemon != self.revive_skill_user and pokemon.is_fainted()]
+        
+        if fainted_allies:
+            for i, pokemon in enumerate(fainted_allies):
+                button_text = f"复活 {pokemon.name} (Lv.{pokemon.level})"
+                self.menu_buttons.append(
+                    Button(SCREEN_WIDTH//2 - 200, 150 + i * 60, 400, 50,
+                           button_text, f"revive_{i}", BLACK, LIGHT_BLUE, MENU_HOVER)
+                )
+        
+        # 添加取消按钮
+        self.menu_buttons.append(
+            Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT - 100, 200, 40, 
+                   "取消", "cancel_revive", BLACK, LIGHT_BLUE, MENU_HOVER)
+        )
+        
+        self.state = GameState.BATTLE_REVIVE_SELECT
 
     def update(self):
         """更新游戏状态"""

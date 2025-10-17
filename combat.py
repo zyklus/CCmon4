@@ -226,8 +226,28 @@ class CombatManager:
             
             # 使用统一的技能管理器
             if move["name"] in UNIFIED_SKILLS_DATABASE:
-                allies = [pokemon for pokemon in self.game.player.pokemon_team if not pokemon.is_fainted()]
+                allies = [pokemon for pokemon in self.game.player.pokemon_team]  # 包含所有队友，包括死亡的
                 damage, skill_messages = skill_manager.use_skill_on_pokemon(move["name"], player_pkm, enemy_pkm, allies)
+                
+                # 检查是否是复活技能需要选择目标（在combat.py中我们暂时自动选择第一个死亡的队友）
+                if damage == -1 and move["name"] in UNIFIED_SKILLS_DATABASE:
+                    skill_data = UNIFIED_SKILLS_DATABASE[move["name"]]
+                    if skill_data.get("category") == SkillCategory.REVIVE:
+                        # 自动选择第一个死亡的队友进行复活
+                        fainted_allies = [pokemon for pokemon in self.game.player.pokemon_team 
+                                         if pokemon != player_pkm and pokemon.is_fainted()]
+                        if fainted_allies:
+                            target_ally = fainted_allies[0]
+                            revive_hp_percentage = skill_data["effects"].get("revive_hp_percentage", 0.9)
+                            heal_amount = int(target_ally.max_hp * revive_hp_percentage)
+                            target_ally.hp = heal_amount
+                            damage = heal_amount
+                            skill_messages = [f"{player_pkm.name}使用了{move['name']}！",
+                                            f"{target_ally.name}复活了，恢复了{heal_amount}点血量！"]
+                        else:
+                            damage = 0
+                            skill_messages = [f"{player_pkm.name}使用了{move['name']}，但没有需要复活的队友！"]
+                
                 self.current_turn["damage"] = damage if damage is not None else 0
                 
                 # 检查是否为必杀技
@@ -444,6 +464,27 @@ class CombatManager:
             status_messages = enemy_pkm.apply_status_effects(player_pkm)
             for msg in status_messages:
                 self.game.battle_messages.append(msg)
+        
+        # 检查状态效果是否导致战斗结束
+        if enemy_pkm and enemy_pkm.is_fainted():
+            self.game.battle_messages.append(f"{enemy_pkm.name}倒下了！")
+            self.end_battle()
+            return
+        elif player_pkm and player_pkm.is_fainted():
+            self.game.battle_messages.append(f"你的{player_pkm.name}倒下了！")
+            # 检查是否还有其他可用顾问
+            if not any(pkm.hp > 0 for pkm in self.game.player.pokemon_team):
+                self.game.battle_messages.append("你的顾问全部倒下了！")
+                self.end_battle()
+                return
+            else:
+                # 自动切换到下一个可用顾问
+                next_pkm = self.game.player.get_next_available_pokemon()
+                if next_pkm:
+                    from CCmon5C import get_type_advantages  # 导入类型优势函数
+                    advantages, disadvantages = get_type_advantages(next_pkm.types, enemy_pkm.types)
+                    self.game.battle_messages.append(f"派出了{next_pkm.name} (Lv.{next_pkm.level})！")
+                    self.game.battle_messages.append(f"优点: {advantages}, 缺点: {disadvantages}")
         
         # 返回到战斗状态
         from CCmon5C import GameState  # 导入GameState枚举
