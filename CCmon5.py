@@ -5187,6 +5187,14 @@ class Player:
             if not pokemon.is_fainted():
                 return pokemon
         return None
+    
+    def get_current_battle_pokemon(self, battle_pokemon_index):
+        """获取当前战斗中的Pokemon，不受团队治疗复活影响"""
+        if (battle_pokemon_index is not None and 
+            0 <= battle_pokemon_index < len(self.pokemon_team) and 
+            not self.pokemon_team[battle_pokemon_index].is_fainted()):
+            return self.pokemon_team[battle_pokemon_index]
+        return self.get_active_pokemon()
         
     def set_default_pokemon(self, index):
         if 0 <= index < len(self.pokemon_team):
@@ -5724,6 +5732,7 @@ class PokemonGame:
         self.menu_stack = []
         self.pending_item_use = None  # 待处理的物品使用
         self.item_result_popup = None  # 物品使用结果弹窗
+        self.current_battle_pokemon_index = None  # 当前战斗中的顾问索引，用于防止团队治疗自动切换
         
         # 初始化通知系统
         self.notification_system = NotificationSystem()
@@ -5938,6 +5947,9 @@ class PokemonGame:
         
         # 重置战斗回合计数器
         self.global_battle_turn = 0  # 重置全局战斗回合计数器
+        
+        # 设置当前战斗Pokemon索引，防止团队治疗时自动切换
+        self.current_battle_pokemon_index = self.player.default_pokemon_index
         
         player_pkm = self.player.get_active_pokemon()
         if player_pkm:
@@ -6756,6 +6768,11 @@ class PokemonGame:
                         disadvantages = ", ".join(next_pkm.disadvantages)
                         self.battle_messages.append(f"派出了{next_pkm.name} (Lv.{next_pkm.level})！")
                         self.battle_messages.append(f"优点: {advantages}, 缺点: {disadvantages}")
+                        # 更新当前战斗顾问索引
+                        for i, pokemon in enumerate(self.player.pokemon_team):
+                            if pokemon == next_pkm:
+                                self.current_battle_pokemon_index = i
+                                break
                         self.battle_step = 7
                         self.animation_delay = 1000
                 else:
@@ -6903,6 +6920,8 @@ class PokemonGame:
             
             # 如果在战斗中切换顾问,当前回合结束
             if self.state in [GameState.BATTLE, GameState.BOSS_BATTLE, GameState.BATTLE_SWITCH_POKEMON]:
+                # 更新当前战斗顾问索引
+                self.current_battle_pokemon_index = index
                 self.battle_messages.append("更换顾问后,当前回合结束！")
                 # 创建一个切换顾问的turn来触发回合结束逻辑
                 self.current_turn = {
@@ -6951,6 +6970,9 @@ class PokemonGame:
             self.enemy_line_display = False
             self.ally_ultimate_line = None
             self.enemy_ultimate_line = None
+            
+            # 清除当前战斗顾问索引
+            self.current_battle_pokemon_index = None
             
             # 判断战斗结果
             player_victory = False
@@ -7178,33 +7200,42 @@ class PokemonGame:
             
             result = item.use(target, self.player)
             
-            if item.item_type in ["heal", "evolution", "exp_boost", "ut_restore", "battle_prevent", "skill_blind_box", "skill_book"]:
+            # 检查使用是否成功（失败的结果包含|FAILED后缀）
+            is_success = "|FAILED" not in result
+            
+            # 清理结果消息，移除|FAILED标记
+            clean_result = result.replace("|FAILED", "")
+            
+            if is_success and item.item_type in ["heal", "evolution", "exp_boost", "ut_restore", "battle_prevent", "skill_blind_box", "skill_book"]:
                 self.player.remove_item(item_index)
                 # 添加物品使用成功通知
                 self.notification_system.add_notification(f"成功使用了{item.name}！", "success")
                 # 显示详细结果
-                self.battle_messages = [f"对{target.name}使用了{item.name}", result]
+                self.battle_messages = [f"对{target.name}使用了{item.name}", clean_result]
                 # 显示物品使用结果弹窗
                 self.item_result_popup = {
                     "title": f"使用 {item.name}",
                     "target": target.name,
-                    "result": result,
+                    "result": clean_result,
                     "success": True
                 }
             else:
-                # 添加物品使用信息通知
-                self.notification_system.add_notification(f"使用了{item.name}", "info")
+                # 使用失败或不消耗类物品
+                if not is_success:
+                    self.notification_system.add_notification(f"无法使用{item.name}！", "warning")
+                else:
+                    self.notification_system.add_notification(f"使用了{item.name}", "info")
                 # 显示详细结果
-                self.battle_messages = [f"使用了{item.name}", result]
+                self.battle_messages = [f"使用了{item.name}", clean_result]
                 # 显示物品使用结果弹窗
                 self.item_result_popup = {
                     "title": f"使用 {item.name}",
                     "target": target.name,
-                    "result": result,
-                    "success": False
+                    "result": clean_result,
+                    "success": is_success
                 }
                 
-            return result
+            return clean_result
         # 添加物品使用失败通知
         self.notification_system.add_notification("无法使用物品！", "warning")
         # 显示物品使用失败结果弹窗
@@ -7906,42 +7937,7 @@ class PokemonGame:
                 player_x = SCREEN_WIDTH - 200  # 将我方顾问图像移动到右侧对称位置（与敌方左侧对称）
                 player_status_y = 50
                 
-                # 玩家经验条 - 放在最上方，与敌方对齐
-                player_exp_width = 300
-                player_exp_height = 15
-                player_exp_x = SCREEN_WIDTH - 320  # 与HP/SP条位置对齐
-                pygame.draw.rect(screen, WHITE, (player_exp_x, player_status_y, player_exp_width, player_exp_height))
-                
-                # 计算经验百分比
-                exp_to_next = player_pkm.exp_to_next_level
-                current_exp = player_pkm.exp
-                if exp_to_next > 0:
-                    exp_percentage = current_exp / (current_exp + exp_to_next)
-                else:
-                    exp_percentage = 1.0  # 满级
-                
-                player_exp_fill_width = max(0, min(int((player_exp_width - 4) * exp_percentage), player_exp_width - 4))
-                player_exp_surface = pygame.Surface((player_exp_fill_width, player_exp_height - 4), pygame.SRCALPHA)
-                player_exp_surface.fill((*YELLOW, 128))  # 黄色,50%透明度
-                screen.blit(player_exp_surface, (player_exp_x + 2, player_status_y + 2))
-                pygame.draw.rect(screen, BLACK, (player_exp_x, player_status_y, player_exp_width, player_exp_height), 2)
-                
-                # 经验文字 - 显示在经验条内部居中,带半透明白色背景
-                if exp_to_next > 0:
-                    player_exp_text = f"EXP: {current_exp}/{current_exp + exp_to_next}"
-                else:
-                    player_exp_text = f"EXP: MAX"
-                player_exp_text_surface = battle_info_font.render(player_exp_text, True, BLACK)
-                player_exp_text_rect = player_exp_text_surface.get_rect(center=(player_exp_x + player_exp_width // 2, player_status_y + player_exp_height // 2))
-                
-                # 绘制经验文字的半透明白色背景
-                player_exp_text_bg = pygame.Surface((player_exp_text_rect.width + 6, player_exp_text_rect.height + 2), pygame.SRCALPHA)
-                player_exp_text_bg.fill((255, 255, 255, 128))  # 白色,50%透明度
-                screen.blit(player_exp_text_bg, (player_exp_text_rect.x - 3, player_exp_text_rect.y - 1))
-                
-                screen.blit(player_exp_text_surface, player_exp_text_rect)
-                
-                player_status_y += player_exp_height + 10
+                # 移除经验条，直接开始绘制状态文字，与敌方对齐
                 
                 # 玩家状态文字（16号字）- 调整文本位置向左移动以完全显示
                 player_text_x = SCREEN_WIDTH - 320  # 与HP条左侧对齐,调整我方顾问文本位置
@@ -8496,7 +8492,7 @@ class PokemonGame:
                     f"SP: {pokemon.sp}/{pokemon.max_sp}",
                     f"攻击: {pokemon.attack}",
                     f"防御: {pokemon.defense}",
-                    f"经验值: {pokemon.exp}/{pokemon.exp_to_next_level}",
+                    f"经验值: {pokemon.exp}/{pokemon.exp + pokemon.exp_to_next_level}",
                     "技能:"
                 ]
                 
@@ -8533,7 +8529,8 @@ class PokemonGame:
                         info_texts.append(f"◆ 技能名称: {move['name']}")
                         
                         # 技能属性
-                        info_texts.append(f"  技能属性: {move['type']}")
+                        skill_type = move.get('type', skill_data.get('type', '未知'))
+                        info_texts.append(f"  技能属性: {skill_type}")
                         
                         # 技能类型
                         info_texts.append(f"  技能类型: {category_name}")
@@ -8582,8 +8579,10 @@ class PokemonGame:
                     else:
                         # 旧技能系统显示
                         info_texts.append(f"◆ 技能名称: {move['name']}")
-                        info_texts.append(f"  技能属性: {move['type']}")
-                        info_texts.append(f"  威力: {move['power']}")
+                        skill_type = move.get('type', '未知')
+                        skill_power = move.get('power', 0)
+                        info_texts.append(f"  技能属性: {skill_type}")
+                        info_texts.append(f"  威力: {skill_power}")
                         
                         # 优先使用技能管理器中的描述
                         desc = ""
@@ -9447,8 +9446,12 @@ class PokemonGame:
                 elif self.state == GameState.BATTLE_REVIVE_SELECT:
                     for button in self.menu_buttons:
                         if button.check_click(event.pos) and button.action:
-                            if button.action == "cancel_revive":
-                                # 取消复活技能
+                            if button.action == "cancel_revive" or button.action == "no_target":
+                                # 取消复活技能，清理状态
+                                if hasattr(self, 'revive_skill_name'):
+                                    delattr(self, 'revive_skill_name')
+                                if hasattr(self, 'revive_skill_user'):
+                                    delattr(self, 'revive_skill_user')
                                 self.go_back()
                             elif button.action.startswith("revive_"):
                                 # 选择了要复活的顾问
@@ -9629,6 +9632,10 @@ class PokemonGame:
     
     def open_revive_selection_menu(self):
         """打开复活技能目标选择菜单"""
+        # 保存当前状态到菜单栈，确保可以正确返回
+        current_state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
+        self.menu_stack.append(current_state)
+        
         self.menu_buttons = []
         
         # 找到所有死亡的队友
@@ -9642,6 +9649,13 @@ class PokemonGame:
                     Button(SCREEN_WIDTH//2 - 200, 150 + i * 60, 400, 50,
                            button_text, f"revive_{i}", BLACK, LIGHT_BLUE, MENU_HOVER)
                 )
+        else:
+            # 如果没有可复活的队友，显示提示信息
+            no_target_text = "没有可复活的队友"
+            self.menu_buttons.append(
+                Button(SCREEN_WIDTH//2 - 200, 150, 400, 50,
+                       no_target_text, "no_target", BLACK, GRAY, GRAY)
+            )
         
         # 添加取消按钮
         self.menu_buttons.append(
@@ -10439,10 +10453,23 @@ class PokemonGame:
             pokemon_text = team_font.render(f"{i+1}. {pokemon.name} (Lv.{pokemon.level})", True, BLACK)
             screen.blit(pokemon_text, (70, team_y + 25 + i * 25))
         
-        # 寄养中的顾问信息
+        # 寄养中的顾问信息 - 动态计算位置避免与队伍信息重叠
         deposited_info = self.training_center.get_deposited_pokemon_info()
         if deposited_info:
-            deposited_y = info_y + 180
+            # 计算队伍信息的结束位置，留出适当间距
+            team_end_y = team_y + 25 + len(self.player.pokemon_team) * 25 + 20
+            deposited_y = max(team_end_y, info_y + 180)  # 确保在队伍信息下方
+            
+            # 检查是否超出信息框范围，如果超出则调整信息框大小
+            max_info_y = info_y + 300
+            if deposited_y + 25 + len(deposited_info) * 25 > max_info_y:
+                # 扩展信息框高度
+                extended_height = deposited_y + 25 + len(deposited_info) * 25 - info_y + 20
+                info_surface_extended = pygame.Surface((SCREEN_WIDTH - 100, extended_height), pygame.SRCALPHA)
+                info_surface_extended.fill((255, 255, 255, 128))
+                screen.blit(info_surface_extended, (50, info_y))
+                pygame.draw.rect(screen, BLACK, (50, info_y, SCREEN_WIDTH - 100, extended_height), 2)
+            
             deposited_text = team_font.render("寄养中的顾问:", True, BLACK)
             screen.blit(deposited_text, (60, deposited_y))
             
