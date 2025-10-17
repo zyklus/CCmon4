@@ -83,6 +83,21 @@ class CombatManager:
             else:
                 self.game.wild_pokemon = enemy_pokemon
                 self.game.boss_pokemon = None
+        else:
+            # 生成敌方顾问
+            enemy_pokemon = self._generate_enemy_pokemon(battle_type)
+            if self.is_boss_battle:
+                self.game.boss_pokemon = enemy_pokemon
+                self.game.wild_pokemon = None
+            else:
+                self.game.wild_pokemon = enemy_pokemon
+                self.game.boss_pokemon = None
+        
+        # 设置战斗状态
+        if self.is_boss_battle:
+            self.game.state = self._get_boss_battle_state()
+        else:
+            self.game.state = self._get_battle_state()
         
         # 设置战斗消息
         enemy = enemy_pokemon
@@ -749,6 +764,94 @@ class CombatManager:
             return False, f"SP不足，需要{sp_cost}点SP"
         
         return True, ""
+    
+    def _generate_enemy_pokemon(self, battle_type):
+        """生成敌方Pokemon"""
+        from CCmon5C import Pokemon, PokemonConfig
+        
+        if battle_type == "wild":
+            # 生成野生Pokemon
+            return self._generate_wild_pokemon()
+        elif battle_type == "mini_boss":
+            # 生成小BOSS
+            return self._generate_mini_boss()
+        elif battle_type == "stage_boss":
+            # 生成大BOSS
+            return self._generate_stage_boss()
+        else:
+            # 默认生成野生Pokemon
+            return self._generate_wild_pokemon()
+    
+    def _generate_wild_pokemon(self):
+        """生成野生Pokemon"""
+        from CCmon5C import Pokemon, PokemonConfig
+        import random
+        
+        # 获取所有可用的Pokemon名称
+        available_names = list(PokemonConfig.base_data.keys())
+        
+        # 随机选择一个Pokemon
+        pokemon_name = random.choice(available_names)
+        
+        # 计算等级
+        player_pkm = self.safe_get_player_pokemon()
+        if player_pkm and hasattr(self.game, 'map'):
+            level = self.game.map.get_wild_pokemon_level(
+                self.game.player.x, 
+                self.game.player.y, 
+                player_pkm.level
+            )
+        else:
+            level = 5  # 默认等级
+        
+        return Pokemon(pokemon_name, level=level)
+    
+    def _generate_mini_boss(self):
+        """生成小BOSS"""
+        from CCmon5C import Pokemon, PokemonConfig
+        import random
+        
+        # 从小BOSS配置中随机选择
+        mini_boss_data = random.choice(PokemonConfig.mini_bosses)
+        return Pokemon(mini_boss_data["name"], level=mini_boss_data["level"])
+    
+    def _generate_stage_boss(self):
+        """生成大BOSS"""
+        from CCmon5C import Pokemon, PokemonConfig
+        
+        # 根据玩家当前阶段选择大BOSS
+        player_stage = getattr(self.game.player, 'stage', 1)
+        
+        # 查找对应阶段的BOSS
+        for boss_data in PokemonConfig.stage_bosses:
+            if boss_data["stage"] == player_stage:
+                return Pokemon(boss_data["name"], level=boss_data["level"])
+        
+        # 如果没找到对应阶段的BOSS，使用第一个
+        if PokemonConfig.stage_bosses:
+            boss_data = PokemonConfig.stage_bosses[0]
+            return Pokemon(boss_data["name"], level=boss_data["level"])
+        
+        # 如果没有BOSS配置，生成一个默认的
+        return self._generate_wild_pokemon()
+    
+    def _get_battle_state(self):
+        """获取普通战斗状态"""
+        # 导入GameState枚举
+        try:
+            from CCmon5C import GameState
+            return GameState.BATTLE
+        except ImportError:
+            return 1  # 假设BATTLE状态的值是1
+    
+    def _get_boss_battle_state(self):
+        """获取BOSS战斗状态"""
+        # 导入GameState枚举
+        try:
+            from CCmon5C import GameState
+            return GameState.BOSS_BATTLE
+        except ImportError:
+            return 2  # 假设BOSS_BATTLE状态的值是2
     
     def get_battle_result(self):
         """获取战斗结果"""

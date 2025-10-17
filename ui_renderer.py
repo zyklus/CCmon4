@@ -668,7 +668,7 @@ class UIRenderer:
                 screen.blit(money_text, (20, 70))
             
             # 绘制商品列表
-            if hasattr(self.game, 'shop') and hasattr(self.game.shop, 'items'):
+            if hasattr(self.game, 'shop'):
                 self._draw_shop_items(screen)
             
             # 绘制按钮
@@ -682,27 +682,46 @@ class UIRenderer:
     
     def _draw_shop_items(self, screen):
         """绘制商店物品列表"""
-        item_font = FontManager.get_font(20) if 'FontManager' in globals() else pygame.font.Font(None, 20)
-        start_y = 120
-        item_height = 60
-        
-        for i, item in enumerate(self.game.shop.items):
-            item_y = start_y + i * item_height
-            item_rect = pygame.Rect(20, item_y, SCREEN_WIDTH - 40, item_height - 5)
+        try:
+            item_font = FontManager.get_font(20) if 'FontManager' in globals() else pygame.font.Font(None, 20)
+            start_y = 120
+            item_height = 60
             
-            # 绘制物品背景
-            pygame.draw.rect(screen, LIGHT_BLUE, item_rect)
-            pygame.draw.rect(screen, BLACK, item_rect, 2)
+            # 获取所有商店物品
+            all_items = []
+            if hasattr(self.game.shop, 'get_all_items'):
+                all_items = self.game.shop.get_all_items()
+            elif hasattr(self.game.shop, 'regular_items') and hasattr(self.game.shop, 'rare_items'):
+                all_items = self.game.shop.regular_items + self.game.shop.rare_items
             
-            # 绘制物品信息
-            item_text = f"{item.name} - {item.price}金币"
-            text_surface = item_font.render(item_text, True, BLACK)
-            screen.blit(text_surface, (item_rect.x + 10, item_rect.y + 10))
-            
-            # 绘制物品描述
-            desc_font = FontManager.get_font(16) if 'FontManager' in globals() else pygame.font.Font(None, 16)
-            desc_surface = desc_font.render(item.description, True, BLACK)
-            screen.blit(desc_surface, (item_rect.x + 10, item_rect.y + 35))
+            # 绘制物品
+            for i, item in enumerate(all_items):
+                item_y = start_y + i * item_height
+                item_rect = pygame.Rect(20, item_y, SCREEN_WIDTH - 40, item_height - 5)
+                
+                # 绘制物品背景
+                pygame.draw.rect(screen, LIGHT_BLUE, item_rect)
+                pygame.draw.rect(screen, BLACK, item_rect, 2)
+                
+                # 绘制物品信息
+                item_name = item.get("name", "未知物品")
+                item_price = item.get("price", 0)
+                item_stock = item.get("stock", 0)
+                item_text = f"{item_name} - {item_price}金币 (库存: {item_stock})"
+                text_surface = item_font.render(item_text, True, BLACK)
+                screen.blit(text_surface, (item_rect.x + 10, item_rect.y + 10))
+                
+                # 绘制物品描述
+                desc_font = FontManager.get_font(16) if 'FontManager' in globals() else pygame.font.Font(None, 16)
+                item_desc = item.get("description", "无描述")
+                desc_surface = desc_font.render(item_desc, True, BLACK)
+                screen.blit(desc_surface, (item_rect.x + 10, item_rect.y + 35))
+        except Exception as e:
+            print(f"绘制商店物品时出错: {e}")
+            # 绘制错误信息
+            error_font = FontManager.get_font(20) if 'FontManager' in globals() else pygame.font.Font(None, 20)
+            error_text = error_font.render("商店物品加载失败", True, RED)
+            screen.blit(error_text, (50, 150))
     
     # ==================== 背包界面渲染 ====================
     
