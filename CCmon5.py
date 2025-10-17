@@ -29,9 +29,9 @@ from typing import List, Dict, Optional
 # ==================== 游戏常量和配置 ====================
 
 # 屏幕和地图配置
-SCREEN_WIDTH = 720  # 统一界面宽度
-SCREEN_HEIGHT = 720  # 统一界面高度
-TILE_SIZE = 60       # 调整格子尺寸以适配屏幕
+SCREEN_WIDTH = 1280  # 统一界面宽度
+SCREEN_HEIGHT = 1280  # 统一界面高度
+TILE_SIZE = 107      # 调整格子尺寸以适配屏幕 (1280/720*60≈107)
 MAP_SIZE = 12        # 保持12x12地图
 FPS = 30             # 帧率
 
@@ -2231,7 +2231,7 @@ class PokemonConfig:
             "growth_type": "medium_slow",
             "moves": [
                 {"name": "酒后逃逸", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.SELF_BUFF, "sp_cost": 100},
-                {"name": "织条毯子", "power": 24, "type": ['共情', '节操']},
+                {"name": "织条毯子"},
                 {"name": "酒精打击", "power": 45, "type": ['networking', '体力'], "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害,有18%几率造成1.5倍伤害"},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
             ]
@@ -2693,7 +2693,7 @@ class PokemonConfig:
             "disadvantages": ["体力", "content", "勇气", "耐心"],
             "growth_type": "medium_fast",
             "moves": [
-                {"name": "织条毯子", "power": 20, "type": ["共情", "节操"], "category": SkillCategory.DIRECT_DAMAGE},
+                {"name": "织条毯子"},
                 {"name": "我有意见！", "power": 45, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "躺平", "power": 0, "type": "节操", "category": SkillCategory.DIRECT_HEAL},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
@@ -2706,7 +2706,7 @@ class PokemonConfig:
             "disadvantages": ["体力", "content", "耐心"],
             "growth_type": "medium_slow",
             "moves": [
-                {"name": "织条毯子", "power": 20, "type": ["共情", "节操"], "category": SkillCategory.DIRECT_DAMAGE},
+                {"name": "织条毯子"},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
                 {"name": "鼓舞", "power": 0, "type": "共情", "category": SkillCategory.TEAM_BUFF},
                 {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT, "sp_cost": 45},
@@ -2721,7 +2721,7 @@ class PokemonConfig:
             "disadvantages": ["体力", "耐心"],
             "growth_type": "slow",
             "moves": [
-                {"name": "织条毯子", "power": 20, "type": ["共情", "节操"], "category": SkillCategory.DIRECT_DAMAGE},
+                {"name": "织条毯子"},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
                 {"name": "鼓舞", "power": 0, "type": "共情", "category": SkillCategory.TEAM_BUFF},
                 {"name": "凌晨4点的太阳", "power": 16, "type": ["韧性", "体力"], "category": SkillCategory.DOT, "sp_cost": 45},
