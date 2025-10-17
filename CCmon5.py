@@ -3862,7 +3862,8 @@ class Pokemon:
                 "turns_remaining": 0,
                 "effect_name": "",
                 "caster": "self"      # 默认为自己施放
-            }
+            },
+            "dodge_effects": []       # 回避/免疫效果
         }
         
         # 回合计数器,用于延迟效果
@@ -5107,7 +5108,8 @@ class Pokemon:
                 "turns_remaining": 0,
                 "effect_name": "",
                 "caster": "self"
-            }
+            },
+            "dodge_effects": []
         })
         
         # 加载回合计数器（向后兼容）
@@ -5116,6 +5118,10 @@ class Pokemon:
         # 确保现有数据的向后兼容性
         if "caster" not in pkm.status_effects["stat_modifiers"]:
             pkm.status_effects["stat_modifiers"]["caster"] = "self"
+        
+        # 确保dodge_effects存在（向后兼容）
+        if "dodge_effects" not in pkm.status_effects:
+            pkm.status_effects["dodge_effects"] = []
         
         # 为现有的连续伤害和治疗效果添加施放者信息
         for effect in pkm.status_effects["continuous_damage"]:
@@ -7900,6 +7906,43 @@ class PokemonGame:
                 player_x = SCREEN_WIDTH - 200  # 将我方顾问图像移动到右侧对称位置（与敌方左侧对称）
                 player_status_y = 50
                 
+                # 玩家经验条 - 放在最上方，与敌方对齐
+                player_exp_width = 300
+                player_exp_height = 15
+                player_exp_x = SCREEN_WIDTH - 320  # 与HP/SP条位置对齐
+                pygame.draw.rect(screen, WHITE, (player_exp_x, player_status_y, player_exp_width, player_exp_height))
+                
+                # 计算经验百分比
+                exp_to_next = player_pkm.exp_to_next_level
+                current_exp = player_pkm.exp
+                if exp_to_next > 0:
+                    exp_percentage = current_exp / (current_exp + exp_to_next)
+                else:
+                    exp_percentage = 1.0  # 满级
+                
+                player_exp_fill_width = max(0, min(int((player_exp_width - 4) * exp_percentage), player_exp_width - 4))
+                player_exp_surface = pygame.Surface((player_exp_fill_width, player_exp_height - 4), pygame.SRCALPHA)
+                player_exp_surface.fill((*YELLOW, 128))  # 黄色,50%透明度
+                screen.blit(player_exp_surface, (player_exp_x + 2, player_status_y + 2))
+                pygame.draw.rect(screen, BLACK, (player_exp_x, player_status_y, player_exp_width, player_exp_height), 2)
+                
+                # 经验文字 - 显示在经验条内部居中,带半透明白色背景
+                if exp_to_next > 0:
+                    player_exp_text = f"EXP: {current_exp}/{current_exp + exp_to_next}"
+                else:
+                    player_exp_text = f"EXP: MAX"
+                player_exp_text_surface = battle_info_font.render(player_exp_text, True, BLACK)
+                player_exp_text_rect = player_exp_text_surface.get_rect(center=(player_exp_x + player_exp_width // 2, player_status_y + player_exp_height // 2))
+                
+                # 绘制经验文字的半透明白色背景
+                player_exp_text_bg = pygame.Surface((player_exp_text_rect.width + 6, player_exp_text_rect.height + 2), pygame.SRCALPHA)
+                player_exp_text_bg.fill((255, 255, 255, 128))  # 白色,50%透明度
+                screen.blit(player_exp_text_bg, (player_exp_text_rect.x - 3, player_exp_text_rect.y - 1))
+                
+                screen.blit(player_exp_text_surface, player_exp_text_rect)
+                
+                player_status_y += player_exp_height + 10
+                
                 # 玩家状态文字（16号字）- 调整文本位置向左移动以完全显示
                 player_text_x = SCREEN_WIDTH - 320  # 与HP条左侧对齐,调整我方顾问文本位置
                 player_advantages = ", ".join(player_pkm.advantages)
@@ -7965,43 +8008,6 @@ class PokemonGame:
                 screen.blit(player_sp_text_surface, player_sp_text_rect)
                 
                 player_status_y += player_sp_height + 10
-                
-                # 玩家经验条 - 统一宽度与HP/SP条相同
-                player_exp_width = 300
-                player_exp_height = 15
-                player_exp_x = SCREEN_WIDTH - 320  # 与HP/SP条位置对齐
-                pygame.draw.rect(screen, WHITE, (player_exp_x, player_status_y, player_exp_width, player_exp_height))
-                
-                # 计算经验百分比
-                exp_to_next = player_pkm.exp_to_next_level
-                current_exp = player_pkm.exp
-                if exp_to_next > 0:
-                    exp_percentage = current_exp / (current_exp + exp_to_next)
-                else:
-                    exp_percentage = 1.0  # 满级
-                
-                player_exp_fill_width = max(0, min(int((player_exp_width - 4) * exp_percentage), player_exp_width - 4))
-                player_exp_surface = pygame.Surface((player_exp_fill_width, player_exp_height - 4), pygame.SRCALPHA)
-                player_exp_surface.fill((*YELLOW, 128))  # 黄色,50%透明度
-                screen.blit(player_exp_surface, (player_exp_x + 2, player_status_y + 2))
-                pygame.draw.rect(screen, BLACK, (player_exp_x, player_status_y, player_exp_width, player_exp_height), 2)
-                
-                # 经验文字 - 显示在经验条内部居中,带半透明白色背景
-                if exp_to_next > 0:
-                    player_exp_text = f"EXP: {current_exp}/{current_exp + exp_to_next}"
-                else:
-                    player_exp_text = f"EXP: MAX"
-                player_exp_text_surface = battle_info_font.render(player_exp_text, True, BLACK)
-                player_exp_text_rect = player_exp_text_surface.get_rect(center=(player_exp_x + player_exp_width // 2, player_status_y + player_exp_height // 2))
-                
-                # 绘制经验文字的半透明白色背景
-                player_exp_text_bg = pygame.Surface((player_exp_text_rect.width + 6, player_exp_text_rect.height + 2), pygame.SRCALPHA)
-                player_exp_text_bg.fill((255, 255, 255, 128))  # 白色,50%透明度
-                screen.blit(player_exp_text_bg, (player_exp_text_rect.x - 3, player_exp_text_rect.y - 1))
-                
-                screen.blit(player_exp_text_surface, player_exp_text_rect)
-                
-                player_status_y += player_exp_height + 10
                 
                 # 玩家头像（右侧）- 确保与敌方图像高度一致
                 pkm_img = self.images.pokemon.get(player_pkm.name, 
@@ -9272,6 +9278,12 @@ class PokemonGame:
                         self.go_back()
                 
                 elif self.state == GameState.MENU_BACKPACK:
+                    # 检查物品结果弹窗的点击
+                    if hasattr(self, 'item_result_popup') and self.item_result_popup and hasattr(self, 'item_result_button'):
+                        if self.item_result_button.collidepoint(event.pos):
+                            self.item_result_popup = None
+                            return
+                    
                     # 背包界面专门的鼠标处理
                     if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
                         # 弹窗状态下的点击处理
