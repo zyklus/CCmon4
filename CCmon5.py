@@ -2230,7 +2230,7 @@ class PokemonConfig:
             "disadvantages": ["节操", "networking"],
             "growth_type": "medium_slow",
             "moves": [
-                {"name": "酒后逃逸", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.SELF_BUFF},
+                {"name": "酒后逃逸", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.SELF_BUFF, "sp_cost": 100},
                 {"name": "织条毯子", "power": 24, "type": ['共情', '节操']},
                 {"name": "酒精打击", "power": 45, "type": ['networking', '体力'], "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害,有18%几率造成1.5倍伤害"},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"}
@@ -2242,7 +2242,7 @@ class PokemonConfig:
             "disadvantages": ["PS", "韧性", "content", "耐心"],
             "growth_type": "medium_fast",
             "moves": [
-                {"name": "小嘴抹毒", "power": 40, "type": "networking", "category": SkillCategory.DOT},
+                {"name": "小嘴抹毒", "power": 40, "type": "networking", "category": SkillCategory.DOT, "sp_cost": 80},
                 {"name": "快乐小狗", "power": 28, "type": "共情", "category": SkillCategory.HOT},
                 {"name": "茶颜悦色", "power": 25, "type": "共情", "category": SkillCategory.HEAL},
                 {"name": "躺平", "power": 35, "type": "节操", "category": SkillCategory.HEAL}
@@ -2254,11 +2254,11 @@ class PokemonConfig:
             "disadvantages": ["PS", "韧性", "content", "耐心"],
             "growth_type": "medium_slow",
             "moves": [
-                {"name": "小嘴抹毒", "power": 40, "type": "networking", "category": SkillCategory.DOT},
+                {"name": "小嘴抹毒", "power": 40, "type": "networking", "category": SkillCategory.DOT, "sp_cost": 80},
                 {"name": "快乐小狗", "power": 28, "type": "共情", "category": SkillCategory.HOT},
                 {"name": "茶颜悦色", "power": 25, "type": "共情", "category": SkillCategory.HEAL},
                 {"name": "躺平", "power": 35, "type": "节操", "category": SkillCategory.HEAL},
-                {"name": "绝世骰手", "power": 120, "type": ['networking', '节操'], "category": SkillCategory.SPECIAL_ATTACK},
+                {"name": "绝世骰手", "power": 120, "type": ['networking', '节操'], "category": SkillCategory.SPECIAL_ATTACK, "sp_cost": 90},
                 {"name": "雪松杀手", "power": 85, "type": "勇气", "category": SkillCategory.DIRECT_ATTACK},
                 {"name": "钓鱼执法", "power": 75, "type": "networking", "category": SkillCategory.ENEMY_DEBUFF},
                 {"name": "PTO", "power": 0, "type": "勇气", "category": SkillCategory.DIRECT_HEAL}
@@ -3095,7 +3095,7 @@ class ItemConfig:
         {"name": "泥潭中的小萱的船票", "description": "用于托马斯二次进化", "item_type": "evolution", "effect": "泥潭中的小萱的船票", "rarity": 0.02, "price": 1600},
         {"name": "穿膜工具套装", "description": "用于半血小萱进化为泥潭中的小萱", "item_type": "evolution", "effect": "穿膜工具套装", "rarity": 0.03, "price": 800},
         {"name": "挤出机灭火套装", "description": "用于泥潭中的小萱进化为拉膜圣手李小萱", "item_type": "evolution", "effect": "挤出机灭火套装", "rarity": 0.02, "price": 1400},
-        {"name": "经验糖果", "description": "获得50点经验值", "item_type": "exp_boost", "effect": 50, "rarity": 0.1, "price": 250},
+        {"name": "经验糖果", "description": "获得2000点经验值", "item_type": "exp_boost", "effect": 2000, "rarity": 0.1, "price": 250},
         {"name": "UT补充剂", "description": "将UT恢复至100点", "item_type": "ut_restore", "effect": 100, "rarity": 0.0, "price": 400},  # 普通战斗不掉落,仅BOSS战掉落
         {"name": "必杀技学习盲盒", "description": "使用后随机生成一个必杀技学习书", "item_type": "skill_blind_box", "effect": None, "rarity": 0.03, "price": 2500}
     ]
@@ -6627,9 +6627,13 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加物品使用成功通知
                 self.notification_system.add_notification(f"成功使用了{item.name}！", "success")
+                # 显示详细结果
+                self.battle_messages = [f"对{target.name}使用了{item.name}", result]
             else:
                 # 添加物品使用信息通知
                 self.notification_system.add_notification(f"使用了{item.name}", "info")
+                # 显示详细结果
+                self.battle_messages = [f"使用了{item.name}", result]
                 
             return result
         # 添加物品使用失败通知
@@ -6654,10 +6658,13 @@ class PokemonGame:
                     self.player.remove_item(item_index)
                     # 添加治疗成功通知
                     self.notification_system.add_notification(f"对{target.name}使用了{item.name}！", "success")
+                    # 显示详细结果
+                    self.battle_messages = [f"使用了{item.name}", result]
                     return result
                 else:
                     # 添加治疗失败通知
                     self.notification_system.add_notification("所有顾问HP已满！", "info")
+                    self.battle_messages = ["所有顾问HP已满"]
                     return "所有顾问HP已满"
                     
             elif item.item_type == "ut_restore":
@@ -6665,6 +6672,8 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加UT恢复通知
                 self.notification_system.add_notification(f"使用了{item.name},恢复UT！", "success")
+                # 显示详细结果
+                self.battle_messages = [f"使用了{item.name}", result]
                 return result
                 
             elif item.item_type == "battle_prevent":
@@ -6672,6 +6681,8 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加PTO通知使用通知
                 self.notification_system.add_notification(f"使用了{item.name},战斗保护生效！", "success")
+                # 显示详细结果
+                self.battle_messages = [f"使用了{item.name}", result]
                 return result
                 
             elif item.item_type == "skill_blind_box":
@@ -6679,6 +6690,8 @@ class PokemonGame:
                 self.player.remove_item(item_index)
                 # 添加盲盒使用通知,显示详细结果
                 self.notification_system.add_notification(result, "success")
+                # 显示详细结果
+                self.battle_messages = [f"使用了{item.name}", result]
                 
                 # 调整选择索引到新生成的技能书（背包末尾）
                 if self.player.backpack:
@@ -6811,8 +6824,12 @@ class PokemonGame:
             if success:
                 self.player.remove_item(item_index)
                 self.notification_system.add_notification(f"成功对{target.name}使用了{item.name}！", "success")
+                # 添加详细的使用结果到战斗消息中显示
+                self.battle_messages = [f"使用了{item.name}", result]
             else:
                 self.notification_system.add_notification(result, "info")
+                # 失败时也显示结果
+                self.battle_messages = [result]
             
             # 清除待处理的物品使用
             self.pending_item_use = None
