@@ -6508,7 +6508,7 @@ class PokemonGame:
                             print(f"使用技能 {move['name']} 时出错: {e}")
                             damage, skill_messages = 0, [f"技能 {move['name']} 使用失败！"]
                         
-                        # 检查是否是复活技能需要选择目标
+                        # 检查是否是复活技能或治疗技能需要选择目标
                         if damage == -1 and move["name"] in NEW_SKILLS_DATABASE:
                             skill_data = NEW_SKILLS_DATABASE[move["name"]]
                             if skill_data["category"] == SkillCategory.REVIVE:
