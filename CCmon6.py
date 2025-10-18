@@ -3307,7 +3307,7 @@ class Item:
                     if len(target.moves) >= 4:
                         return f"SKILL_FORGET_DIALOG|{skill_name}"
                     else:
-                        # 从统一技能数据库获取完整的技能信息
+                        # 问题5的修复：从统一技能数据库获取完整的技能信息
                         if skill_name in UNIFIED_SKILLS_DATABASE:
                             skill_data = UNIFIED_SKILLS_DATABASE[skill_name]
                             # 创建包含完整信息的技能条目
@@ -3322,10 +3322,48 @@ class Item:
                                 "effects": skill_data.get("effects", {})
                             }
                             target.moves.append(new_move)
+                            
+                            # 同时将技能添加到NEW_SKILLS_DATABASE以确保在顾问信息中正确显示
+                            if skill_name not in NEW_SKILLS_DATABASE:
+                                NEW_SKILLS_DATABASE[skill_name] = skill_data.copy()
+                            
+                            # 确保技能也注册到技能管理器中
+                            if not hasattr(target, '_skill_manager_updated'):
+                                target._skill_manager_updated = True
+                            skill_manager.add_skill_from_data(skill_name, skill_data)
+                            
                             return f"{target.name}学会了{skill_name}！"
                         else:
-                            # 如果技能不在数据库中，使用默认值
-                            target.moves.append({"name": skill_name, "power": 80, "type": "共情"})
+                            # 如果技能不在数据库中，使用默认值并添加到数据库
+                            default_skill_data = {
+                                "power": 80,
+                                "type": "共情",
+                                "category": SkillCategory.DIRECT_DAMAGE,
+                                "sp_cost": 0,
+                                "description": f"从必杀技学习书学会的技能：{skill_name}",
+                                "quote": "这是从书中学会的技能！",
+                                "effects": {}
+                            }
+                            new_move = {
+                                "name": skill_name,
+                                "power": 80,
+                                "type": "共情",
+                                "category": SkillCategory.DIRECT_DAMAGE,
+                                "sp_cost": 0,
+                                "description": default_skill_data["description"],
+                                "quote": default_skill_data["quote"],
+                                "effects": {}
+                            }
+                            target.moves.append(new_move)
+                            
+                            # 添加到NEW_SKILLS_DATABASE以确保在顾问信息中正确显示
+                            NEW_SKILLS_DATABASE[skill_name] = default_skill_data
+                            
+                            # 确保技能也注册到技能管理器中
+                            if not hasattr(target, '_skill_manager_updated'):
+                                target._skill_manager_updated = True
+                            skill_manager.add_skill_from_data(skill_name, default_skill_data)
+                            
                             return f"{target.name}学会了{skill_name}！"
                 else:
                     return f"{target.name}已经会{skill_name}了！|FAILED"
@@ -5010,10 +5048,11 @@ class Pokemon:
     def add_delayed_effect(self, effect_type, value, delay_turns, name, caster="self", target="enemy", global_turn=None):
         """添加延迟效果"""
         # 使用全局战斗回合计数器，如果没有提供则使用个人计数器作为后备
+        # 问题3的修复：延迟效果应该在回合结束后才开始计数，所以+1
         if global_turn is not None:
-            trigger_turn = global_turn + delay_turns
+            trigger_turn = global_turn + delay_turns + 1  # 从下一回合开始计数
         else:
-            trigger_turn = self.battle_turn_counter + delay_turns
+            trigger_turn = self.battle_turn_counter + delay_turns + 1  # 从下一回合开始计数
         
         self.status_effects["delayed_effects"].append({
             "effect_type": effect_type,  # "damage", "heal", "damage_percentage", "heal_percentage", "self_sacrifice"
@@ -6978,14 +7017,15 @@ class PokemonGame:
             if self.state in [GameState.BATTLE, GameState.BOSS_BATTLE, GameState.BATTLE_SWITCH_POKEMON]:
                 # 更新当前战斗顾问索引
                 self.current_battle_pokemon_index = index
-                self.battle_messages.append("更换顾问后,当前回合结束！")
+                self.battle_messages.append("更换顾问后,我方行动阶段结束,敌方开始行动！")
+                # 问题4的修复：更换顾问后，我方当前行动阶段结束，敌方进行行动阶段
                 # 创建一个切换顾问的turn来触发回合结束逻辑
                 self.current_turn = {
                     "action": "switch_pokemon",
                     "switched": True
                 }
                 self.state = GameState.BATTLE_ANIMATION
-                self.battle_step = 7  # 直接结束回合
+                self.battle_step = 2  # 跳到敌方行动阶段，而不是直接结束回合
                 self.animation_timer = pygame.time.get_ticks()
             else:
                 self.go_back()
@@ -7216,6 +7256,9 @@ class PokemonGame:
         self.selected_item_index = 0
         self.backpack_popup_state = False  # 是否显示确认弹窗
         self.backpack_scroll_offset = 0  # 重置滚动偏移
+        
+        # 清除之前的物品使用结果弹窗（问题2的修复）
+        self.item_result_popup = None
         
         self.state = GameState.MENU_BACKPACK
     
@@ -9923,8 +9966,12 @@ class PokemonGame:
         if hasattr(self, 'backpack_popup_state') and self.backpack_popup_state:
             self.draw_item_use_popup()
         
-        # 绘制物品使用结果弹窗
+        # 绘制物品使用结果弹窗（问题1和2的修复：确保在最前方显示）
         if hasattr(self, 'item_result_popup') and self.item_result_popup:
+            # 绘制半透明背景遮罩确保弹窗在最前方
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 100))  # 半透明黑色背景
+            screen.blit(overlay, (0, 0))
             self.draw_item_result_popup()
             return
         
