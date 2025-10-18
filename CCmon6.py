@@ -6473,14 +6473,20 @@ class PokemonGame:
                             if (skill_data.get("category") == SkillCategory.HEAL and 
                                 skill_data.get("effects", {}).get("requires_target_selection", False)):
                                 
+                                print(f"DEBUG: 检测到需要目标选择的治疗技能: {move['name']}")
+                                
                                 # 找到可以被治疗的队友（包括使用者自己，且血量不满）
                                 healable_allies = [pokemon for pokemon in self.player.pokemon_team 
                                                  if not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
+                                
+                                print(f"DEBUG: 可治疗的队友数量: {len(healable_allies)}")
                                 
                                 if healable_allies:
                                     # 进入治疗目标选择状态
                                     self.heal_skill_name = move["name"]
                                     self.heal_skill_user = player_pkm
+                                    # 不要在这里处理skill_messages，等目标选择完成后再处理
+                                    print(f"DEBUG: 准备打开治疗选择菜单")
                                     self.open_heal_selection_menu()
                                     return
                                 else:
@@ -6493,6 +6499,7 @@ class PokemonGame:
                         if damage == -1 and move["name"] in NEW_SKILLS_DATABASE:
                             skill_data = NEW_SKILLS_DATABASE[move["name"]]
                             if skill_data["category"] == SkillCategory.HEAL:
+                                print(f"DEBUG: 通过damage=-1检测到治疗技能: {move['name']}")
                                 # 进入治疗目标选择状态
                                 self.heal_skill_name = move["name"]
                                 self.heal_skill_user = player_pkm
@@ -6520,6 +6527,7 @@ class PokemonGame:
                             self.ally_ultimate_line = skill.quote
                             self.ally_line_display = True
                         
+                        # 只有在不需要目标选择时才处理消息
                         for msg in skill_messages:
                             self.battle_messages.append(msg)
                         
@@ -8244,6 +8252,11 @@ class PokemonGame:
             # 绘制技能悬浮提示框
             if self.state == GameState.BATTLE_MOVE_SELECT and self.hovered_skill_info:
                 self.draw_skill_tooltip(screen, self.hovered_skill_info)
+            
+            # 绘制战斗中的菜单界面（如治疗选择UI）
+            if self.state in [GameState.BATTLE_HEAL_SELECT, GameState.BATTLE_TEAM_HEAL_SELECT]:
+                print(f"DEBUG: 在draw_battle中绘制菜单，状态: {self.state}")
+                self.draw_menu()
                     
         except Exception as e:
             print(f"绘制战斗界面时出错: {e}")
@@ -8903,11 +8916,14 @@ class PokemonGame:
                     button.draw(screen)
             
             elif self.state == GameState.BATTLE_HEAL_SELECT:
+                print(f"DEBUG: 正在绘制治疗选择UI，按钮数量：{len(getattr(self, 'menu_buttons', []))}")
+                
                 font, small_font, battle_font, menu_font = get_fonts()
                 
-                # 绘制更深的半透明背景
-                overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), BLACK, 180)
+                # 绘制更深的半透明背景，确保覆盖整个屏幕
+                overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), BLACK, 200)
                 screen.blit(overlay, (0, 0))
+                print(f"DEBUG: 绘制了半透明背景")
                 
                 # 绘制对话框背景
                 dialog_width = 500
@@ -8915,29 +8931,87 @@ class PokemonGame:
                 dialog_x = SCREEN_WIDTH//2 - dialog_width//2
                 dialog_y = SCREEN_HEIGHT//2 - dialog_height//2
                 
-                # 绘制对话框边框
-                border_rect = pygame.Rect(dialog_x - 5, dialog_y - 5, dialog_width + 10, dialog_height + 10)
+                # 绘制对话框边框（更粗的边框以确保可见性）
+                border_rect = pygame.Rect(dialog_x - 8, dialog_y - 8, dialog_width + 16, dialog_height + 16)
                 pygame.draw.rect(screen, WHITE, border_rect)
+                print(f"DEBUG: 绘制了对话框边框")
                 
                 # 绘制对话框背景
                 dialog_rect = pygame.Rect(dialog_x, dialog_y, dialog_width, dialog_height)
-                pygame.draw.rect(screen, (50, 50, 50), dialog_rect)
+                pygame.draw.rect(screen, (30, 30, 30), dialog_rect)  # 更深的背景色
+                print(f"DEBUG: 绘制了对话框背景")
                 
                 # 绘制标题
                 title = menu_font.render("选择要治疗的队友", True, WHITE)
-                screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, dialog_y + 20))
+                title_x = SCREEN_WIDTH//2 - title.get_width()//2
+                title_y = dialog_y + 20
+                screen.blit(title, (title_x, title_y))
+                print(f"DEBUG: 绘制了标题在位置 ({title_x}, {title_y})")
                 
                 # 绘制技能信息
                 if hasattr(self, 'heal_skill_name'):
                     skill_info = small_font.render(f"使用技能: {self.heal_skill_name}", True, YELLOW)
-                    screen.blit(skill_info, (SCREEN_WIDTH//2 - skill_info.get_width()//2, dialog_y + 50))
+                    skill_x = SCREEN_WIDTH//2 - skill_info.get_width()//2
+                    skill_y = dialog_y + 50
+                    screen.blit(skill_info, (skill_x, skill_y))
+                    print(f"DEBUG: 绘制了技能信息: {self.heal_skill_name}")
                 
                 # 绘制按钮
-                for button in self.menu_buttons:
-                    button.draw(screen)
+                if hasattr(self, 'menu_buttons'):
+                    for i, button in enumerate(self.menu_buttons):
+                        button.draw(screen)
+                        print(f"DEBUG: 绘制了按钮 {i}: {button.text} at ({button.x}, {button.y})")
+                else:
+                    print(f"DEBUG: 没有menu_buttons属性")
+                
+                # 强制刷新显示
+                pygame.display.flip()
+                print(f"DEBUG: 治疗选择UI绘制完成")
                     
         except Exception as e:
             print(f"绘制菜单时出错: {e}")
+        
+        # 确保治疗选择UI在最顶层绘制（重新绘制一次以确保在最顶层）
+        if self.state == GameState.BATTLE_HEAL_SELECT:
+            print(f"DEBUG: 最终层级绘制治疗选择UI")
+            try:
+                font, small_font, battle_font, menu_font = get_fonts()
+                
+                # 再次绘制半透明背景
+                overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), BLACK, 220)
+                screen.blit(overlay, (0, 0))
+                
+                # 绘制对话框
+                dialog_width = 500
+                dialog_height = 400
+                dialog_x = SCREEN_WIDTH//2 - dialog_width//2
+                dialog_y = SCREEN_HEIGHT//2 - dialog_height//2
+                
+                # 绘制边框
+                border_rect = pygame.Rect(dialog_x - 10, dialog_y - 10, dialog_width + 20, dialog_height + 20)
+                pygame.draw.rect(screen, (255, 255, 0), border_rect)  # 黄色边框以便调试
+                
+                # 绘制背景
+                dialog_rect = pygame.Rect(dialog_x, dialog_y, dialog_width, dialog_height)
+                pygame.draw.rect(screen, (20, 20, 20), dialog_rect)
+                
+                # 绘制标题
+                title = menu_font.render("【治疗目标选择】", True, (255, 255, 255))
+                screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, dialog_y + 20))
+                
+                # 绘制技能信息
+                if hasattr(self, 'heal_skill_name'):
+                    skill_info = small_font.render(f"技能: {self.heal_skill_name}", True, (255, 255, 0))
+                    screen.blit(skill_info, (SCREEN_WIDTH//2 - skill_info.get_width()//2, dialog_y + 50))
+                
+                # 绘制按钮
+                if hasattr(self, 'menu_buttons'):
+                    for button in self.menu_buttons:
+                        button.draw(screen)
+                
+                print(f"DEBUG: 顶层治疗UI绘制完成")
+            except Exception as e:
+                print(f"DEBUG: 顶层治疗UI绘制出错: {e}")
 
     def handle_input(self, event):
         if event.type == QUIT:
@@ -9673,53 +9747,72 @@ class PokemonGame:
                                         self.battle_step = 1  # 继续战斗流程
                 
                 elif self.state == GameState.BATTLE_HEAL_SELECT:
-                    for button in self.menu_buttons:
-                        if button.check_click(event.pos) and button.action:
-                            if button.action == "cancel_heal_target" or button.action == "no_target":
-                                # 取消治疗技能，清理状态
-                                if hasattr(self, 'heal_skill_name'):
-                                    delattr(self, 'heal_skill_name')
-                                if hasattr(self, 'heal_skill_user'):
-                                    delattr(self, 'heal_skill_user')
-                                self.go_back()
-                            elif button.action.startswith("heal_target_"):
-                                # 选择了要治疗的队友
-                                target_index = int(button.action.split("_")[2])
+                    print(f"DEBUG: 治疗选择状态下的点击事件，位置: {event.pos}")
+                    print(f"DEBUG: 当前按钮数量: {len(getattr(self, 'menu_buttons', []))}")
+                    
+                    if hasattr(self, 'menu_buttons'):
+                        for i, button in enumerate(self.menu_buttons):
+                            print(f"DEBUG: 检查按钮 {i}: {button.text} at ({button.x}, {button.y}) size ({button.width}, {button.height})")
+                            if button.check_click(event.pos) and button.action:
+                                print(f"DEBUG: 点击了按钮: {button.action}")
                                 
-                                # 找到可以被治疗的队友（包括使用者自己）
-                                healable_allies = [pokemon for pokemon in self.player.pokemon_team 
-                                                 if not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
-                                
-                                if 0 <= target_index < len(healable_allies):
-                                    target_ally = healable_allies[target_index]
-                                    
-                                    # 执行治疗
+                                if button.action == "cancel_heal_target" or button.action == "no_target":
+                                    print(f"DEBUG: 取消治疗技能")
+                                    # 取消治疗技能，清理状态
                                     if hasattr(self, 'heal_skill_name'):
-                                        skill_data = UNIFIED_SKILLS_DATABASE.get(self.heal_skill_name, {})
-                                        heal_percentage = skill_data.get("effects", {}).get("heal_percentage", 1.0)
-                                        heal_amount = int(target_ally.max_hp * heal_percentage)
-                                        prev_hp = target_ally.hp
-                                        target_ally.hp = min(target_ally.max_hp, target_ally.hp + heal_amount)
-                                        actual_heal = target_ally.hp - prev_hp
-                                        
-                                        # 添加战斗消息
-                                        self.battle_messages.append(f"{self.heal_skill_user.name}使用了{self.heal_skill_name}！")
-                                        skill_quote = skill_data.get("quote", "")
-                                        if skill_quote:
-                                            self.battle_messages.append(f'"{skill_quote}"')
-                                        self.battle_messages.append(f"{target_ally.name}恢复了{actual_heal}点血量！")
-                                        
-                                        # 设置战斗回合数据
-                                        self.current_turn["damage"] = actual_heal
-                                        self.current_turn["type_multiplier"] = 1.0
-                                        
-                                        # 清理治疗状态
                                         delattr(self, 'heal_skill_name')
+                                    if hasattr(self, 'heal_skill_user'):
                                         delattr(self, 'heal_skill_user')
+                                    self.go_back()
+                                elif button.action.startswith("heal_target_"):
+                                    print(f"DEBUG: 选择治疗目标")
+                                    # 选择了要治疗的队友
+                                    target_index = int(button.action.split("_")[2])
+                                    print(f"DEBUG: 目标索引: {target_index}")
+                                    
+                                    # 找到可以被治疗的队友（包括使用者自己）
+                                    healable_allies = [pokemon for pokemon in self.player.pokemon_team 
+                                                     if not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
+                                    
+                                    print(f"DEBUG: 可治疗队友数量: {len(healable_allies)}")
+                                    
+                                    if 0 <= target_index < len(healable_allies):
+                                        target_ally = healable_allies[target_index]
+                                        print(f"DEBUG: 选择的目标: {target_ally.name}")
                                         
-                                        # 返回战斗状态并继续处理回合
-                                        self.state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
-                                        self.battle_step = 1  # 继续战斗流程
+                                        # 执行治疗
+                                        if hasattr(self, 'heal_skill_name'):
+                                            skill_data = UNIFIED_SKILLS_DATABASE.get(self.heal_skill_name, {})
+                                            heal_percentage = skill_data.get("effects", {}).get("heal_percentage", 1.0)
+                                            heal_amount = int(target_ally.max_hp * heal_percentage)
+                                            prev_hp = target_ally.hp
+                                            target_ally.hp = min(target_ally.max_hp, target_ally.hp + heal_amount)
+                                            actual_heal = target_ally.hp - prev_hp
+                                            
+                                            print(f"DEBUG: 治疗量: {actual_heal}")
+                                            
+                                            # 添加战斗消息
+                                            self.battle_messages.append(f"{self.heal_skill_user.name}使用了{self.heal_skill_name}！")
+                                            skill_quote = skill_data.get("quote", "")
+                                            if skill_quote:
+                                                self.battle_messages.append(f'"{skill_quote}"')
+                                            self.battle_messages.append(f"{target_ally.name}恢复了{actual_heal}点血量！")
+                                            
+                                            # 设置战斗回合数据
+                                            self.current_turn["damage"] = actual_heal
+                                            self.current_turn["type_multiplier"] = 1.0
+                                            
+                                            # 清理治疗状态
+                                            delattr(self, 'heal_skill_name')
+                                            delattr(self, 'heal_skill_user')
+                                            
+                                            # 返回战斗状态并继续处理回合
+                                            self.state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
+                                            self.battle_step = 1  # 继续战斗流程
+                                            print(f"DEBUG: 返回战斗状态，battle_step = 1")
+                                break
+                    else:
+                        print(f"DEBUG: 没有menu_buttons属性")
                 
                 elif self.state == GameState.SHOP:
                     # 检查是否在购买弹窗状态
@@ -9902,9 +9995,14 @@ class PokemonGame:
 
     def open_heal_selection_menu(self):
         """打开治疗技能目标选择菜单"""
+        print(f"DEBUG: 打开治疗选择菜单，技能：{getattr(self, 'heal_skill_name', 'None')}")
+        print(f"DEBUG: 当前状态：{self.state}")
+        print(f"DEBUG: 是否为Boss战：{self.is_boss_battle}")
+        
         # 保存当前状态到菜单栈，确保可以正确返回
         current_state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
         self.menu_stack.append(current_state)
+        print(f"DEBUG: 保存状态到菜单栈：{current_state}")
         
         self.menu_buttons = []
         
@@ -9912,16 +10010,20 @@ class PokemonGame:
         healable_allies = [pokemon for pokemon in self.player.pokemon_team 
                          if not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
         
+        print(f"DEBUG: 可治疗队友列表：")
+        for i, pokemon in enumerate(healable_allies):
+            print(f"  {i}: {pokemon.name} HP:{pokemon.hp}/{pokemon.max_hp}")
+        
         # 计算对话框位置
         dialog_y = SCREEN_HEIGHT//2 - 200
         
         if healable_allies:
             for i, pokemon in enumerate(healable_allies):
                 button_text = f"治疗 {pokemon.name} (Lv.{pokemon.level}) HP:{pokemon.hp}/{pokemon.max_hp}"
-                self.menu_buttons.append(
-                    Button(SCREEN_WIDTH//2 - 200, dialog_y + 80 + i * 60, 400, 50,
+                button = Button(SCREEN_WIDTH//2 - 200, dialog_y + 80 + i * 60, 400, 50,
                            button_text, f"heal_target_{i}", WHITE, LIGHT_BLUE, MENU_HOVER)
-                )
+                self.menu_buttons.append(button)
+                print(f"DEBUG: 创建治疗按钮 {i}: {button_text}")
         else:
             # 如果没有可治疗的队友，显示提示信息
             no_target_text = "没有队友可释放技能"
@@ -9929,14 +10031,16 @@ class PokemonGame:
                 Button(SCREEN_WIDTH//2 - 200, dialog_y + 80, 400, 50,
                        no_target_text, "no_target", WHITE, GRAY, GRAY)
             )
+            print(f"DEBUG: 创建无目标按钮")
         
         # 添加取消按钮
-        self.menu_buttons.append(
-            Button(SCREEN_WIDTH//2 - 100, dialog_y + 320, 200, 40, 
+        cancel_button = Button(SCREEN_WIDTH//2 - 100, dialog_y + 320, 200, 40, 
                    "返回", "cancel_heal_target", WHITE, LIGHT_BLUE, MENU_HOVER)
-        )
+        self.menu_buttons.append(cancel_button)
+        print(f"DEBUG: 创建取消按钮")
         
         self.state = GameState.BATTLE_HEAL_SELECT
+        print(f"DEBUG: 设置状态为 BATTLE_HEAL_SELECT，按钮数量：{len(self.menu_buttons)}")
 
     def update(self):
         """更新游戏状态"""
