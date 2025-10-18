@@ -4907,6 +4907,47 @@ class Pokemon:
             else:
                 return 0, [f"{self.name}使用了{skill_name},但没有目标！"]
         
+        elif category == SkillCategory.HEAL:
+            # 治疗技能
+            effects = skill_data.get("effects", {})
+            
+            # 添加技能使用消息和台词
+            messages.append(f"{self.name}使用了{skill_name}！")
+            skill_quote = skill_data.get("quote", "")
+            if skill_quote:
+                messages.append(f'"{skill_quote}"')
+            
+            # 检查是否需要目标选择
+            if effects.get("requires_target_selection", False):
+                if allies:
+                    # 找到活着的队友（不包括自己）
+                    alive_allies = [ally for ally in allies if ally != self and not ally.is_fainted()]
+                    
+                    if alive_allies:
+                        # 返回特殊值表示需要选择治疗目标
+                        return -1, messages
+                    else:
+                        # 没有可治疗的队友
+                        messages.append("没有队友可释放技能！")
+                        return 0, messages
+                else:
+                    # 没有队友
+                    messages.append("没有队友！")
+                    return 0, messages
+            else:
+                # 普通治疗技能（治疗自己）
+                heal_percentage = effects.get("heal_percentage", 0.5)
+                heal_amount = int(self.max_hp * heal_percentage)
+                old_hp = self.hp
+                self.hp = min(self.max_hp, self.hp + heal_amount)
+                actual_heal = self.hp - old_hp
+                
+                if actual_heal > 0:
+                    messages.append(f"{self.name}恢复了{actual_heal}点血量！")
+                else:
+                    messages.append(f"{self.name}的血量已满！")
+                return actual_heal, messages
+        
         elif category == SkillCategory.REVIVE:
             # 复活技能 - SP已在前面检查和消耗，这里处理复活逻辑
             if allies:
