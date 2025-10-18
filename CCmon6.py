@@ -384,12 +384,13 @@ UNIFIED_SKILLS_DATABASE = {
     "威士忌之友": {
         "power": 0,
         "type": ["韧性", "耐心", "共情"],
-        "category": SkillCategory.REVIVE,
-        "description": "消耗100SP,复活一位顾问,恢复其生命90%",
-        "sp_cost": 100,
-        "quote": "这杯试喝的威士忌,已经换了三块冰了",
+        "category": SkillCategory.TEAM_HEAL,
+        "description": "恢复被选择的一位队友的全部生命。使用该技能后出现UI界面选择可释放技能的队友及返回按钮。如没有队友可释放技能，则提示不能释放技能",
+        "sp_cost": 0,
+        "quote": "你能不能闻到泥煤味",
         "effects": {
-            "revive_hp_percentage": 0.9
+            "heal_percentage": 1.0,
+            "requires_target_selection": True
         }
     },
     "我要休产假了": {
@@ -5423,7 +5424,8 @@ class GameState:
     TRAINING_CENTER = 17  # 训练中心界面
     MENU_TARGET_SELECTION = 18  # 目标选择状态
     BATTLE_REVIVE_SELECT = 19  # 复活技能目标选择状态
-    BATTLE_END_RESULT = 20  # 战斗结束结果显示状态
+    BATTLE_TEAM_HEAL_SELECT = 20  # 团队治疗技能目标选择状态
+    BATTLE_END_RESULT = 21  # 战斗结束结果显示状态
 
 # 通知系统类
 class NotificationSystem:
@@ -6451,6 +6453,14 @@ class PokemonGame:
                                 self.revive_skill_user = player_pkm
                                 self.open_revive_selection_menu()
                                 return
+                        
+                        # 检查是否是威士忌之友技能需要选择目标
+                        if move["name"] == "威士忌之友":
+                            # 进入团队治疗目标选择状态
+                            self.team_heal_skill_name = move["name"]
+                            self.team_heal_skill_user = player_pkm
+                            self.open_team_heal_selection_menu()
+                            return
                         
                         self.current_turn["damage"] = damage if damage is not None else 0
                         self.current_turn["type_multiplier"] = 1.0
@@ -8892,6 +8902,26 @@ class PokemonGame:
                 # 绘制按钮
                 for button in self.menu_buttons:
                     button.draw(screen)
+            
+            elif self.state == GameState.BATTLE_TEAM_HEAL_SELECT:
+                font, small_font, battle_font, menu_font = get_fonts()
+                
+                # 绘制半透明背景
+                overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), BLACK, 128)
+                screen.blit(overlay, (0, 0))
+                
+                # 绘制标题
+                title = menu_font.render("选择要治疗的队友", True, WHITE)
+                screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, 100))
+                
+                # 绘制技能信息
+                if hasattr(self, 'team_heal_skill_name'):
+                    skill_info = small_font.render(f"使用技能: {self.team_heal_skill_name}", True, WHITE)
+                    screen.blit(skill_info, (SCREEN_WIDTH//2 - skill_info.get_width()//2, 120))
+                
+                # 绘制按钮
+                for button in self.menu_buttons:
+                    button.draw(screen)
                     
         except Exception as e:
             print(f"绘制菜单时出错: {e}")
@@ -9157,7 +9187,7 @@ class PokemonGame:
             elif self.state in [GameState.MENU_MAIN, GameState.MENU_POKEMON,
                                GameState.MENU_POKEMON_DETAIL, GameState.MENU_BACKPACK,
                                GameState.MENU_ITEM_USE, GameState.MENU_TARGET_SELECTION,
-                               GameState.BATTLE_REVIVE_SELECT]:
+                               GameState.BATTLE_REVIVE_SELECT, GameState.BATTLE_TEAM_HEAL_SELECT]:
                 for button in self.menu_buttons:
                     button.check_hover(event.pos)
             elif self.state == GameState.EXPLORING:
@@ -9407,9 +9437,17 @@ class PokemonGame:
                             for action, rect in self.popup_buttons.items():
                                 if rect.collidepoint(event.pos):
                                     if action == "use":
-                                        # 打开物品使用目标选择界面
-                                        self.open_item_use_menu(self.selected_item_index)
-                                        self.backpack_popup_state = False
+                                        # 检查是否是治疗物品，如果是则直接使用
+                                        selected_item = self.player.backpack[self.selected_item_index]
+                                        if selected_item.item_type == "heal":
+                                            # 直接使用治疗物品
+                                            result = self.use_item_directly(self.selected_item_index)
+                                            self.battle_messages = [result]
+                                            self.backpack_popup_state = False
+                                        else:
+                                            # 其他物品打开目标选择界面
+                                            self.open_item_use_menu(self.selected_item_index)
+                                            self.backpack_popup_state = False
                                     elif action == "cancel":
                                         self.backpack_popup_state = False
                     else:
@@ -9604,6 +9642,53 @@ class PokemonGame:
                                         self.state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
                                         self.battle_step = 1  # 继续战斗流程
                 
+                elif self.state == GameState.BATTLE_TEAM_HEAL_SELECT:
+                    for button in self.menu_buttons:
+                        if button.check_click(event.pos) and button.action:
+                            if button.action == "cancel_heal" or button.action == "no_target":
+                                # 取消团队治疗技能，清理状态
+                                if hasattr(self, 'team_heal_skill_name'):
+                                    delattr(self, 'team_heal_skill_name')
+                                if hasattr(self, 'team_heal_skill_user'):
+                                    delattr(self, 'team_heal_skill_user')
+                                self.go_back()
+                            elif button.action.startswith("heal_"):
+                                # 选择了要治疗的队友
+                                target_index = int(button.action.split("_")[1])
+                                
+                                # 找到活着的队友
+                                alive_allies = [pokemon for pokemon in self.player.pokemon_team 
+                                               if pokemon != self.team_heal_skill_user and not pokemon.is_fainted()]
+                                
+                                if 0 <= target_index < len(alive_allies):
+                                    target_ally = alive_allies[target_index]
+                                    
+                                    # 执行治疗
+                                    if hasattr(self, 'team_heal_skill_name'):
+                                        skill_data = UNIFIED_SKILLS_DATABASE[self.team_heal_skill_name]
+                                        heal_percentage = skill_data["effects"].get("heal_percentage", 1.0)
+                                        heal_amount = int(target_ally.max_hp * heal_percentage)
+                                        prev_hp = target_ally.hp
+                                        target_ally.hp = min(target_ally.max_hp, target_ally.hp + heal_amount)
+                                        actual_heal = target_ally.hp - prev_hp
+                                        
+                                        # 添加战斗消息
+                                        self.battle_messages.append(f"{self.team_heal_skill_user.name}使用了{self.team_heal_skill_name}！")
+                                        self.battle_messages.append(f'"{UNIFIED_SKILLS_DATABASE[self.team_heal_skill_name]["quote"]}"')
+                                        self.battle_messages.append(f"{target_ally.name}恢复了{actual_heal}点血量！")
+                                        
+                                        # 设置战斗回合数据
+                                        self.current_turn["damage"] = actual_heal
+                                        self.current_turn["type_multiplier"] = 1.0
+                                        
+                                        # 清理团队治疗状态
+                                        delattr(self, 'team_heal_skill_name')
+                                        delattr(self, 'team_heal_skill_user')
+                                        
+                                        # 返回战斗状态并继续处理回合
+                                        self.state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
+                                        self.battle_step = 1  # 继续战斗流程
+                
                 elif self.state == GameState.SHOP:
                     # 检查是否在购买弹窗状态
                     if hasattr(self, 'shop_popup_state') and self.shop_popup_state:
@@ -9781,6 +9866,41 @@ class PokemonGame:
         )
         
         self.state = GameState.BATTLE_REVIVE_SELECT
+
+    def open_team_heal_selection_menu(self):
+        """打开团队治疗技能目标选择菜单"""
+        # 保存当前状态到菜单栈，确保可以正确返回
+        current_state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
+        self.menu_stack.append(current_state)
+        
+        self.menu_buttons = []
+        
+        # 找到所有活着的队友（不包括自己）
+        alive_allies = [pokemon for pokemon in self.player.pokemon_team 
+                       if pokemon != self.team_heal_skill_user and not pokemon.is_fainted()]
+        
+        if alive_allies:
+            for i, pokemon in enumerate(alive_allies):
+                button_text = f"治疗 {pokemon.name} (Lv.{pokemon.level}) HP:{pokemon.hp}/{pokemon.max_hp}"
+                self.menu_buttons.append(
+                    Button(SCREEN_WIDTH//2 - 200, 150 + i * 60, 400, 50,
+                           button_text, f"heal_{i}", BLACK, LIGHT_BLUE, MENU_HOVER)
+                )
+        else:
+            # 如果没有可治疗的队友，显示提示信息
+            no_target_text = "没有队友可释放技能"
+            self.menu_buttons.append(
+                Button(SCREEN_WIDTH//2 - 200, 150, 400, 50,
+                       no_target_text, "no_target", BLACK, GRAY, GRAY)
+            )
+        
+        # 添加取消按钮
+        self.menu_buttons.append(
+            Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT - 100, 200, 40, 
+                   "返回", "cancel_heal", BLACK, LIGHT_BLUE, MENU_HOVER)
+        )
+        
+        self.state = GameState.BATTLE_TEAM_HEAL_SELECT
 
     def update(self):
         """更新游戏状态"""
