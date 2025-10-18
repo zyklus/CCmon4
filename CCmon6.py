@@ -83,7 +83,6 @@ class EffectType(Enum):
     BUFF = "增益"
     DEBUFF = "减益"
     DODGE = "回避"
-    REVIVE = "复活"
     DOT = "持续伤害"
     HOT = "持续治疗"
     SPECIAL = "特殊"
@@ -130,7 +129,6 @@ class SkillCategory:
     HOT = "hot"                              # 持续治疗效果
     TEAM_HEAL = "team_heal"                  # 团队治疗
     MULTI_HIT = "multi_hit"                  # 多段攻击
-    REVIVE = "revive"                        # 复活技能
     MIXED_BUFF_DEBUFF = "mixed_buff_debuff"  # 混合增益/减益效果
     HOT_DOT = "hot_dot"                      # 持续治疗和伤害效果
     ULTIMATE = "ultimate"                    # 终极技能
@@ -1368,13 +1366,6 @@ class SkillManager:
                         f"第{i+1}次攻击造成{power}%攻击力伤害"
                     ))
         
-        # 复活技能
-        elif category == SkillCategory.REVIVE:
-            heal_percentage = skill_effects.get("revive_heal_percentage", 90)
-            effects.append(SkillEffect(
-                EffectType.HEAL, heal_percentage, 1, 1.0, "ally_fainted", 
-                f"复活倒下的顾问并恢复{heal_percentage}%生命"
-            ))
         
         # 混合增益减益效果
         elif category == SkillCategory.MIXED_BUFF_DEBUFF:
@@ -4129,18 +4120,8 @@ class Pokemon:
             traceback.print_exc()
             return None, [f"技能 {skill_name} 使用失败: {str(e)}"]
         
-        # 对于REVIVE技能，先检查是否有可复活的队友，再消耗SP
+        # 检查技能类别
         category = skill_data.get("category")
-        if category == SkillCategory.REVIVE:
-            if allies:
-                fainted_allies = [ally for ally in allies if ally != self and ally.is_fainted()]
-                if not fainted_allies:
-                    # 没有可复活的队友，不消耗SP，直接返回
-                    messages.append(f"{self.name}使用了{skill_name}，但没有需要复活的队友！")
-                    return 0, messages
-            else:
-                # 没有队友，不消耗SP，直接返回
-                return 0, [f"{self.name}使用了{skill_name},但没有队友！"]
         
         # 检查SP消耗
         if skill_data["sp_cost"] > 0:
@@ -4341,12 +4322,8 @@ class Pokemon:
                             ally_heal_amount = int(ally.max_hp * heal_percentage)
                             old_ally_hp = ally.hp
                             
-                            # 如果队友已死亡，先复活再治疗
-                            if ally.is_fainted():
-                                ally.hp = ally_heal_amount
-                                total_heal += ally_heal_amount
-                                messages.append(f"{ally.name}复活并恢复了{ally_heal_amount}点血量！")
-                            else:
+                            # 只治疗活着的队友
+                            if not ally.is_fainted():
                                 ally.hp = min(ally.max_hp, ally.hp + ally_heal_amount)
                                 ally_actual_heal = ally.hp - old_ally_hp
                                 total_heal += ally_actual_heal
@@ -4388,7 +4365,6 @@ class Pokemon:
                 self.add_stat_modifier(attack_mult, 1.0, turns, f"{skill_name}·武神之力", "self")
                 
                 messages.append(f"{self.name}使用了{skill_name}！队友血量恢复,攻击力大幅提升！")
-                messages.append(f"{delay_turns}回合后将满血复活！")
                 messages.append(f"自身攻击力翻倍,全队攻击力提升{int(all_allies_attack_buff*100)}%！")
                 return total_heal, messages
             
@@ -4603,12 +4579,7 @@ class Pokemon:
                         # 立即治疗
                         heal_amount = int(ally.max_hp * team_heal_percentage)
                         
-                        if ally.is_fainted():
-                            # 复活并治疗
-                            ally.hp = heal_amount
-                            total_heal += heal_amount
-                            messages.append(f"{ally.name}复活并恢复了{heal_amount}点血量！")
-                        else:
+                        if not ally.is_fainted():
                             # 普通治疗
                             old_hp = ally.hp
                             ally.hp = min(ally.max_hp, ally.hp + heal_amount)
@@ -4948,21 +4919,6 @@ class Pokemon:
                     messages.append(f"{self.name}的血量已满！")
                 return actual_heal, messages
         
-        elif category == SkillCategory.REVIVE:
-            # 复活技能 - SP已在前面检查和消耗，这里处理复活逻辑
-            if allies:
-                fainted_allies = [ally for ally in allies if ally != self and ally.is_fainted()]
-                
-                if fainted_allies:
-                    # 返回特殊值表示需要选择复活目标
-                    return -1, [f"{self.name}准备使用{skill_name}，请选择要复活的顾问！"]
-                else:
-                    # 这种情况不应该发生，因为前面已经检查过了
-                    messages.append(f"{self.name}使用了{skill_name}，但没有需要复活的队友！")
-                    return 0, messages
-            else:
-                # 这种情况不应该发生，因为前面已经检查过了
-                return 0, [f"{self.name}使用了{skill_name},但没有队友！"]
         
         return 0, messages
     
@@ -5485,7 +5441,6 @@ class GameState:
     SHOP = 16  # 商店界面
     TRAINING_CENTER = 17  # 训练中心界面
     MENU_TARGET_SELECTION = 18  # 目标选择状态
-    BATTLE_REVIVE_SELECT = 19  # 复活技能目标选择状态
     BATTLE_TEAM_HEAL_SELECT = 20  # 团队治疗技能目标选择状态
     BATTLE_HEAL_SELECT = 21  # 治疗技能目标选择状态
     BATTLE_END_RESULT = 22  # 战斗结束结果显示状态
@@ -5977,7 +5932,7 @@ class PokemonGame:
                            GameState.BATTLE_MOVE_SELECT, GameState.BATTLE_ANIMATION,
                            GameState.CAPTURE_ANIMATION, GameState.BATTLE_SWITCH_POKEMON,
                            GameState.BATTLE_END_RESULT, GameState.BATTLE_HEAL_SELECT,
-                           GameState.BATTLE_REVIVE_SELECT, GameState.BATTLE_TEAM_HEAL_SELECT]:
+                           GameState.BATTLE_TEAM_HEAL_SELECT]:
             self.draw_battle()
         elif self.state in [GameState.MENU_MAIN, GameState.MENU_POKEMON,
                            GameState.MENU_POKEMON_DETAIL, GameState.MENU_BACKPACK,
@@ -6508,16 +6463,10 @@ class PokemonGame:
                             print(f"使用技能 {move['name']} 时出错: {e}")
                             damage, skill_messages = 0, [f"技能 {move['name']} 使用失败！"]
                         
-                        # 检查是否是复活技能需要选择目标
+                        # 检查是否是治疗技能需要选择目标
                         if damage == -1 and move["name"] in NEW_SKILLS_DATABASE:
                             skill_data = NEW_SKILLS_DATABASE[move["name"]]
-                            if skill_data["category"] == SkillCategory.REVIVE:
-                                # 进入复活目标选择状态
-                                self.revive_skill_name = move["name"]
-                                self.revive_skill_user = player_pkm
-                                self.open_revive_selection_menu()
-                                return
-                            elif skill_data["category"] == SkillCategory.HEAL and skill_data.get("effects", {}).get("requires_target_selection"):
+                            if skill_data["category"] == SkillCategory.HEAL and skill_data.get("effects", {}).get("requires_target_selection"):
                                 # 进入治疗目标选择状态
                                 self.heal_skill_name = move["name"]
                                 self.heal_skill_user = player_pkm
@@ -8664,7 +8613,6 @@ class PokemonGame:
                             SkillCategory.HOT: "持续治疗",
                             SkillCategory.TEAM_HEAL: "团队治疗",
                             SkillCategory.MULTI_HIT: "多段攻击",
-                            SkillCategory.REVIVE: "复活技能",
                             SkillCategory.MIXED_BUFF_DEBUFF: "混合效果",
                             SkillCategory.HOT_DOT: "持续效果",
                             SkillCategory.ULTIMATE: "终极技能",
@@ -8903,25 +8851,6 @@ class PokemonGame:
                 if hasattr(self, 'item_result_popup') and self.item_result_popup:
                     self.draw_item_result_popup()
             
-            elif self.state == GameState.BATTLE_REVIVE_SELECT:
-                font, small_font, battle_font, menu_font = get_fonts()
-                
-                # 绘制半透明背景
-                overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), BLACK, 128)
-                screen.blit(overlay, (0, 0))
-                
-                # 绘制标题
-                title = menu_font.render("选择要复活的顾问", True, WHITE)
-                screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, 100))
-                
-                # 绘制技能信息
-                if hasattr(self, 'revive_skill_name'):
-                    skill_info = small_font.render(f"使用技能: {self.revive_skill_name}", True, WHITE)
-                    screen.blit(skill_info, (SCREEN_WIDTH//2 - skill_info.get_width()//2, 120))
-                
-                # 绘制按钮
-                for button in self.menu_buttons:
-                    button.draw(screen)
             
             elif self.state == GameState.BATTLE_TEAM_HEAL_SELECT:
                 font, small_font, battle_font, menu_font = get_fonts()
@@ -9227,7 +9156,7 @@ class PokemonGame:
             elif self.state in [GameState.MENU_MAIN, GameState.MENU_POKEMON,
                                GameState.MENU_POKEMON_DETAIL, GameState.MENU_BACKPACK,
                                GameState.MENU_ITEM_USE, GameState.MENU_TARGET_SELECTION,
-                               GameState.BATTLE_REVIVE_SELECT, GameState.BATTLE_TEAM_HEAL_SELECT,
+                               GameState.BATTLE_TEAM_HEAL_SELECT,
                                GameState.BATTLE_HEAL_SELECT]:
                 for button in self.menu_buttons:
                     button.check_hover(event.pos)
@@ -9649,49 +9578,6 @@ class PokemonGame:
                                 self.process_battle_turn(action="catch", ball_type="master")
                                 # 不调用go_back(),让process_battle_turn处理状态转换
                 
-                elif self.state == GameState.BATTLE_REVIVE_SELECT:
-                    for button in self.menu_buttons:
-                        if button.check_click(event.pos) and button.action:
-                            if button.action == "cancel_revive" or button.action == "no_target":
-                                # 取消复活技能，清理状态
-                                if hasattr(self, 'revive_skill_name'):
-                                    delattr(self, 'revive_skill_name')
-                                if hasattr(self, 'revive_skill_user'):
-                                    delattr(self, 'revive_skill_user')
-                                self.go_back()
-                            elif button.action.startswith("revive_"):
-                                # 选择了要复活的顾问
-                                target_index = int(button.action.split("_")[1])
-                                
-                                # 找到死亡的队友
-                                fainted_allies = [pokemon for pokemon in self.player.pokemon_team 
-                                                 if pokemon != self.revive_skill_user and pokemon.is_fainted()]
-                                
-                                if 0 <= target_index < len(fainted_allies):
-                                    target_ally = fainted_allies[target_index]
-                                    
-                                    # 执行复活
-                                    if hasattr(self, 'revive_skill_name'):
-                                        skill_data = NEW_SKILLS_DATABASE[self.revive_skill_name]
-                                        revive_hp_percentage = skill_data["effects"].get("revive_hp_percentage", 0.9)
-                                        heal_amount = int(target_ally.max_hp * revive_hp_percentage)
-                                        target_ally.hp = heal_amount
-                                        
-                                        # 添加战斗消息
-                                        self.battle_messages.append(f"{self.revive_skill_user.name}使用了{self.revive_skill_name}！")
-                                        self.battle_messages.append(f"{target_ally.name}复活了，恢复了{heal_amount}点血量！")
-                                        
-                                        # 设置战斗回合数据
-                                        self.current_turn["damage"] = heal_amount
-                                        self.current_turn["type_multiplier"] = 1.0
-                                        
-                                        # 清理复活状态
-                                        delattr(self, 'revive_skill_name')
-                                        delattr(self, 'revive_skill_user')
-                                        
-                                        # 返回战斗状态并继续处理回合
-                                        self.state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
-                                        self.battle_step = 1  # 继续战斗流程
                 
                 elif self.state == GameState.BATTLE_TEAM_HEAL_SELECT:
                     for button in self.menu_buttons:
@@ -9934,40 +9820,6 @@ class PokemonGame:
         self.menu_buttons.append(Button(50, 100 + len(deposited_info) * 50 + 20, 200, 40, "返回", "back"))
         self.state = GameState.MENU_MAIN  # 临时使用菜单状态
     
-    def open_revive_selection_menu(self):
-        """打开复活技能目标选择菜单"""
-        # 保存当前状态到菜单栈，确保可以正确返回
-        current_state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
-        self.menu_stack.append(current_state)
-        
-        self.menu_buttons = []
-        
-        # 找到所有死亡的队友
-        fainted_allies = [pokemon for pokemon in self.player.pokemon_team 
-                         if pokemon != self.revive_skill_user and pokemon.is_fainted()]
-        
-        if fainted_allies:
-            for i, pokemon in enumerate(fainted_allies):
-                button_text = f"复活 {pokemon.name} (Lv.{pokemon.level})"
-                self.menu_buttons.append(
-                    Button(SCREEN_WIDTH//2 - 200, 150 + i * 60, 400, 50,
-                           button_text, f"revive_{i}", BLACK, LIGHT_BLUE, MENU_HOVER)
-                )
-        else:
-            # 如果没有可复活的队友，显示提示信息
-            no_target_text = "没有可复活的队友"
-            self.menu_buttons.append(
-                Button(SCREEN_WIDTH//2 - 200, 150, 400, 50,
-                       no_target_text, "no_target", BLACK, GRAY, GRAY)
-            )
-        
-        # 添加取消按钮
-        self.menu_buttons.append(
-            Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT - 100, 200, 40, 
-                   "取消", "cancel_revive", BLACK, LIGHT_BLUE, MENU_HOVER)
-        )
-        
-        self.state = GameState.BATTLE_REVIVE_SELECT
 
     def open_team_heal_selection_menu(self):
         """打开团队治疗技能目标选择菜单"""
