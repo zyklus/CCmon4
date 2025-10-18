@@ -1412,6 +1412,28 @@ class SkillManager:
         """获取所有技能"""
         return self.skills
     
+    def add_skill_from_data(self, skill_name: str, skill_data: Dict):
+        """从技能数据添加新技能到管理器"""
+        # 根据技能类型确定属性
+        skill_type = skill_data.get("type", "")
+        attributes = self._get_skill_attributes(skill_type)
+        
+        # 转换效果
+        effects = self._convert_skill_effects(skill_data)
+        
+        # 创建Skill对象
+        skill = Skill(
+            name=skill_name,
+            attributes=attributes,
+            effects=effects,
+            sp_cost=skill_data.get("sp_cost", 0),
+            quote=skill_data.get("quote", ""),
+            description=skill_data.get("description", "")
+        )
+        
+        # 添加到技能管理器
+        self.skills[skill_name] = skill
+    
     def get_skills_by_attribute(self, attribute: SkillAttribute) -> List[Skill]:
         """根据属性获取技能"""
         return [skill for skill in self.skills.values() if attribute in skill.attributes]
@@ -3330,6 +3352,10 @@ class Item:
                             if skill_name not in NEW_SKILLS_DATABASE:
                                 NEW_SKILLS_DATABASE[skill_name] = skill_data.copy()
                             
+                            # 同时添加到UNIFIED_SKILLS_DATABASE以确保战斗中能正确使用
+                            if skill_name not in UNIFIED_SKILLS_DATABASE:
+                                UNIFIED_SKILLS_DATABASE[skill_name] = skill_data.copy()
+                            
                             # 确保技能也注册到技能管理器中
                             if not hasattr(target, '_skill_manager_updated'):
                                 target._skill_manager_updated = True
@@ -3361,6 +3387,10 @@ class Item:
                             
                             # 添加到NEW_SKILLS_DATABASE以确保在顾问信息中正确显示
                             NEW_SKILLS_DATABASE[skill_name] = default_skill_data
+                            
+                            # 同时添加到UNIFIED_SKILLS_DATABASE以确保战斗中能正确使用
+                            if skill_name not in UNIFIED_SKILLS_DATABASE:
+                                UNIFIED_SKILLS_DATABASE[skill_name] = default_skill_data.copy()
                             
                             # 确保技能也注册到技能管理器中
                             if not hasattr(target, '_skill_manager_updated'):
@@ -7745,6 +7775,10 @@ class PokemonGame:
                     if new_skill not in NEW_SKILLS_DATABASE:
                         NEW_SKILLS_DATABASE[new_skill] = skill_data.copy()
                     
+                    # 同时添加到UNIFIED_SKILLS_DATABASE以确保战斗中能正确使用
+                    if new_skill not in UNIFIED_SKILLS_DATABASE:
+                        UNIFIED_SKILLS_DATABASE[new_skill] = skill_data.copy()
+                    
                     # 确保技能也注册到技能管理器中
                     if not hasattr(target, '_skill_manager_updated'):
                         target._skill_manager_updated = True
@@ -7774,6 +7808,10 @@ class PokemonGame:
                     
                     # 添加到NEW_SKILLS_DATABASE以确保在顾问信息中正确显示
                     NEW_SKILLS_DATABASE[new_skill] = default_skill_data
+                    
+                    # 同时添加到UNIFIED_SKILLS_DATABASE以确保战斗中能正确使用
+                    if new_skill not in UNIFIED_SKILLS_DATABASE:
+                        UNIFIED_SKILLS_DATABASE[new_skill] = default_skill_data.copy()
                     
                     # 确保技能也注册到技能管理器中
                     if not hasattr(target, '_skill_manager_updated'):
