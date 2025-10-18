@@ -1493,7 +1493,13 @@ class SkillManager:
         """使用统一的技能系统逻辑"""
         # 从用户Pokemon获取全局回合计数器（如果有的话）
         global_turn = getattr(user_pokemon, '_current_global_turn', None)
-        return user_pokemon.use_skill(skill_name, target_pokemon, allies, global_turn)
+        
+        # 确定施法者类型：通过检查是否是玩家队伍中的Pokemon来判断
+        caster_type = "self"  # 默认为玩家
+        if hasattr(user_pokemon, '_is_enemy') and user_pokemon._is_enemy:
+            caster_type = "enemy"
+        
+        return user_pokemon.use_skill(skill_name, target_pokemon, allies, global_turn, caster_type)
     
     def _apply_effect(self, effect: SkillEffect, user_stats: Dict, target_stats: Dict = None) -> str:
         """应用技能效果"""
@@ -4103,7 +4109,7 @@ class Pokemon:
         
         return max(1, final_damage), type_multiplier
     
-    def use_skill(self, skill_name, target=None, allies=None, global_turn=None):
+    def use_skill(self, skill_name, target=None, allies=None, global_turn=None, caster_type="self"):
         """使用技能（新的技能系统）"""
         try:
             # 设置当前全局回合计数器，供延迟效果使用
@@ -4202,7 +4208,7 @@ class Pokemon:
                 if self_debuff_chance > 0 and random.random() < self_debuff_chance:
                     self_attack_mult = effects.get("self_attack_multiplier", 1.0)
                     self_debuff_turns = effects.get("self_debuff_turns", 1)
-                    self.add_stat_modifier(self_attack_mult, 1.0, self_debuff_turns, f"{skill_name}副作用", "self")
+                    self.add_stat_modifier(self_attack_mult, 1.0, self_debuff_turns, f"{skill_name}副作用", caster_type)
                     messages.append(f"{self.name}受到{skill_name}的副作用影响,攻击力下降！")
                 
                 return actual_damage, messages
@@ -4236,7 +4242,7 @@ class Pokemon:
                     sp_drain = effects.get("sp_drain", 0)
                     
                     # 添加持续伤害效果（包含SP减少）
-                    target.add_continuous_damage(damage_per_turn, turns, skill_name, "enemy", sp_drain)
+                    target.add_continuous_damage(damage_per_turn, turns, skill_name, caster_type, sp_drain)
                     
                     messages.append(f"{self.name}使用了{skill_name}！")
                     if sp_drain > 0:
@@ -4281,7 +4287,7 @@ class Pokemon:
             heal_percentage = effects["heal_percentage"]
             turns = effects["turns"]
             heal_per_turn = int(self.max_hp * heal_percentage)
-            self.add_continuous_heal(heal_per_turn, turns, skill_name)
+            self.add_continuous_heal(heal_per_turn, turns, skill_name, caster_type)
             messages.append(f"{self.name}使用了{skill_name},将在接下来{turns}回合内每回合回复{heal_per_turn}点HP！")
             return heal_per_turn, messages
         
@@ -4350,7 +4356,7 @@ class Pokemon:
                 if allies:
                     for ally in allies:
                         if ally != self and not ally.is_fainted():  # 不包括自己，但包括刚复活的
-                            ally.add_stat_modifier(1.0 + all_allies_attack_buff, 1.0, team_buff_turns, f"{skill_name}·团队加持", "self")
+                            ally.add_stat_modifier(1.0 + all_allies_attack_buff, 1.0, team_buff_turns, f"{skill_name}·团队加持", caster_type)
                             messages.append(f"{ally.name}的攻击力提升{int(all_allies_attack_buff*100)}%！")
                 
                 # 4回合后自身血量恢复为100% - 使用全局回合计数器
@@ -4359,12 +4365,12 @@ class Pokemon:
                     delay_turns = delayed_heal.get("turns", 4)
                     heal_percentage_delayed = delayed_heal.get("percentage", 1.0)
                     global_turn = getattr(self, '_current_global_turn', None)
-                    self.add_delayed_effect("heal_percentage", heal_percentage_delayed, delay_turns, f"{skill_name}·重生", "self", "self", global_turn)
+                    self.add_delayed_effect("heal_percentage", heal_percentage_delayed, delay_turns, f"{skill_name}·重生", caster_type, "self", global_turn)
                 
                 # 自身攻击力翻倍
                 attack_mult = effects.get("attack_multiplier", 2.0)
                 turns = effects.get("turns", 999)  # 持续整场战斗
-                self.add_stat_modifier(attack_mult, 1.0, turns, f"{skill_name}·武神之力", "self")
+                self.add_stat_modifier(attack_mult, 1.0, turns, f"{skill_name}·武神之力", caster_type)
                 
                 messages.append(f"{self.name}使用了{skill_name}！队友血量恢复,攻击力大幅提升！")
                 messages.append(f"自身攻击力翻倍,全队攻击力提升{int(all_allies_attack_buff*100)}%！")
@@ -4378,7 +4384,7 @@ class Pokemon:
             
             # 处理回避/免疫效果
             if dodge_chance > 0:
-                self.add_dodge_effect(dodge_chance, turns, skill_name, "self")
+                self.add_dodge_effect(dodge_chance, turns, skill_name, caster_type)
                 
                 # 处理团队SP增加（除释放者外）
                 team_sp_boost = effects.get("team_sp_boost", 0)
@@ -4398,7 +4404,7 @@ class Pokemon:
             
             # 处理属性修改效果
             if attack_mult != 1.0 or defense_mult != 1.0:
-                self.add_stat_modifier(attack_mult, defense_mult, turns, skill_name, "self")
+                self.add_stat_modifier(attack_mult, defense_mult, turns, skill_name, caster_type)
                 
                 buff_desc = []
                 if attack_mult > 1.0:
@@ -4448,7 +4454,7 @@ class Pokemon:
                 turns = effects.get("turns", 0)
                 
                 if turns > 0 and (target_attack_mult != 1.0 or target_defense_mult != 1.0):
-                    target.add_stat_modifier(target_attack_mult, target_defense_mult, turns, skill_name, "enemy")
+                    target.add_stat_modifier(target_attack_mult, target_defense_mult, turns, skill_name, caster_type)
                     
                     debuff_desc = []
                     if target_attack_mult < 1.0:
@@ -4519,7 +4525,7 @@ class Pokemon:
             if allies and (team_attack_mult != 1.0 or team_defense_mult != 1.0):
                 for ally in allies:
                     if not ally.is_fainted():  # 包括使用者自己
-                        ally.add_stat_modifier(team_attack_mult, team_defense_mult, turns, f"{skill_name}·团队加持", "self")
+                        ally.add_stat_modifier(team_attack_mult, team_defense_mult, turns, f"{skill_name}·团队加持", caster_type)
                         
                         buff_desc = []
                         if team_attack_mult != 1.0:
@@ -4574,7 +4580,7 @@ class Pokemon:
                             messages.append(f"{ally.name}复活并恢复了{heal_amount}点血量！")
                         else:
                             heal_per_turn = int(ally.max_hp * team_heal_percentage)
-                            ally.add_continuous_heal(heal_per_turn, turns, f"{skill_name}·团队治疗")
+                            ally.add_continuous_heal(heal_per_turn, turns, f"{skill_name}·团队治疗", caster_type)
                             total_heal += heal_per_turn * turns
                             messages.append(f"{ally.name}将在接下来{turns}回合内每回合回复{heal_per_turn}点HP！")
                     else:
@@ -4610,7 +4616,7 @@ class Pokemon:
             
             # 对目标添加攻击力减益（注：这里只能处理单个目标,多目标需要在战斗系统中处理）
             if target and target_attack_mult != 1.0:
-                target.add_stat_modifier(target_attack_mult, 1.0, turns, f"{skill_name}·减益效果", "enemy")
+                target.add_stat_modifier(target_attack_mult, 1.0, turns, f"{skill_name}·减益效果", caster_type)
                 debuff_percentage = int((1.0 - target_attack_mult) * 100)
                 messages.append(f"{target.name}的攻击力下降{debuff_percentage}%,持续{turns}回合！")
             
@@ -4627,13 +4633,13 @@ class Pokemon:
                 attack_mult = effects.get("attack_multiplier", 1.0)
                 defense_mult = effects.get("defense_multiplier", 1.0)
                 turns = effects.get("turns", 2)
-                self.add_stat_modifier(attack_mult, defense_mult, turns, skill_name, "self")
+                self.add_stat_modifier(attack_mult, defense_mult, turns, skill_name, caster_type)
                 
                 # 第二回合：延迟伤害
                 delayed_damage_percentage = effects.get("delayed_damage_percentage", 0)
                 delayed_turns = effects.get("delayed_turns", 1)
                 if delayed_damage_percentage > 0 and target:
-                    self.add_delayed_effect("damage_percentage", delayed_damage_percentage, delayed_turns, f"{skill_name}·万箭齐发", "self", "enemy")
+                    self.add_delayed_effect("damage_percentage", delayed_damage_percentage, delayed_turns, f"{skill_name}·万箭齐发", caster_type, "enemy")
                 
                 messages.append(f"{self.name}使用了{skill_name}！攻击力提升{int((attack_mult-1)*100)}%,防御力提升{int((defense_mult-1)*100)}%！")
                 messages.append(f"第二回合将造成{int(delayed_damage_percentage*100)}%攻击力伤害！")
@@ -4644,7 +4650,7 @@ class Pokemon:
                 # 无敌2回合 + 攻击力变为80%
                 invincible_turns = effects.get("invincible_turns", 2)
                 attack_mult = effects.get("attack_multiplier", 0.8)
-                self.add_stat_modifier(attack_mult, 1.0, invincible_turns, f"{skill_name}·价值关怀", "self")
+                self.add_stat_modifier(attack_mult, 1.0, invincible_turns, f"{skill_name}·价值关怀", caster_type)
                 
                 # 2回合后造成240%伤害并自杀 - 使用全局回合计数器
                 final_damage_percentage = effects.get("final_damage_percentage", 2.4)
@@ -4652,12 +4658,12 @@ class Pokemon:
                     # 需要从外部传入全局回合计数器，这里先使用个人计数器
                     # 实际使用时需要在战斗系统中传入全局计数器
                     global_turn = getattr(self, '_current_global_turn', None)
-                    self.add_delayed_effect("damage_percentage", final_damage_percentage, 2, f"{skill_name}·最终爆发", "self", "enemy", global_turn)
+                    self.add_delayed_effect("damage_percentage", final_damage_percentage, 2, f"{skill_name}·最终爆发", caster_type, "enemy", global_turn)
                 
                 # 自杀效果 - 使用全局回合计数器
                 if effects.get("self_sacrifice", False):
                     global_turn = getattr(self, '_current_global_turn', None)
-                    self.add_delayed_effect("self_sacrifice", 0, 2, f"{skill_name}·献身", "self", "self", global_turn)
+                    self.add_delayed_effect("self_sacrifice", 0, 2, f"{skill_name}·献身", caster_type, "self", global_turn)
                 
                 messages.append(f"{self.name}使用了{skill_name}！无敌2回合,攻击力变为80%！")
                 messages.append(f"2回合后将造成{int(final_damage_percentage*100)}%攻击力伤害并献身！")
@@ -4761,11 +4767,11 @@ class Pokemon:
                 
                 # 对目标应用减益效果
                 if target_attack_mult != 1.0 or target_defense_mult != 1.0:
-                    target.add_stat_modifier(target_attack_mult, target_defense_mult, turns, skill_name, "enemy")
+                    target.add_stat_modifier(target_attack_mult, target_defense_mult, turns, skill_name, caster_type)
                 
                 # 对自己应用增益效果
                 if self_attack_mult != 1.0 or self_defense_mult != 1.0:
-                    self.add_stat_modifier(self_attack_mult, self_defense_mult, turns, skill_name, "self")
+                    self.add_stat_modifier(self_attack_mult, self_defense_mult, turns, skill_name, caster_type)
                 
                 # 处理团队SP增加（除释放者外）
                 team_sp_boost = effects.get("team_sp_boost", 0)
@@ -4807,14 +4813,14 @@ class Pokemon:
                 # 给自己添加持续治疗
                 if heal_percentage > 0:
                     heal_per_turn = int(self.max_hp * heal_percentage)
-                    self.add_continuous_heal(heal_per_turn, turns, f"{skill_name}·治疗")
+                    self.add_continuous_heal(heal_per_turn, turns, f"{skill_name}·治疗", caster_type)
                     total_effect += heal_per_turn * turns
                     messages.append(f"{self.name}将在接下来{turns}回合内每回合回复{heal_per_turn}点HP！")
                 
                 # 给目标添加持续伤害
                 if dot_percentage > 0:
                     damage_per_turn = int(self.attack * dot_percentage)
-                    target.add_continuous_damage(damage_per_turn, turns, f"{skill_name}·伤害", "enemy")
+                    target.add_continuous_damage(damage_per_turn, turns, f"{skill_name}·伤害", caster_type)
                     total_effect += damage_per_turn * turns
                     messages.append(f"{target.name}将在接下来{turns}回合内每回合受到{damage_per_turn}点伤害！")
                 
@@ -4924,11 +4930,42 @@ class Pokemon:
         
         return 0, messages
     
+    def _should_decrease_turn_count(self, caster, global_turn):
+        """
+        判断是否应该减少回合计数
+        根据统一的回合定义：
+        - 对于我方施放的效果：我方行动完毕+敌方行动完毕=完整的一回合
+        - 对于敌方施放的效果：敌方行动完毕+我方行动完毕=完整的一回合
+        """
+        if global_turn is None:
+            return True  # 如果没有全局回合计数器，使用旧的计数方式
+        
+        # 初始化跟踪变量
+        if not hasattr(self, '_last_processed_global_turn_self'):
+            self._last_processed_global_turn_self = global_turn - 1
+        if not hasattr(self, '_last_processed_global_turn_enemy'):
+            self._last_processed_global_turn_enemy = global_turn - 1
+            
+        should_decrease = False
+        
+        if caster == "self":
+            # 自己施放的效果：在完整回合结束时减少计数
+            if global_turn > self._last_processed_global_turn_self:
+                should_decrease = True
+                self._last_processed_global_turn_self = global_turn
+        elif caster == "enemy":
+            # 敌方施放的效果：在完整回合结束时减少计数
+            if global_turn > self._last_processed_global_turn_enemy:
+                should_decrease = True
+                self._last_processed_global_turn_enemy = global_turn
+        
+        return should_decrease
+
     def apply_status_effects(self, target_pokemon=None, global_turn=None):
         """应用状态效果（每回合调用）"""
         messages = []
         
-        # 处理连续伤害
+        # 处理连续伤害 - 使用改进的回合计数系统
         for effect in self.status_effects["continuous_damage"][:]:
             damage = effect["damage"]
             self.hp = max(0, self.hp - damage)
@@ -4941,12 +4978,17 @@ class Pokemon:
                 self.sp -= drained_sp
                 messages.append(f"{self.name}的SP减少了{drained_sp}点！")
             
-            effect["turns"] -= 1
-            if effect["turns"] <= 0:
-                self.status_effects["continuous_damage"].remove(effect)
-                messages.append(f"{self.name}的{effect['name']}效果消失了！")
+            # 根据施法者类型决定回合计数方式
+            caster = effect.get("caster", "self")
+            should_decrease = self._should_decrease_turn_count(caster, global_turn)
+            
+            if should_decrease:
+                effect["turns"] -= 1
+                if effect["turns"] <= 0:
+                    self.status_effects["continuous_damage"].remove(effect)
+                    messages.append(f"{self.name}的{effect['name']}效果消失了！")
         
-        # 处理连续治疗
+        # 处理连续治疗 - 使用改进的回合计数系统
         for effect in self.status_effects["continuous_heal"][:]:
             heal = effect["heal"]
             old_hp = self.hp
@@ -4954,10 +4996,16 @@ class Pokemon:
             actual_heal = self.hp - old_hp
             if actual_heal > 0:
                 messages.append(f"{self.name}受到{effect['name']}的治疗效果,回复{actual_heal}点HP！")
-            effect["turns"] -= 1
-            if effect["turns"] <= 0:
-                self.status_effects["continuous_heal"].remove(effect)
-                messages.append(f"{self.name}的{effect['name']}效果消失了！")
+            
+            # 根据施法者类型决定回合计数方式
+            caster = effect.get("caster", "self")
+            should_decrease = self._should_decrease_turn_count(caster, global_turn)
+            
+            if should_decrease:
+                effect["turns"] -= 1
+                if effect["turns"] <= 0:
+                    self.status_effects["continuous_heal"].remove(effect)
+                    messages.append(f"{self.name}的{effect['name']}效果消失了！")
         
         # 处理G总,你不懂OPS的延迟伤害效果
         if hasattr(self, 'delayed_effects'):
@@ -5011,21 +5059,30 @@ class Pokemon:
                 # 移除已触发的延迟效果
                 self.status_effects["delayed_effects"].remove(effect)
         
-        # 处理属性修改效果
+        # 处理属性修改效果 - 使用改进的回合计数系统
         if self.status_effects["stat_modifiers"]["turns_remaining"] > 0:
-            self.status_effects["stat_modifiers"]["turns_remaining"] -= 1
-            if self.status_effects["stat_modifiers"]["turns_remaining"] <= 0:
-                self.status_effects["stat_modifiers"]["attack_multiplier"] = 1.0
-                self.status_effects["stat_modifiers"]["defense_multiplier"] = 1.0
-                messages.append(f"{self.name}的{self.status_effects['stat_modifiers']['effect_name']}效果消失了！")
-                self.status_effects["stat_modifiers"]["effect_name"] = ""
+            # 根据施法者类型决定回合计数方式
+            caster = self.status_effects["stat_modifiers"].get("caster", "self")
+            should_decrease = self._should_decrease_turn_count(caster, global_turn)
+            
+            if should_decrease:
+                self.status_effects["stat_modifiers"]["turns_remaining"] -= 1
+                if self.status_effects["stat_modifiers"]["turns_remaining"] <= 0:
+                    self.status_effects["stat_modifiers"]["attack_multiplier"] = 1.0
+                    self.status_effects["stat_modifiers"]["defense_multiplier"] = 1.0
+                    messages.append(f"{self.name}的{self.status_effects['stat_modifiers']['effect_name']}效果消失了！")
+                    self.status_effects["stat_modifiers"]["effect_name"] = ""
         
-        # 处理回避/免疫效果
+        # 处理回避/免疫效果 - 使用改进的回合计数系统
         for effect in self.status_effects["dodge_effects"][:]:  # 使用切片复制列表以避免修改时出错
-            effect["turns"] -= 1
-            if effect["turns"] <= 0:
-                messages.append(f"{self.name}的{effect['name']}效果消失了！")
-                self.status_effects["dodge_effects"].remove(effect)
+            caster = effect.get("caster", "self")
+            should_decrease = self._should_decrease_turn_count(caster, global_turn)
+            
+            if should_decrease:
+                effect["turns"] -= 1
+                if effect["turns"] <= 0:
+                    messages.append(f"{self.name}的{effect['name']}效果消失了！")
+                    self.status_effects["dodge_effects"].remove(effect)
         
         return messages
     
@@ -6458,6 +6515,9 @@ class PokemonGame:
                         try:
                             # 设置全局回合计数器
                             player_pkm._current_global_turn = self.global_battle_turn
+                            # 确保玩家Pokemon不被标记为敌方
+                            if hasattr(player_pkm, '_is_enemy'):
+                                delattr(player_pkm, '_is_enemy')
                             # 使用统一的技能管理器,传递队友信息以支持团队技能
                             allies = [pokemon for pokemon in self.player.pokemon_team]  # 包含所有队友，包括死亡的
                             damage, skill_messages = skill_manager.use_skill_on_pokemon(move["name"], player_pkm, enemy_pkm, allies)
@@ -6621,6 +6681,8 @@ class PokemonGame:
                             # 对自己使用技能,不造成伤害
                             skill = skill_manager.get_skill(enemy_move["name"])
                             if skill:
+                                # 标记为敌方Pokemon
+                                enemy_pkm._is_enemy = True
                                 _, skill_messages = skill_manager.use_skill_on_pokemon(enemy_move["name"], enemy_pkm, enemy_pkm)
                                 for msg in skill_messages:
                                     self.battle_messages.append(msg)
@@ -6757,6 +6819,8 @@ class PokemonGame:
                         try:
                             # 设置全局回合计数器
                             enemy_pkm._current_global_turn = self.global_battle_turn
+                            # 标记为敌方Pokemon
+                            enemy_pkm._is_enemy = True
                             # 判断技能目标并使用统一的技能管理器
                             skill_data = NEW_SKILLS_DATABASE.get(enemy_move["name"])
                             if skill_data and skill_data["category"] in [SkillCategory.SELF_BUFF, SkillCategory.DIRECT_HEAL, SkillCategory.CONTINUOUS_HEAL]:
@@ -6848,6 +6912,8 @@ class PokemonGame:
                         # 对自己使用技能,不造成伤害
                         skill = skill_manager.get_skill(enemy_move["name"])
                         if skill:
+                            # 标记为敌方Pokemon
+                            enemy_pkm._is_enemy = True
                             _, skill_messages = skill_manager.use_skill_on_pokemon(enemy_move["name"], enemy_pkm, enemy_pkm)
                             for msg in skill_messages:
                                 self.battle_messages.append(msg)
@@ -9746,7 +9812,8 @@ class PokemonGame:
                                         
                                         # 返回战斗状态并继续处理回合
                                         self.state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
-                                        self.battle_step = 1  # 继续战斗流程
+                                        # 团队治疗技能使用后应该轮到敌方行动，跳到敌方回合
+                                        self.battle_step = 2  # 跳过玩家伤害处理，直接到敌方回合
                 
                 elif self.state == GameState.BATTLE_HEAL_SELECT:
                     print(f"DEBUG: 治疗选择状态下的点击事件，位置: {event.pos}")
@@ -9812,8 +9879,9 @@ class PokemonGame:
                                             
                                             # 返回战斗状态并继续处理回合
                                             self.state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
-                                            self.battle_step = 1  # 继续战斗流程
-                                            print(f"DEBUG: 返回战斗状态，battle_step = 1")
+                                            # 威士忌之友使用后应该轮到敌方行动，跳到敌方回合
+                                            self.battle_step = 2  # 跳过玩家伤害处理，直接到敌方回合
+                                            print(f"DEBUG: 返回战斗状态，battle_step = 2 (敌方回合)")
                                 break
                     else:
                         print(f"DEBUG: 没有menu_buttons属性")
