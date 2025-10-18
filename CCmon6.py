@@ -1416,6 +1416,36 @@ class SkillManager:
         """根据属性获取技能"""
         return [skill for skill in self.skills.values() if attribute in skill.attributes]
     
+    def add_skill_from_data(self, skill_name: str, skill_data: Dict):
+        """从技能数据动态添加技能到管理器中"""
+        if skill_name in self.skills:
+            # 技能已存在，不需要重复添加
+            return
+        
+        # 将技能数据也添加到UNIFIED_SKILLS_DATABASE中，确保数据一致性
+        if skill_name not in UNIFIED_SKILLS_DATABASE:
+            UNIFIED_SKILLS_DATABASE[skill_name] = skill_data.copy()
+        
+        # 根据技能类型确定属性
+        skill_type = skill_data.get("type", "")
+        attributes = self._get_skill_attributes(skill_type)
+        
+        # 转换效果
+        effects = self._convert_skill_effects(skill_data)
+        
+        # 创建Skill对象
+        skill = Skill(
+            name=skill_name,
+            attributes=attributes,
+            effects=effects,
+            sp_cost=skill_data.get("sp_cost", 0),
+            quote=skill_data.get("quote", ""),
+            description=skill_data.get("description", "")
+        )
+        
+        # 添加到技能管理器
+        self.skills[skill_name] = skill
+    
     def use_skill(self, skill_name: str, user_stats: Dict, target_stats: Dict = None):
         """使用技能"""
         skill = self.get_skill(skill_name)
