@@ -2271,6 +2271,7 @@ class PokemonConfig:
             "growth_type": "medium_slow",
             "moves": [
                 {"name": "酒后逃逸", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.SELF_BUFF, "sp_cost": 100},
+                {"name": "酒仙", "power": 0, "type": ['networking', '体力'], "category": SkillCategory.DIRECT_HEAL, "sp_cost": 0, "quote": "双倍IPA治疗失眠", "description": "立即回复40%生命"}，                
                 {"name": "织条毯子"},
                 {"name": "酒精打击", "power": 45, "type": ['networking', '体力'], "sp_cost": 0, "quote": "你挣钱不就是来喝的吗", "description": "造成自身攻击力93%伤害,有18%几率造成1.5倍伤害"},
                 {"name": "问题解决", "power": 50, "type": ['PS', '结构化'], "sp_cost": 0, "quote": "今天谁也不许走", "description": "造成自身攻击力49%伤害"},
