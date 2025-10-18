@@ -6465,15 +6465,43 @@ class PokemonGame:
                             damage, skill_messages = 0, [f"技能 {move['name']} 使用失败！"]
                         
                         # 检查是否是治疗技能需要选择目标
+                        # 修复威士忌之友等技能的目标选择UI不出现的问题
+                        # 首先检查是否是需要目标选择的治疗技能
+                        if move["name"] in NEW_SKILLS_DATABASE:
+                            skill_data = NEW_SKILLS_DATABASE[move["name"]]
+                            if (skill_data.get("category") == SkillCategory.HEAL and 
+                                skill_data.get("effects", {}).get("requires_target_selection", False)):
+                                
+                                # 找到活着的队友（不包括使用者自己）
+                                alive_allies = [pokemon for pokemon in self.player.pokemon_team 
+                                               if pokemon != player_pkm and not pokemon.is_fainted()]
+                                
+                                if alive_allies:
+                                    # 进入治疗目标选择状态
+                                    self.heal_skill_name = move["name"]
+                                    self.heal_skill_user = player_pkm
+                                    self.open_heal_selection_menu()
+                                    return
+                                else:
+                                    # 没有可治疗的队友
+                                    self.battle_messages.append("没有队友可释放技能！")
+                                    self.battle_step = 7  # 跳到战斗结束
+                                    return
+                        
+                        # 备用检查：如果damage是-1，也尝试打开目标选择
                         if damage == -1 and move["name"] in NEW_SKILLS_DATABASE:
                             skill_data = NEW_SKILLS_DATABASE[move["name"]]
-                            if skill_data["category"] == SkillCategory.HEAL and skill_data.get("effects", {}).get("requires_target_selection"):
+                            if skill_data["category"] == SkillCategory.HEAL:
                                 # 进入治疗目标选择状态
                                 self.heal_skill_name = move["name"]
                                 self.heal_skill_user = player_pkm
                                 self.open_heal_selection_menu()
                                 return
                         
+                        # 确保damage不是-1（-1是目标选择的特殊返回值）
+                        # 如果到达这里，说明不需要目标选择，正常处理伤害
+                        if damage == -1:
+                            damage = 0
                         self.current_turn["damage"] = damage if damage is not None else 0
                         self.current_turn["type_multiplier"] = 1.0
                         
