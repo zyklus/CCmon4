@@ -9735,6 +9735,8 @@ class PokemonGame:
                                         self.battle_messages.append(f"{target_ally.name}恢复了{actual_heal}点血量！")
                                         
                                         # 设置战斗回合数据
+                                        if self.current_turn is None:
+                                            self.current_turn = {}
                                         self.current_turn["damage"] = actual_heal
                                         self.current_turn["type_multiplier"] = 1.0
                                         
@@ -9799,6 +9801,8 @@ class PokemonGame:
                                             self.battle_messages.append(f"{target_ally.name}恢复了{actual_heal}点血量！")
                                             
                                             # 设置战斗回合数据
+                                            if self.current_turn is None:
+                                                self.current_turn = {}
                                             self.current_turn["damage"] = actual_heal
                                             self.current_turn["type_multiplier"] = 1.0
                                             
