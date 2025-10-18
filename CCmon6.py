@@ -5935,7 +5935,8 @@ class PokemonGame:
         elif self.state in [GameState.BATTLE, GameState.BOSS_BATTLE, 
                            GameState.BATTLE_MOVE_SELECT, GameState.BATTLE_ANIMATION,
                            GameState.CAPTURE_ANIMATION, GameState.BATTLE_SWITCH_POKEMON,
-                           GameState.BATTLE_END_RESULT]:
+                           GameState.BATTLE_END_RESULT, GameState.BATTLE_HEAL_SELECT,
+                           GameState.BATTLE_REVIVE_SELECT, GameState.BATTLE_TEAM_HEAL_SELECT]:
             self.draw_battle()
         elif self.state in [GameState.MENU_MAIN, GameState.MENU_POKEMON,
                            GameState.MENU_POKEMON_DETAIL, GameState.MENU_BACKPACK,
