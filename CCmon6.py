@@ -3307,8 +3307,26 @@ class Item:
                     if len(target.moves) >= 4:
                         return f"SKILL_FORGET_DIALOG|{skill_name}"
                     else:
-                        target.moves.append({"name": skill_name, "power": 80, "type": "共情"})
-                        return f"{target.name}学会了{skill_name}！"
+                        # 从统一技能数据库获取完整的技能信息
+                        if skill_name in UNIFIED_SKILLS_DATABASE:
+                            skill_data = UNIFIED_SKILLS_DATABASE[skill_name]
+                            # 创建包含完整信息的技能条目
+                            new_move = {
+                                "name": skill_name,
+                                "power": skill_data.get("power", 80),
+                                "type": skill_data.get("type", "共情"),
+                                "category": skill_data.get("category", SkillCategory.DIRECT_DAMAGE),
+                                "sp_cost": skill_data.get("sp_cost", 0),
+                                "description": skill_data.get("description", ""),
+                                "quote": skill_data.get("quote", ""),
+                                "effects": skill_data.get("effects", {})
+                            }
+                            target.moves.append(new_move)
+                            return f"{target.name}学会了{skill_name}！"
+                        else:
+                            # 如果技能不在数据库中，使用默认值
+                            target.moves.append({"name": skill_name, "power": 80, "type": "共情"})
+                            return f"{target.name}学会了{skill_name}！"
                 else:
                     return f"{target.name}已经会{skill_name}了！|FAILED"
             return "这个技能书需要对顾问使用|FAILED"
@@ -5948,6 +5966,10 @@ class PokemonGame:
         # 重置战斗回合计数器
         self.global_battle_turn = 0  # 重置全局战斗回合计数器
         
+        # 初始化回合行动跟踪标记
+        self._player_acted_this_turn = False
+        self._enemy_acted_this_turn = False
+        
         # 设置当前战斗Pokemon索引，防止团队治疗时自动切换
         self.current_battle_pokemon_index = self.player.default_pokemon_index
         
@@ -6509,6 +6531,8 @@ class PokemonGame:
                             damage, type_multiplier = enemy_pkm.calculate_move_damage(enemy_move, player_pkm)
                         self.current_turn["enemy_damage"] = damage
                         self.current_turn["enemy_type_multiplier"] = type_multiplier
+                        # 标记敌方已行动
+                        self._enemy_acted_this_turn = True
                         self.battle_messages.append(f"{enemy_pkm.name}使用了{enemy_move['name']}({enemy_move['type']}属性)！")
                         
                         if type_multiplier < 1:
@@ -6648,6 +6672,8 @@ class PokemonGame:
                             damage, skill_messages = 0, [f"敌方技能 {enemy_move['name']} 使用失败！"]
                         self.current_turn["enemy_damage"] = damage if damage is not None else 0
                         self.current_turn["enemy_type_multiplier"] = 1.0
+                        # 标记敌方已行动
+                        self._enemy_acted_this_turn = True
                         
                         # 检查是否为必杀技,如果是则显示台词
                         if enemy_move["name"] in NEW_SKILLS_DATABASE:
@@ -6680,6 +6706,8 @@ class PokemonGame:
                         damage, type_multiplier = enemy_pkm.calculate_move_damage(enemy_move, player_pkm)
                         self.current_turn["enemy_damage"] = damage
                         self.current_turn["enemy_type_multiplier"] = type_multiplier
+                        # 标记敌方已行动
+                        self._enemy_acted_this_turn = True
                         self.battle_messages.append(f"{enemy_pkm.name} (Lv.{enemy_pkm.level})使用了{enemy_move['name']}({enemy_move['type']}属性)！")
                         
                         # 检查旧技能系统的台词显示（新增功能）
@@ -6730,6 +6758,8 @@ class PokemonGame:
                         damage, type_multiplier = enemy_pkm.calculate_move_damage(enemy_move, player_pkm)
                     self.current_turn["enemy_damage"] = damage
                     self.current_turn["enemy_type_multiplier"] = type_multiplier
+                    # 标记敌方已行动
+                    self._enemy_acted_this_turn = True
                     self.battle_messages.append(f"野生的{enemy_pkm.name}使用了{enemy_move['name']}({enemy_move['type']}属性)！")
                     
                     if type_multiplier < 1:
@@ -6786,14 +6816,40 @@ class PokemonGame:
                 
             elif self.battle_step == 7:
                 # 回合结束前应用状态效果
-                # 增加全局回合计数器
-                self.global_battle_turn += 1
+                # 只有在双方都行动完毕后才增加全局回合计数器
+                # 检查是否是完整回合结束（双方都行动过）
+                if not hasattr(self, '_player_acted_this_turn'):
+                    self._player_acted_this_turn = False
+                if not hasattr(self, '_enemy_acted_this_turn'):
+                    self._enemy_acted_this_turn = False
                 
-                # 增加个人回合计数器（保持兼容性）
-                if player_pkm:
-                    player_pkm.increment_battle_turn()
-                if enemy_pkm:
-                    enemy_pkm.increment_battle_turn()
+                # 标记当前回合的行动状态
+                if self.current_turn and self.current_turn.get("action") in ["attack", "use_item", "switch_pokemon"]:
+                    self._player_acted_this_turn = True
+                
+                # 检查敌方是否也行动了（通过检查是否有敌方伤害记录或特殊行动）
+                if (self.current_turn and 
+                    (self.current_turn.get("enemy_damage", 0) > 0 or 
+                     self.current_turn.get("action") in ["catch", "flee"] or
+                     self._enemy_acted_this_turn or
+                     # 如果玩家使用了物品或切换顾问，敌方不行动，直接结束回合
+                     self.current_turn.get("action") in ["use_item", "switch_pokemon"])):
+                    self._enemy_acted_this_turn = True
+                
+                # 只有双方都行动完毕才算一个完整回合
+                if self._player_acted_this_turn and self._enemy_acted_this_turn:
+                    # 增加全局回合计数器
+                    self.global_battle_turn += 1
+                    
+                    # 重置回合行动标记
+                    self._player_acted_this_turn = False
+                    self._enemy_acted_this_turn = False
+                    
+                    # 增加个人回合计数器（保持兼容性）
+                    if player_pkm:
+                        player_pkm.increment_battle_turn()
+                    if enemy_pkm:
+                        enemy_pkm.increment_battle_turn()
                 
                 # 应用玩家顾问的状态效果（包括延迟效果），传入全局回合计数器
                 if player_pkm:
@@ -7594,7 +7650,25 @@ class PokemonGame:
             forget_index = int(selection.split("_")[1])
             if 0 <= forget_index < len(target.moves):
                 old_move = target.moves[forget_index]
-                target.moves[forget_index] = {"name": new_skill, "power": 80, "type": "共情"}
+                
+                # 从统一技能数据库获取完整的技能信息
+                if new_skill in UNIFIED_SKILLS_DATABASE:
+                    skill_data = UNIFIED_SKILLS_DATABASE[new_skill]
+                    # 创建包含完整信息的技能条目
+                    new_move = {
+                        "name": new_skill,
+                        "power": skill_data.get("power", 80),
+                        "type": skill_data.get("type", "共情"),
+                        "category": skill_data.get("category", SkillCategory.DIRECT_DAMAGE),
+                        "sp_cost": skill_data.get("sp_cost", 0),
+                        "description": skill_data.get("description", ""),
+                        "quote": skill_data.get("quote", ""),
+                        "effects": skill_data.get("effects", {})
+                    }
+                    target.moves[forget_index] = new_move
+                else:
+                    # 如果技能不在数据库中，使用默认值
+                    target.moves[forget_index] = {"name": new_skill, "power": 80, "type": "共情"}
                 
                 # 移除物品
                 self.player.remove_item(item_index)
