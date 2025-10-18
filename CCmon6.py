@@ -7359,42 +7359,16 @@ class PokemonGame:
         return "无法使用物品"
     
     def use_item_directly(self, item_index):
-        """直接使用物品,自动选择最佳目标"""
+        """直接使用物品,只适用于特定的可直接使用物品"""
         if 0 <= item_index < len(self.player.backpack):
             item = self.player.backpack[item_index]
             
-            if item.item_type == "heal":
-                # 选择HP最低的顾问
-                target = None
-                for pokemon in self.player.pokemon_team:
-                    if pokemon.hp < pokemon.max_hp:
-                        if target is None or pokemon.hp < target.hp:
-                            target = pokemon
-                
-                if target:
-                    result = item.use(target, self.player)
-                    self.player.remove_item(item_index)
-                    # 添加治疗成功通知
-                    self.notification_system.add_notification(f"对{target.name}使用了{item.name}！", "success")
-                    # 显示物品使用结果弹窗
-                    self.item_result_popup = {
-                        "title": f"使用 {item.name}",
-                        "target": target.name,
-                        "result": result,
-                        "success": True
-                    }
-                    return result
-                else:
-                    # 添加治疗失败通知
-                    self.notification_system.add_notification("所有顾问HP已满！", "info")
-                    # 显示物品使用结果弹窗
-                    self.item_result_popup = {
-                        "title": f"使用 {item.name}",
-                        "target": "无目标",
-                        "result": "所有顾问HP已满",
-                        "success": False
-                    }
-                    return "所有顾问HP已满"
+            # 只允许直接使用特定物品
+            direct_use_items = ["skill_blind_box", "ut_restore", "master_ball", "pokeball"]
+            if item.item_type not in direct_use_items:
+                # 添加物品无法直接使用通知
+                self.notification_system.add_notification("这个物品需要选择使用对象", "warning")
+                return "这个物品需要选择使用对象"
                     
             elif item.item_type == "ut_restore":
                 result = item.use(None, self.player)
@@ -7721,9 +7695,45 @@ class PokemonGame:
                         "effects": skill_data.get("effects", {})
                     }
                     target.moves[forget_index] = new_move
+                    
+                    # 同时将技能添加到NEW_SKILLS_DATABASE以确保在顾问信息中正确显示
+                    if new_skill not in NEW_SKILLS_DATABASE:
+                        NEW_SKILLS_DATABASE[new_skill] = skill_data.copy()
+                    
+                    # 确保技能也注册到技能管理器中
+                    if not hasattr(target, '_skill_manager_updated'):
+                        target._skill_manager_updated = True
+                    skill_manager.add_skill_from_data(new_skill, skill_data)
                 else:
-                    # 如果技能不在数据库中，使用默认值
-                    target.moves[forget_index] = {"name": new_skill, "power": 80, "type": "共情"}
+                    # 如果技能不在数据库中，使用默认值并添加到数据库
+                    default_skill_data = {
+                        "power": 80,
+                        "type": "共情",
+                        "category": SkillCategory.DIRECT_DAMAGE,
+                        "sp_cost": 0,
+                        "description": f"从必杀技学习书学会的技能：{new_skill}",
+                        "quote": "这是从书中学会的技能！",
+                        "effects": {}
+                    }
+                    new_move = {
+                        "name": new_skill,
+                        "power": 80,
+                        "type": "共情",
+                        "category": SkillCategory.DIRECT_DAMAGE,
+                        "sp_cost": 0,
+                        "description": default_skill_data["description"],
+                        "quote": default_skill_data["quote"],
+                        "effects": {}
+                    }
+                    target.moves[forget_index] = new_move
+                    
+                    # 添加到NEW_SKILLS_DATABASE以确保在顾问信息中正确显示
+                    NEW_SKILLS_DATABASE[new_skill] = default_skill_data
+                    
+                    # 确保技能也注册到技能管理器中
+                    if not hasattr(target, '_skill_manager_updated'):
+                        target._skill_manager_updated = True
+                    skill_manager.add_skill_from_data(new_skill, default_skill_data)
                 
                 # 移除物品
                 self.player.remove_item(item_index)
@@ -9439,15 +9449,17 @@ class PokemonGame:
                             for action, rect in self.popup_buttons.items():
                                 if rect.collidepoint(event.pos):
                                     if action == "use":
-                                        # 检查是否是治疗物品，如果是则直接使用
+                                        # 检查是否是可直接使用的物品
                                         selected_item = self.player.backpack[self.selected_item_index]
-                                        if selected_item.item_type == "heal":
-                                            # 直接使用治疗物品
+                                        # 只有以下物品可以直接使用：必杀技学习盲盒、UT补充剂、大师球、精灵球
+                                        direct_use_items = ["skill_blind_box", "ut_restore", "master_ball", "pokeball"]
+                                        if selected_item.item_type in direct_use_items:
+                                            # 直接使用物品
                                             result = self.use_item_directly(self.selected_item_index)
                                             self.battle_messages = [result]
                                             self.backpack_popup_state = False
                                         else:
-                                            # 其他物品打开目标选择界面
+                                            # 其他物品（包括HP恢复类）都需要选择目标
                                             self.open_item_use_menu(self.selected_item_index)
                                             self.backpack_popup_state = False
                                     elif action == "cancel":
@@ -9667,8 +9679,8 @@ class PokemonGame:
                                     
                                     # 执行治疗
                                     if hasattr(self, 'team_heal_skill_name'):
-                                        skill_data = UNIFIED_SKILLS_DATABASE[self.team_heal_skill_name]
-                                        heal_percentage = skill_data["effects"].get("heal_percentage", 1.0)
+                                        skill_data = UNIFIED_SKILLS_DATABASE.get(self.team_heal_skill_name, {})
+                                        heal_percentage = skill_data.get("effects", {}).get("heal_percentage", 1.0)
                                         heal_amount = int(target_ally.max_hp * heal_percentage)
                                         prev_hp = target_ally.hp
                                         target_ally.hp = min(target_ally.max_hp, target_ally.hp + heal_amount)
@@ -9676,7 +9688,9 @@ class PokemonGame:
                                         
                                         # 添加战斗消息
                                         self.battle_messages.append(f"{self.team_heal_skill_user.name}使用了{self.team_heal_skill_name}！")
-                                        self.battle_messages.append(f'"{UNIFIED_SKILLS_DATABASE[self.team_heal_skill_name]["quote"]}"')
+                                        skill_quote = skill_data.get("quote", "")
+                                        if skill_quote:
+                                            self.battle_messages.append(f'"{skill_quote}"')
                                         self.battle_messages.append(f"{target_ally.name}恢复了{actual_heal}点血量！")
                                         
                                         # 设置战斗回合数据
