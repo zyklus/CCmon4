@@ -3423,15 +3423,23 @@ class Item:
             return "无法使用PTO通知"
             
         elif self.item_type == "skill_blind_box":
+            # 必杀技学习盲盒不需要目标，只需要玩家对象
             if player:
                 # 使用编码系统获取所有必杀技
                 ultimate_skills = self._get_all_ultimate_skills()
+                
+                # 调试信息：打印找到的必杀技数量
+                print(f"[DEBUG] 找到 {len(ultimate_skills)} 个必杀技")
+                for code, skill in list(ultimate_skills.items())[:5]:  # 只打印前5个
+                    print(f"[DEBUG] {code}: {skill['name']} (SP: {skill['sp_cost']})")
                 
                 if ultimate_skills:
                     import random
                     # 随机选择一个必杀技编码
                     selected_skill_code = random.choice(list(ultimate_skills.keys()))
                     selected_skill = ultimate_skills[selected_skill_code]
+                    
+                    print(f"[DEBUG] 选中技能: {selected_skill['name']} (编码: {selected_skill_code})")
                     
                     # 创建对应的必杀技学习书,包含详细信息
                     # 获取技能详细信息
@@ -3480,11 +3488,16 @@ class Item:
                         price=0
                     )
                     
+                    print(f"[DEBUG] 创建学习书: {skill_book.name}")
+                    
                     # 添加到玩家背包
                     player.add_item(skill_book)
                     
+                    print(f"[DEBUG] 学习书已添加到背包，当前背包物品数: {len(player.backpack)}")
+                    
                     return f"打开了{self.name}！获得了{skill_book.name}！（编码：{selected_skill_code}）"
                 else:
+                    print("[DEBUG] 没有找到任何必杀技")
                     return f"打开了{self.name},但没有找到可学习的必杀技..."
             return "无法使用必杀技学习盲盒"
             
@@ -3497,9 +3510,13 @@ class Item:
         ultimate_skills = {}
         skill_id = 1
         
+        print(f"[DEBUG] UNIFIED_SKILLS_DATABASE 总技能数: {len(UNIFIED_SKILLS_DATABASE)}")
+        
         # 从统一技能数据库中筛选必杀技（SP消耗大于50的技能）
         for skill_name, skill_data in UNIFIED_SKILLS_DATABASE.items():
-            if skill_data.get("sp_cost", 0) >= 50:  # 必杀技标准：SP消耗>=50
+            sp_cost = skill_data.get("sp_cost", 0)
+            if sp_cost >= 50:  # 必杀技标准：SP消耗>=50
+                print(f"[DEBUG] 找到必杀技: {skill_name} (SP: {sp_cost})")
                 ultimate_skills[f"{skill_id:03d}"] = {
                     "name": skill_name,
                     "type": skill_data.get("type", ""),
@@ -3510,6 +3527,7 @@ class Item:
                 }
                 skill_id += 1
         
+        print(f"[DEBUG] 筛选出的必杀技总数: {len(ultimate_skills)}")
         return ultimate_skills
     
         
@@ -7274,6 +7292,16 @@ class PokemonGame:
     
     def open_item_use_menu(self, item_index):
         if 0 <= item_index < len(self.player.backpack):
+            item = self.player.backpack[item_index]
+            
+            # 检查是否是不需要目标的物品类型
+            no_target_items = ["ut_restore", "battle_prevent", "skill_blind_box"]
+            if item.item_type in no_target_items:
+                # 直接使用物品，不需要选择目标
+                result = self.use_item_directly(item_index)
+                self.battle_messages = [result]
+                return
+            
             self.menu_stack.append(self.state)
             self.selected_item_index = item_index
             self.menu_buttons = []
@@ -9437,17 +9465,9 @@ class PokemonGame:
                             for action, rect in self.popup_buttons.items():
                                 if rect.collidepoint(event.pos):
                                     if action == "use":
-                                        # 检查是否是治疗物品，如果是则直接使用
-                                        selected_item = self.player.backpack[self.selected_item_index]
-                                        if selected_item.item_type == "heal":
-                                            # 直接使用治疗物品
-                                            result = self.use_item_directly(self.selected_item_index)
-                                            self.battle_messages = [result]
-                                            self.backpack_popup_state = False
-                                        else:
-                                            # 其他物品打开目标选择界面
-                                            self.open_item_use_menu(self.selected_item_index)
-                                            self.backpack_popup_state = False
+                                        # 打开物品使用目标选择界面
+                                        self.open_item_use_menu(self.selected_item_index)
+                                        self.backpack_popup_state = False
                                     elif action == "cancel":
                                         self.backpack_popup_state = False
                     else:
