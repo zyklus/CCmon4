@@ -8960,7 +8960,7 @@ class PokemonGame:
                 if hasattr(self, 'menu_buttons'):
                     for i, button in enumerate(self.menu_buttons):
                         button.draw(screen)
-                        print(f"DEBUG: 绘制了按钮 {i}: {button.text} at ({button.x}, {button.y})")
+                        print(f"DEBUG: 绘制了按钮 {i}: {button.text} at ({button.rect.x}, {button.rect.y})")
                 else:
                     print(f"DEBUG: 没有menu_buttons属性")
                 
@@ -9754,7 +9754,7 @@ class PokemonGame:
                     
                     if hasattr(self, 'menu_buttons'):
                         for i, button in enumerate(self.menu_buttons):
-                            print(f"DEBUG: 检查按钮 {i}: {button.text} at ({button.x}, {button.y}) size ({button.width}, {button.height})")
+                            print(f"DEBUG: 检查按钮 {i}: {button.text} at ({button.rect.x}, {button.rect.y}) size ({button.rect.width}, {button.rect.height})")
                             if button.check_click(event.pos) and button.action:
                                 print(f"DEBUG: 点击了按钮: {button.action}")
                                 
