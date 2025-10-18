@@ -4261,11 +4261,19 @@ class Pokemon:
             if target:
                 effects = skill_data["effects"]
                 dot_percentage = effects.get("dot_percentage", 0)
+                dot_damage = effects.get("dot_damage", 0)
                 turns = effects.get("turns", 3)
                 
                 if dot_percentage > 0:
                     # 计算每回合伤害
                     damage_per_turn = int(self.attack * dot_percentage)
+                elif dot_damage > 0:
+                    # 使用固定伤害值
+                    damage_per_turn = dot_damage
+                else:
+                    damage_per_turn = 0
+                
+                if damage_per_turn > 0:
                     
                     # 获取SP减少效果
                     sp_drain = effects.get("sp_drain", 0)
@@ -4458,21 +4466,50 @@ class Pokemon:
             return 0, messages
         
         elif category == SkillCategory.ENEMY_DEBUFF:
-            # 改变敌方属性多回合
+            # 改变敌方属性多回合，可能包含直接伤害
             if target:
+                # 处理直接伤害（如钓鱼执法）
+                direct_damage = effects.get("direct_damage", 0)
+                actual_damage = 0
+                
+                if direct_damage > 0:
+                    # 检查目标是否有回避/免疫效果
+                    is_dodged, dodge_effect_name = target.check_dodge()
+                    if is_dodged:
+                        messages.append(f"{target.name}的{dodge_effect_name}生效！完全回避了攻击！")
+                    else:
+                        # 计算属性克制
+                        type_multiplier = target.calculate_type_effectiveness(skill_data["type"])
+                        final_damage = int(direct_damage * type_multiplier)
+                        
+                        # 应用防御减免
+                        defense_reduction = target.defense // 2
+                        actual_damage = max(1, final_damage - defense_reduction)
+                        
+                        target.hp = max(0, target.hp - actual_damage)
+                        messages.append(f"{self.name}使用了{skill_name}！")
+                        messages.append(f"对{target.name}造成{actual_damage}点伤害！")
+                
+                # 处理减益效果
                 target_attack_mult = effects.get("target_attack_multiplier", 1.0)
                 target_defense_mult = effects.get("target_defense_multiplier", 1.0)
-                turns = effects["turns"]
-                target.add_stat_modifier(target_attack_mult, target_defense_mult, turns, skill_name, "enemy")
+                turns = effects.get("turns", 0)
                 
-                debuff_desc = []
-                if target_attack_mult < 1.0:
-                    debuff_desc.append(f"攻击力下降{int((1-target_attack_mult)*100)}%")
-                if target_defense_mult < 1.0:
-                    debuff_desc.append(f"防御力下降{int((1-target_defense_mult)*100)}%")
+                if turns > 0 and (target_attack_mult != 1.0 or target_defense_mult != 1.0):
+                    target.add_stat_modifier(target_attack_mult, target_defense_mult, turns, skill_name, "enemy")
+                    
+                    debuff_desc = []
+                    if target_attack_mult < 1.0:
+                        debuff_desc.append(f"攻击力下降{int((1-target_attack_mult)*100)}%")
+                    if target_defense_mult < 1.0:
+                        debuff_desc.append(f"防御力下降{int((1-target_defense_mult)*100)}%")
+                    
+                    if debuff_desc:
+                        if direct_damage == 0:
+                            messages.append(f"{self.name}使用了{skill_name}！")
+                        messages.append(f"{target.name}{', '.join(debuff_desc)},持续{turns}回合！")
                 
-                messages.append(f"{self.name}使用了{skill_name},{target.name}{', '.join(debuff_desc)},持续{turns}回合！")
-                return 0, messages
+                return actual_damage, messages
         
         elif category == SkillCategory.SPECIAL_ATTACK:
             # 必杀技
@@ -5210,6 +5247,7 @@ class Player:
         self.ut = 100  # UT值,初始100点
         self.max_ut = 100  # 最大UT值
         self.ut_empty_counter = 0  # UT耗尽提示计数器
+        self.step_counter = 0  # 步数计数器，用于UT扣减
         self.stage = 1  # 游戏阶段,用于决定大BOSS
         self.mini_bosses_defeated = 0  # 击败的小BOSS数量
         # 根据配置设置初始金币数量
@@ -5287,6 +5325,13 @@ class Player:
         # 如果UT耗尽,处理惩罚
         if self.ut <= 0:
             self.ut_empty_counter = 60  # 显示1秒的提示（假设60FPS）
+    
+    def step_and_check_ut(self):
+        """每步调用，检查是否需要扣减UT"""
+        self.step_counter += 1
+        if self.step_counter >= 4:
+            self.step_counter = 0
+            self.decrease_ut(1)
             # 所有顾问降一级
             for pokemon in self.pokemon_team:
                 pokemon.lose_level()
@@ -9023,7 +9068,7 @@ class PokemonGame:
                 
                 # 移动后检查是否触发地块事件
                 if (self.player.x != prev_x or self.player.y != prev_y):
-                    self.player.decrease_ut(1)
+                    self.player.step_and_check_ut()
                     # 减少PTO通知剩余步数
                     if self.player.battle_prevention_steps > 0:
                         self.player.battle_prevention_steps -= 1
