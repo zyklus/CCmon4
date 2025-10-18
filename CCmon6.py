@@ -9631,7 +9631,9 @@ class PokemonGame:
                                 target_idx = int(button.action.split("_")[1])
                                 result = self.use_pending_item_on_target(target_idx)
                                 self.battle_messages = [result]
-                                self.go_back()
+                                # 只有在不需要技能忘记对话框时才回退状态
+                                if "正在选择要忘记的技能" not in result:
+                                    self.go_back()
                             elif button.action == "catch_normal":
                                 self.process_battle_turn(action="catch", ball_type="normal")
                                 # 不调用go_back(),让process_battle_turn处理状态转换
