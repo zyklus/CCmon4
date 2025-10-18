@@ -3124,6 +3124,7 @@ class GameInitialConfig:
         "items": [
             {"name": "啤酒畅饮券", "description": "用于Delia二次进化", "item_type": "evolution", "effect": "啤酒畅饮券", "quantity": 1},
             {"name": "办公室微信群", "description": "用于Delia进化", "item_type": "evolution", "effect": "办公室微信群", "quantity": 1},
+            {"name":  "description": "获得2000点经验值", "item_type": "exp_boost", "effect": 2000, "quantity": 5},
             {"name": "必杀技学习盲盒", "description": "学习必杀技的盲盒", "item_type": "skill_blind_box", "effect": None, "quantity": 10}
         ]
     }
