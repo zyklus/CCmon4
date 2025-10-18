@@ -7425,7 +7425,9 @@ class PokemonGame:
             
             # 只允许直接使用特定物品
             direct_use_items = ["skill_blind_box", "ut_restore", "master_ball", "pokeball"]
-            if item.item_type not in direct_use_items:
+            # 允许需要目标选择的物品通过（它们会在后续逻辑中处理目标选择）
+            target_selection_items = ["skill_book", "evolution", "permanent_boost", "exp_boost", "attribute_enhancer", "sp_enhancer", "upgrade_gem"]
+            if item.item_type not in direct_use_items and item.item_type not in target_selection_items:
                 # 添加物品无法直接使用通知
                 self.notification_system.add_notification("这个物品需要选择使用对象", "warning")
                 return "这个物品需要选择使用对象"
@@ -9486,9 +9488,15 @@ class PokemonGame:
                                             self.battle_messages = [result]
                                             self.backpack_popup_state = False
                                         else:
-                                            # 其他物品（包括HP恢复类）都需要选择目标
-                                            self.open_item_use_menu(self.selected_item_index)
-                                            self.backpack_popup_state = False
+                                            # 其他物品（包括HP恢复类和必杀技学习书）都需要选择目标
+                                            # 对于必杀技学习书，使用use_item_directly来触发正确的目标选择流程
+                                            if selected_item.item_type == "skill_book":
+                                                result = self.use_item_directly(self.selected_item_index)
+                                                self.battle_messages = [result]
+                                                self.backpack_popup_state = False
+                                            else:
+                                                self.open_item_use_menu(self.selected_item_index)
+                                                self.backpack_popup_state = False
                                     elif action == "cancel":
                                         self.backpack_popup_state = False
                     else:
