@@ -10336,6 +10336,10 @@ class PokemonGame:
         elif item.item_type == "sp_enhancer":
             return "增加SP上限到120"
             
+        elif item.item_type == "exp_boost":
+            exp_amount = item.effect
+            return f"获得{exp_amount}点经验值"
+            
         elif item.item_type == "special":
             # 特殊物品可能需要特定的使用方式
             return "这是特殊物品,可能需要在特定情况下使用"
