@@ -3124,7 +3124,7 @@ class GameInitialConfig:
         "items": [
             {"name": "啤酒畅饮券", "description": "用于Delia二次进化", "item_type": "evolution", "effect": "啤酒畅饮券", "quantity": 1},
             {"name": "办公室微信群", "description": "用于Delia进化", "item_type": "evolution", "effect": "办公室微信群", "quantity": 1},
-            {"name":  "description": "获得2000点经验值", "item_type": "exp_boost", "effect": 2000, "quantity": 5},
+            {"name": "经验糖果", "description": "获得2000点经验值", "item_type": "exp_boost", "effect": 2000, "quantity": 5},
             {"name": "必杀技学习盲盒", "description": "学习必杀技的盲盒", "item_type": "skill_blind_box", "effect": None, "quantity": 10}
         ]
     }
@@ -7561,12 +7561,12 @@ class PokemonGame:
                     SCREEN_WIDTH//2 - 200, 150 + i * 60, 400, 50,
                     button_text,
                     f"target_{i}",
-                    BLACK, button_color, hover_color
+                    WHITE, button_color, hover_color
                 )
             )
         
         self.menu_buttons.append(
-            Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT - 100, 200, 40, "取消", "cancel", BLACK, button_color, hover_color)
+            Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT - 100, 200, 40, "取消", "cancel", WHITE, button_color, hover_color)
         )
         self.state = GameState.MENU_TARGET_SELECTION
     
@@ -9846,7 +9846,7 @@ class PokemonGame:
             no_target_text = "没有队友可释放技能"
             self.menu_buttons.append(
                 Button(SCREEN_WIDTH//2 - 200, 150, 400, 50,
-                       no_target_text, "no_target", BLACK, GRAY, GRAY)
+                       no_target_text, "no_target", WHITE, GRAY, GRAY)
             )
         
         # 添加取消按钮
@@ -9874,20 +9874,20 @@ class PokemonGame:
                 button_text = f"治疗 {pokemon.name} (Lv.{pokemon.level}) HP:{pokemon.hp}/{pokemon.max_hp}"
                 self.menu_buttons.append(
                     Button(SCREEN_WIDTH//2 - 200, 150 + i * 60, 400, 50,
-                           button_text, f"heal_target_{i}", BLACK, LIGHT_BLUE, MENU_HOVER)
+                           button_text, f"heal_target_{i}", WHITE, LIGHT_BLUE, MENU_HOVER)
                 )
         else:
             # 如果没有可治疗的队友，显示提示信息
             no_target_text = "没有队友可释放技能"
             self.menu_buttons.append(
                 Button(SCREEN_WIDTH//2 - 200, 150, 400, 50,
-                       no_target_text, "no_target", BLACK, GRAY, GRAY)
+                       no_target_text, "no_target", WHITE, GRAY, GRAY)
             )
         
         # 添加取消按钮
         self.menu_buttons.append(
             Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT - 100, 200, 40, 
-                   "返回", "cancel_heal_target", BLACK, LIGHT_BLUE, MENU_HOVER)
+                   "返回", "cancel_heal_target", WHITE, LIGHT_BLUE, MENU_HOVER)
         )
         
         self.state = GameState.BATTLE_HEAL_SELECT
