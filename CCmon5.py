@@ -3244,7 +3244,61 @@ class Item:
                     if len(target.moves) >= 4:
                         return f"SKILL_FORGET_DIALOG|{skill_name}"
                     else:
-                        target.moves.append({"name": skill_name, "power": 80, "type": "共情"})
+                        # 从统一技能数据库获取完整的技能信息
+                        if skill_name in UNIFIED_SKILLS_DATABASE:
+                            skill_data = UNIFIED_SKILLS_DATABASE[skill_name]
+                            # 创建包含完整信息的技能条目
+                            new_move = {
+                                "name": skill_name,
+                                "power": skill_data.get("power", 80),
+                                "type": skill_data.get("type", "共情"),
+                                "category": skill_data.get("category", SkillCategory.DIRECT_DAMAGE),
+                                "sp_cost": skill_data.get("sp_cost", 0),
+                                "description": skill_data.get("description", ""),
+                                "quote": skill_data.get("quote", ""),
+                                "effects": skill_data.get("effects", {})
+                            }
+                            target.moves.append(new_move)
+                            
+                            # 同时将技能添加到NEW_SKILLS_DATABASE以确保在顾问信息中正确显示
+                            if skill_name not in NEW_SKILLS_DATABASE:
+                                NEW_SKILLS_DATABASE[skill_name] = skill_data.copy()
+                            
+                            # 确保技能也注册到技能管理器中
+                            if not hasattr(target, '_skill_manager_updated'):
+                                target._skill_manager_updated = True
+                            skill_manager.add_skill_from_data(skill_name, skill_data)
+                        else:
+                            # 如果技能不在数据库中，使用默认值并添加到数据库
+                            default_skill_data = {
+                                "power": 80,
+                                "type": "共情",
+                                "category": SkillCategory.DIRECT_DAMAGE,
+                                "sp_cost": 0,
+                                "description": f"从必杀技学习书学会的技能：{skill_name}",
+                                "quote": "这是从书中学会的技能！",
+                                "effects": {}
+                            }
+                            new_move = {
+                                "name": skill_name,
+                                "power": 80,
+                                "type": "共情",
+                                "category": SkillCategory.DIRECT_DAMAGE,
+                                "sp_cost": 0,
+                                "description": default_skill_data["description"],
+                                "quote": default_skill_data["quote"],
+                                "effects": {}
+                            }
+                            target.moves.append(new_move)
+                            
+                            # 添加到NEW_SKILLS_DATABASE以确保在顾问信息中正确显示
+                            NEW_SKILLS_DATABASE[skill_name] = default_skill_data
+                            
+                            # 确保技能也注册到技能管理器中
+                            if not hasattr(target, '_skill_manager_updated'):
+                                target._skill_manager_updated = True
+                            skill_manager.add_skill_from_data(skill_name, default_skill_data)
+                        
                         return f"{target.name}学会了{skill_name}！"
                 else:
                     return f"{target.name}已经会{skill_name}了！|FAILED"
