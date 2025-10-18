@@ -45,6 +45,7 @@ HALF_TILE_SIZE = TILE_SIZE // 2
 # 颜色定义
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
@@ -4892,8 +4893,8 @@ class Pokemon:
             # 检查是否需要目标选择
             if effects.get("requires_target_selection", False):
                 if allies:
-                    # 找到可以被治疗的队友（不包括自己，且血量不满）
-                    healable_allies = [ally for ally in allies if ally != self and not ally.is_fainted() and ally.hp < ally.max_hp]
+                    # 找到可以被治疗的队友（包括自己，且血量不满）
+                    healable_allies = [ally for ally in allies if not ally.is_fainted() and ally.hp < ally.max_hp]
                     
                     if healable_allies:
                         # 返回特殊值表示需要选择治疗目标
@@ -6472,9 +6473,9 @@ class PokemonGame:
                             if (skill_data.get("category") == SkillCategory.HEAL and 
                                 skill_data.get("effects", {}).get("requires_target_selection", False)):
                                 
-                                # 找到可以被治疗的队友（不包括使用者自己，且血量不满）
+                                # 找到可以被治疗的队友（包括使用者自己，且血量不满）
                                 healable_allies = [pokemon for pokemon in self.player.pokemon_team 
-                                                 if pokemon != player_pkm and not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
+                                                 if not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
                                 
                                 if healable_allies:
                                     # 进入治疗目标选择状态
@@ -8904,18 +8905,32 @@ class PokemonGame:
             elif self.state == GameState.BATTLE_HEAL_SELECT:
                 font, small_font, battle_font, menu_font = get_fonts()
                 
-                # 绘制半透明背景
-                overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), BLACK, 128)
+                # 绘制更深的半透明背景
+                overlay = SurfaceFactory.create_overlay((SCREEN_WIDTH, SCREEN_HEIGHT), BLACK, 180)
                 screen.blit(overlay, (0, 0))
+                
+                # 绘制对话框背景
+                dialog_width = 500
+                dialog_height = 400
+                dialog_x = SCREEN_WIDTH//2 - dialog_width//2
+                dialog_y = SCREEN_HEIGHT//2 - dialog_height//2
+                
+                # 绘制对话框边框
+                border_rect = pygame.Rect(dialog_x - 5, dialog_y - 5, dialog_width + 10, dialog_height + 10)
+                pygame.draw.rect(screen, WHITE, border_rect)
+                
+                # 绘制对话框背景
+                dialog_rect = pygame.Rect(dialog_x, dialog_y, dialog_width, dialog_height)
+                pygame.draw.rect(screen, (50, 50, 50), dialog_rect)
                 
                 # 绘制标题
                 title = menu_font.render("选择要治疗的队友", True, WHITE)
-                screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, 100))
+                screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, dialog_y + 20))
                 
                 # 绘制技能信息
                 if hasattr(self, 'heal_skill_name'):
-                    skill_info = small_font.render(f"使用技能: {self.heal_skill_name}", True, WHITE)
-                    screen.blit(skill_info, (SCREEN_WIDTH//2 - skill_info.get_width()//2, 120))
+                    skill_info = small_font.render(f"使用技能: {self.heal_skill_name}", True, YELLOW)
+                    screen.blit(skill_info, (SCREEN_WIDTH//2 - skill_info.get_width()//2, dialog_y + 50))
                 
                 # 绘制按钮
                 for button in self.menu_buttons:
@@ -9671,9 +9686,9 @@ class PokemonGame:
                                 # 选择了要治疗的队友
                                 target_index = int(button.action.split("_")[2])
                                 
-                                # 找到可以被治疗的队友
+                                # 找到可以被治疗的队友（包括使用者自己）
                                 healable_allies = [pokemon for pokemon in self.player.pokemon_team 
-                                                 if pokemon != self.heal_skill_user and not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
+                                                 if not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
                                 
                                 if 0 <= target_index < len(healable_allies):
                                     target_ally = healable_allies[target_index]
@@ -9893,28 +9908,31 @@ class PokemonGame:
         
         self.menu_buttons = []
         
-        # 找到所有可以被治疗的队友（不包括自己，且血量不满）
+        # 找到所有可以被治疗的队友（包括自己，且血量不满）
         healable_allies = [pokemon for pokemon in self.player.pokemon_team 
-                         if pokemon != self.heal_skill_user and not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
+                         if not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
+        
+        # 计算对话框位置
+        dialog_y = SCREEN_HEIGHT//2 - 200
         
         if healable_allies:
             for i, pokemon in enumerate(healable_allies):
                 button_text = f"治疗 {pokemon.name} (Lv.{pokemon.level}) HP:{pokemon.hp}/{pokemon.max_hp}"
                 self.menu_buttons.append(
-                    Button(SCREEN_WIDTH//2 - 200, 150 + i * 60, 400, 50,
+                    Button(SCREEN_WIDTH//2 - 200, dialog_y + 80 + i * 60, 400, 50,
                            button_text, f"heal_target_{i}", WHITE, LIGHT_BLUE, MENU_HOVER)
                 )
         else:
             # 如果没有可治疗的队友，显示提示信息
             no_target_text = "没有队友可释放技能"
             self.menu_buttons.append(
-                Button(SCREEN_WIDTH//2 - 200, 150, 400, 50,
+                Button(SCREEN_WIDTH//2 - 200, dialog_y + 80, 400, 50,
                        no_target_text, "no_target", WHITE, GRAY, GRAY)
             )
         
         # 添加取消按钮
         self.menu_buttons.append(
-            Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT - 100, 200, 40, 
+            Button(SCREEN_WIDTH//2 - 100, dialog_y + 320, 200, 40, 
                    "返回", "cancel_heal_target", WHITE, LIGHT_BLUE, MENU_HOVER)
         )
         
