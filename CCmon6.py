@@ -4892,10 +4892,10 @@ class Pokemon:
             # 检查是否需要目标选择
             if effects.get("requires_target_selection", False):
                 if allies:
-                    # 找到活着的队友（不包括自己）
-                    alive_allies = [ally for ally in allies if ally != self and not ally.is_fainted()]
+                    # 找到可以被治疗的队友（不包括自己，且血量不满）
+                    healable_allies = [ally for ally in allies if ally != self and not ally.is_fainted() and ally.hp < ally.max_hp]
                     
-                    if alive_allies:
+                    if healable_allies:
                         # 返回特殊值表示需要选择治疗目标
                         return -1, messages
                     else:
@@ -6472,11 +6472,11 @@ class PokemonGame:
                             if (skill_data.get("category") == SkillCategory.HEAL and 
                                 skill_data.get("effects", {}).get("requires_target_selection", False)):
                                 
-                                # 找到活着的队友（不包括使用者自己）
-                                alive_allies = [pokemon for pokemon in self.player.pokemon_team 
-                                               if pokemon != player_pkm and not pokemon.is_fainted()]
+                                # 找到可以被治疗的队友（不包括使用者自己，且血量不满）
+                                healable_allies = [pokemon for pokemon in self.player.pokemon_team 
+                                                 if pokemon != player_pkm and not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
                                 
-                                if alive_allies:
+                                if healable_allies:
                                     # 进入治疗目标选择状态
                                     self.heal_skill_name = move["name"]
                                     self.heal_skill_user = player_pkm
@@ -9622,12 +9622,12 @@ class PokemonGame:
                                 # 选择了要治疗的队友
                                 target_index = int(button.action.split("_")[1])
                                 
-                                # 找到活着的队友
-                                alive_allies = [pokemon for pokemon in self.player.pokemon_team 
-                                               if pokemon != self.team_heal_skill_user and not pokemon.is_fainted()]
+                                # 找到可以被治疗的队友
+                                healable_allies = [pokemon for pokemon in self.player.pokemon_team 
+                                                 if pokemon != self.team_heal_skill_user and not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
                                 
-                                if 0 <= target_index < len(alive_allies):
-                                    target_ally = alive_allies[target_index]
+                                if 0 <= target_index < len(healable_allies):
+                                    target_ally = healable_allies[target_index]
                                     
                                     # 执行治疗
                                     if hasattr(self, 'team_heal_skill_name'):
@@ -9671,12 +9671,12 @@ class PokemonGame:
                                 # 选择了要治疗的队友
                                 target_index = int(button.action.split("_")[2])
                                 
-                                # 找到活着的队友
-                                alive_allies = [pokemon for pokemon in self.player.pokemon_team 
-                                               if pokemon != self.heal_skill_user and not pokemon.is_fainted()]
+                                # 找到可以被治疗的队友
+                                healable_allies = [pokemon for pokemon in self.player.pokemon_team 
+                                                 if pokemon != self.heal_skill_user and not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
                                 
-                                if 0 <= target_index < len(alive_allies):
-                                    target_ally = alive_allies[target_index]
+                                if 0 <= target_index < len(healable_allies):
+                                    target_ally = healable_allies[target_index]
                                     
                                     # 执行治疗
                                     if hasattr(self, 'heal_skill_name'):
@@ -9858,12 +9858,12 @@ class PokemonGame:
         
         self.menu_buttons = []
         
-        # 找到所有活着的队友（不包括自己）
-        alive_allies = [pokemon for pokemon in self.player.pokemon_team 
-                       if pokemon != self.team_heal_skill_user and not pokemon.is_fainted()]
+        # 找到所有可以被治疗的队友（不包括自己，且血量不满）
+        healable_allies = [pokemon for pokemon in self.player.pokemon_team 
+                         if pokemon != self.team_heal_skill_user and not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
         
-        if alive_allies:
-            for i, pokemon in enumerate(alive_allies):
+        if healable_allies:
+            for i, pokemon in enumerate(healable_allies):
                 button_text = f"治疗 {pokemon.name} (Lv.{pokemon.level}) HP:{pokemon.hp}/{pokemon.max_hp}"
                 self.menu_buttons.append(
                     Button(SCREEN_WIDTH//2 - 200, 150 + i * 60, 400, 50,
@@ -9893,12 +9893,12 @@ class PokemonGame:
         
         self.menu_buttons = []
         
-        # 找到所有活着的队友（不包括自己）
-        alive_allies = [pokemon for pokemon in self.player.pokemon_team 
-                       if pokemon != self.heal_skill_user and not pokemon.is_fainted()]
+        # 找到所有可以被治疗的队友（不包括自己，且血量不满）
+        healable_allies = [pokemon for pokemon in self.player.pokemon_team 
+                         if pokemon != self.heal_skill_user and not pokemon.is_fainted() and pokemon.hp < pokemon.max_hp]
         
-        if alive_allies:
-            for i, pokemon in enumerate(alive_allies):
+        if healable_allies:
+            for i, pokemon in enumerate(healable_allies):
                 button_text = f"治疗 {pokemon.name} (Lv.{pokemon.level}) HP:{pokemon.hp}/{pokemon.max_hp}"
                 self.menu_buttons.append(
                     Button(SCREEN_WIDTH//2 - 200, 150 + i * 60, 400, 50,
