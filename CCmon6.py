@@ -385,7 +385,7 @@ UNIFIED_SKILLS_DATABASE = {
         "type": ["韧性", "耐心", "共情"],
         "category": SkillCategory.HEAL,
         "description": "恢复被选择的一位队友的全部生命。使用该技能后出现UI界面选择可释放技能的队友及返回按钮。如没有队友可释放技能，则提示不能释放技能",
-        "sp_cost": 0,
+        "sp_cost": 50,
         "quote": "你能不能闻到泥煤味",
         "effects": {
             "heal_percentage": 1.0,
@@ -2372,7 +2372,7 @@ class PokemonConfig:
                 {"name": "我有意见！", "power": 50, "type": ["PS", "勇气", "content"], "sp_cost": 25, "quote": "这个东西怎么落地？", "description": "对敌人造成50点伤害,对自身有反噬效果"},
                 {"name": "沉默的牛马", "power": 40, "type": ['共情', 'PS'], "category": SkillCategory.MULTI_HIT},
                 {"name": "浆板下水", "power": 45, "type": ["共情", "体力"]},
-                {"name": "威士忌之友", "power": 0, "type": "共情", "category": SkillCategory.HEAL},
+                {"name": "威士忌之友", "power": 0, "type": "共情", "sp_cost": 50, "category": SkillCategory.HEAL},
                 {"name": "倒立攻击", "power": 65, "type": ["勇气", "体力"]}
             ]
         },
