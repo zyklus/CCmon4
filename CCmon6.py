@@ -9810,6 +9810,12 @@ class PokemonGame:
                                         delattr(self, 'team_heal_skill_name')
                                         delattr(self, 'team_heal_skill_user')
                                         
+                                        # 设置战斗回合数据以标记玩家已行动
+                                        if self.current_turn is None:
+                                            self.current_turn = {}
+                                        # 修复团队治疗技能不结束回合的BUG：设置action为attack以标记玩家已行动
+                                        self.current_turn["action"] = "attack"
+                                        
                                         # 返回战斗状态并继续处理回合
                                         self.state = GameState.BATTLE if not self.is_boss_battle else GameState.BOSS_BATTLE
                                         # 团队治疗技能使用后应该轮到敌方行动，跳到敌方回合
@@ -9872,6 +9878,8 @@ class PokemonGame:
                                                 self.current_turn = {}
                                             self.current_turn["damage"] = actual_heal
                                             self.current_turn["type_multiplier"] = 1.0
+                                            # 修复威士忌之友技能不结束回合的BUG：设置action为attack以标记玩家已行动
+                                            self.current_turn["action"] = "attack"
                                             
                                             # 清理治疗状态
                                             delattr(self, 'heal_skill_name')
